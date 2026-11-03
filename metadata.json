@@ -1,0 +1,6 @@
+{
+  "name": "Scan2SQL — Intelligent Document Scanner & SQL Extraction",
+  "description": "Intelligent Document Scanner and Automated SQL Data Extraction System using Python FastAPI, OpenCV, Tesseract OCR, and PostgreSQL.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
