@@ -221,7 +221,7 @@ Return ONLY a valid JSON object matching this format:
   // ---------------------------------------------------------------------------
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -234,7 +234,7 @@ Return ONLY a valid JSON object matching this format:
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Scan2SQL Server running on http://localhost:${PORT}`);
+    console.log(`LedgerSutra Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -48,6 +48,9 @@ import {
   Code2,
   UserCheck,
   Briefcase,
+  ShieldCheck,
+  AlertTriangle,
+  BookOpen,
 } from 'lucide-react';
 import {
   SAMPLE_TEST_FILES,
@@ -55,6 +58,25 @@ import {
   generateSampleTestFile,
   downloadSampleTestFile,
 } from './sampleTestFiles';
+import {
+  auditBillDraftOrRecord,
+  computeSupplierSummary,
+  exportMasterRowsToCsv,
+  exportBillsToJsonFile,
+  exportBillsToSqlFile,
+} from './caValidation';
+import {
+  BRAND_NAME,
+  BRAND_TAGLINE,
+  normalizePathname,
+  syncDocumentSeoTags,
+} from './seoContent';
+import {
+  LedgerSutraHeroBanner,
+  LedgerSutraHomepageSections,
+  LedgerSutraRouteView,
+  LedgerSutraFooter,
+} from './components/LedgerSutraMarketing';
 
 // Configure PDF.js worker for browser rendering & coordinate text extraction
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
@@ -743,6 +765,37 @@ export function App() {
 
   // Main Navigation Tabs
   const [activeTab, setActiveTab] = useState<'scanner' | 'master_sheet' | 'dashboard' | 'history'>('scanner');
+
+  // Clean URL Route State for Multi-Page SEO Architecture & CA Resource Center
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return normalizePathname(window.location.pathname);
+    }
+    return '/';
+  });
+
+  useEffect(() => {
+    syncDocumentSeoTags(currentPath);
+  }, [currentPath]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(normalizePathname(window.location.pathname));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = useCallback((path: string) => {
+    const normalized = normalizePathname(path);
+    if (typeof window !== 'undefined' && normalizePathname(window.location.pathname) !== normalized) {
+      window.history.pushState({}, '', normalized);
+    }
+    setCurrentPath(normalized);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const [showSupplierSummary, setShowSupplierSummary] = useState<boolean>(false);
 
   // Document & Preview State
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -1960,6 +2013,12 @@ export function App() {
     setBillItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // State for duplicate invoiceNumber + shopName warning & merge suggestion
+  const [pendingDuplicateSave, setPendingDuplicateSave] = useState<{
+    newBill: NoSQLBillRecord;
+    existingBill: NoSQLBillRecord;
+  } | null>(null);
+
   // Manual Save / Append Current Bill to Master Sheet
   const handleSaveCurrentToMasterSheet = () => {
     if (!uploadedFileName && !extractedText.trim() && billItems.length === 0) {
@@ -1968,14 +2027,17 @@ export function App() {
     }
 
     const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    const resolvedShopName = shopName.trim() || 'Shop / Vendor';
+    const resolvedInvoiceNumber = invoiceNumber.trim() || `INV-${Date.now().toString().slice(-5)}`;
+
     const newBill: NoSQLBillRecord = {
       id: `BILL-${Date.now()}`,
       fileName: uploadedFileName || 'Manual_Bill.pdf',
-      shopName: shopName.trim() || 'Shop / Vendor',
+      shopName: resolvedShopName,
       sellerGstin: sellerGstin.trim(),
       buyerName: buyerName.trim(),
       buyerGstin: buyerGstin.trim(),
-      invoiceNumber: invoiceNumber.trim() || `INV-${Date.now().toString().slice(-5)}`,
+      invoiceNumber: resolvedInvoiceNumber,
       billDate: billDate || new Date().toISOString().slice(0, 10),
       placeOfSupply: placeOfSupply.trim(),
       voucherType,
@@ -1994,9 +2056,108 @@ export function App() {
       items: billItems,
     };
 
+    // Check for existing invoiceNumber + shopName combination in savedBills
+    const normalizedInv = resolvedInvoiceNumber.toLowerCase();
+    const normalizedShop = resolvedShopName.toLowerCase();
+    const existingDuplicate = savedBills.find(
+      (b) =>
+        b.invoiceNumber.trim().toLowerCase() === normalizedInv &&
+        b.shopName.trim().toLowerCase() === normalizedShop
+    );
+
+    if (existingDuplicate) {
+      setPendingDuplicateSave({ newBill, existingBill: existingDuplicate });
+      showToast(
+        `Duplicate Warning: Invoice "${resolvedInvoiceNumber}" for "${resolvedShopName}" already exists in Master Sheet.`
+      );
+      return;
+    }
+
+    setPendingDuplicateSave(null);
     setSavedBills((prev) => [newBill, ...prev]);
     markBillsAsRecentlyAdded([newBill.id]);
     showToast(`Added "${newBill.shopName}" (₹${newBill.grandTotal.toFixed(2)}) as 1 Row in Master Sheet!`);
+  };
+
+  const handleMergePendingIntoExistingBill = () => {
+    if (!pendingDuplicateSave) return;
+    const { newBill, existingBill } = pendingDuplicateSave;
+
+    const mergedItems: BillLineItem[] = [
+      ...existingBill.items,
+      ...newBill.items.map((it, idx) => ({
+        ...it,
+        id: `${it.id}-merged-${Date.now()}-${idx}`,
+      })),
+    ];
+
+    const mergedExtraHeaders = [...existingBill.extraHeaderFields];
+    newBill.extraHeaderFields.forEach((field) => {
+      const existingIdx = mergedExtraHeaders.findIndex(
+        (f) => f.label.trim().toLowerCase() === field.label.trim().toLowerCase()
+      );
+      if (existingIdx >= 0) {
+        mergedExtraHeaders[existingIdx] = field;
+      } else {
+        mergedExtraHeaders.push(field);
+      }
+    });
+
+    const mergedSubtotal = Number((existingBill.subtotal + newBill.subtotal).toFixed(2));
+    const mergedCgst = Number((existingBill.cgstAmount + newBill.cgstAmount).toFixed(2));
+    const mergedSgst = Number((existingBill.sgstAmount + newBill.sgstAmount).toFixed(2));
+    const mergedIgst = Number((existingBill.igstAmount + newBill.igstAmount).toFixed(2));
+    const mergedTax = Number((existingBill.taxAmount + newBill.taxAmount).toFixed(2));
+    const mergedDiscount = Number((existingBill.discountAmount + newBill.discountAmount).toFixed(2));
+    const mergedGrandTotal = Number((existingBill.grandTotal + newBill.grandTotal).toFixed(2));
+
+    const mergedRecord: NoSQLBillRecord = {
+      ...existingBill,
+      sellerGstin: newBill.sellerGstin || existingBill.sellerGstin,
+      buyerName: newBill.buyerName || existingBill.buyerName,
+      buyerGstin: newBill.buyerGstin || existingBill.buyerGstin,
+      placeOfSupply: newBill.placeOfSupply || existingBill.placeOfSupply,
+      subtotal: mergedSubtotal,
+      cgstAmount: mergedCgst,
+      sgstAmount: mergedSgst,
+      igstAmount: mergedIgst,
+      taxAmount: mergedTax,
+      discountAmount: mergedDiscount,
+      grandTotal: mergedGrandTotal,
+      extraHeaderFields: mergedExtraHeaders,
+      items: mergedItems,
+    };
+
+    setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? mergedRecord : b)));
+    markBillsAsRecentlyAdded([existingBill.id]);
+    setPendingDuplicateSave(null);
+    showToast(
+      `Merged ${newBill.items.length} item(s) into existing Invoice "${existingBill.invoiceNumber}" (New Total: ₹${mergedGrandTotal.toFixed(2)})!`
+    );
+  };
+
+  const handleReplaceExistingBillWithPending = () => {
+    if (!pendingDuplicateSave) return;
+    const { newBill, existingBill } = pendingDuplicateSave;
+    const updatedRecord: NoSQLBillRecord = {
+      ...newBill,
+      id: existingBill.id,
+    };
+    setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? updatedRecord : b)));
+    markBillsAsRecentlyAdded([existingBill.id]);
+    setPendingDuplicateSave(null);
+    showToast(
+      `Updated existing Invoice "${existingBill.invoiceNumber}" for "${existingBill.shopName}" (₹${updatedRecord.grandTotal.toFixed(2)})!`
+    );
+  };
+
+  const handleForceAddPendingDuplicate = () => {
+    if (!pendingDuplicateSave) return;
+    const { newBill } = pendingDuplicateSave;
+    setSavedBills((prev) => [newBill, ...prev]);
+    markBillsAsRecentlyAdded([newBill.id]);
+    setPendingDuplicateSave(null);
+    showToast(`Added duplicate Invoice "${newBill.invoiceNumber}" as a new row in Master Sheet!`);
   };
 
   // ---------------------------------------------------------------------------
@@ -2039,7 +2200,7 @@ export function App() {
           bill.items.length > 0 ? bill.items.map((i) => i.itemName).join(', ') : bill.shopName || 'Bill Entry';
         const combinedHsn = Array.from(new Set(bill.items.map((i) => i.hsnSac).filter(Boolean))).join(', ');
 
-        allAvailableColumns.forEach((col) => {
+        activeSelectedColumnDefs.forEach((col) => {
           if (col.key.startsWith('prod_')) {
             const prodIdx = parseInt(col.key.replace('prod_', ''), 10) - 1;
             // Only populate Product 1..N columns if this bill has multiple products (> 1), or if user selected it
@@ -2115,7 +2276,7 @@ export function App() {
 
         itemsToUse.forEach((item, idx) => {
           const cells: Record<string, string | number> = {};
-          allAvailableColumns.forEach((col) => {
+          activeSelectedColumnDefs.forEach((col) => {
             if (col.key.startsWith('hdr:')) {
               const rawK = col.key.slice(4);
               cells[col.key] = bill.extraHeaderFields?.[rawK] ?? '';
@@ -2142,7 +2303,7 @@ export function App() {
     }
 
     return rows;
-  }, [filteredBills, masterSheetMode, allAvailableColumns]);
+  }, [filteredBills, masterSheetMode, activeSelectedColumnDefs]);
 
   // Calculate Column Totals for Footer Row
   const columnTotals = useMemo(() => {
@@ -2158,6 +2319,107 @@ export function App() {
     });
     return totals;
   }, [activeSelectedColumnDefs, masterSheetRows]);
+
+  // ---------------------------------------------------------------------------
+  // Windowed Virtual Rendering for Master Spreadsheet Table (1,000s of CA bills)
+  // ---------------------------------------------------------------------------
+  const MASTER_ROW_HEIGHT = 40;
+  const MASTER_VIEWPORT_HEIGHT = 560;
+  const MASTER_OVERSCAN = 10;
+  const masterTableScrollRef = useRef<HTMLDivElement | null>(null);
+  const masterScrollRafRef = useRef<number | null>(null);
+  const [masterTableScrollTop, setMasterTableScrollTop] = useState<number>(0);
+  const [masterViewportHeight, setMasterViewportHeight] = useState<number>(MASTER_VIEWPORT_HEIGHT);
+
+  const recentlyAddedBillIdSet = useMemo(
+    () => new Set(recentlyAddedBillIds),
+    [recentlyAddedBillIds]
+  );
+
+  const handleMasterTableScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const nextScrollTop = e.currentTarget.scrollTop;
+    const nextClientHeight = e.currentTarget.clientHeight;
+    if (masterScrollRafRef.current !== null) {
+      cancelAnimationFrame(masterScrollRafRef.current);
+    }
+    masterScrollRafRef.current = requestAnimationFrame(() => {
+      setMasterTableScrollTop(nextScrollTop);
+      if (nextClientHeight > 0 && nextClientHeight !== masterViewportHeight) {
+        setMasterViewportHeight(nextClientHeight);
+      }
+      masterScrollRafRef.current = null;
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (masterScrollRafRef.current !== null) {
+        cancelAnimationFrame(masterScrollRafRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setMasterTableScrollTop(0);
+    if (masterTableScrollRef.current) {
+      masterTableScrollRef.current.scrollTop = 0;
+    }
+  }, [searchQuery, dateFilter, masterSheetMode]);
+
+  useEffect(() => {
+    const container = masterTableScrollRef.current;
+    if (!container) return;
+    const measureViewport = () => {
+      if (container.clientHeight > 0) {
+        setMasterViewportHeight(container.clientHeight);
+      }
+    };
+    measureViewport();
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(measureViewport);
+      observer.observe(container);
+      return () => observer.disconnect();
+    }
+  }, [activeTab, masterSheetRows.length]);
+
+  useEffect(() => {
+    const maxScrollTop = Math.max(0, masterSheetRows.length * MASTER_ROW_HEIGHT - masterViewportHeight);
+    if (masterTableScrollTop > maxScrollTop) {
+      setMasterTableScrollTop(maxScrollTop);
+    }
+  }, [masterSheetRows.length, masterViewportHeight, masterTableScrollTop]);
+
+  const virtualMasterWindow = useMemo(() => {
+    const totalRows = masterSheetRows.length;
+    if (totalRows === 0) {
+      return {
+        totalRows: 0,
+        startIndex: 0,
+        endIndex: 0,
+        visibleRows: [] as typeof masterSheetRows,
+        paddingTop: 0,
+        paddingBottom: 0,
+      };
+    }
+    const effectiveViewportHeight = masterViewportHeight > 0 ? masterViewportHeight : MASTER_VIEWPORT_HEIGHT;
+    const rawStartIndex = Math.floor(masterTableScrollTop / MASTER_ROW_HEIGHT);
+    const clampedStart = Math.min(rawStartIndex, Math.max(0, totalRows - 1));
+    const startIndex = Math.max(0, clampedStart - MASTER_OVERSCAN);
+    const visibleCount = Math.ceil(effectiveViewportHeight / MASTER_ROW_HEIGHT) + MASTER_OVERSCAN * 2;
+    const endIndex = Math.min(totalRows, startIndex + visibleCount);
+    const visibleRows = masterSheetRows.slice(startIndex, endIndex);
+    const paddingTop = startIndex * MASTER_ROW_HEIGHT;
+    const paddingBottom = Math.max(0, (totalRows - endIndex) * MASTER_ROW_HEIGHT);
+
+    return {
+      totalRows,
+      startIndex,
+      endIndex,
+      visibleRows,
+      paddingTop,
+      paddingBottom,
+    };
+  }, [masterSheetRows, masterTableScrollTop, masterViewportHeight]);
 
   // ---------------------------------------------------------------------------
   // Real Multi-Sheet .XLSX Excel Export
@@ -2198,7 +2460,7 @@ export function App() {
     }));
     wsMaster['!cols'] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, wsMaster, 'Scan2SQL_Bills_Sheet');
+    XLSX.utils.book_append_sheet(wb, wsMaster, 'LedgerSutra_Bills_Sheet');
 
     const textSheetData = filteredBills.map((b, i) => ({
       'Sr. No': i + 1,
@@ -2206,15 +2468,96 @@ export function App() {
       'Bill Date': b.billDate,
       'Bill / Invoice No': b.invoiceNumber,
       'Shop / Party Name': b.shopName,
+      'Seller GSTIN': b.sellerGstin,
       'Total Cost (₹)': b.grandTotal,
       'Exact Extracted Text': b.rawText,
     }));
     const wsText = XLSX.utils.json_to_sheet(textSheetData);
     XLSX.utils.book_append_sheet(wb, wsText, 'Exact_Extracted_Text');
 
-    XLSX.writeFile(wb, `Scan2SQL_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    showToast(`Exported ${masterSheetRows.length} rows to Scan2SQL Excel (.xlsx)!`);
+    XLSX.writeFile(wb, `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    showToast(`Exported ${masterSheetRows.length} rows to LedgerSutra Excel (.xlsx)!`);
   };
+
+  const handleExportMasterCsv = () => {
+    if (masterSheetRows.length === 0) {
+      showToast('No bills in the sheet yet. Scan a bill first!');
+      return;
+    }
+    const filename = `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
+    exportMasterRowsToCsv(masterSheetRows, activeSelectedColumnDefs, columnTotals, filename);
+    showToast(`Exported ${masterSheetRows.length} rows to CSV (${filename})!`);
+  };
+
+  const handleExportMasterJson = () => {
+    if (filteredBills.length === 0) {
+      showToast('No bills in the sheet yet. Scan a bill first!');
+      return;
+    }
+    const filename = `LedgerSutra_Invoices_${new Date().toISOString().slice(0, 10)}.json`;
+    exportBillsToJsonFile(filteredBills, filename);
+    showToast(`Exported ${filteredBills.length} structured invoices to JSON (${filename})!`);
+  };
+
+  const handleExportMasterSql = () => {
+    if (filteredBills.length === 0) {
+      showToast('No bills in the sheet yet. Scan a bill first!');
+      return;
+    }
+    const filename = `LedgerSutra_Accounting_${new Date().toISOString().slice(0, 10)}.sql`;
+    exportBillsToSqlFile(filteredBills, filename);
+    showToast(`Exported ${filteredBills.length} invoices & line items to SQL (${filename})!`);
+  };
+
+  // Real-time CA Audit & Validation for Active Bill Draft
+  const currentBillAudit = useMemo(
+    () =>
+      auditBillDraftOrRecord(
+        {
+          shopName,
+          sellerGstin,
+          buyerGstin,
+          invoiceNumber,
+          billDate,
+          subtotal: calculatedSubtotal,
+          taxAmount,
+          discountAmount,
+          grandTotal: calculatedGrandTotal,
+          confidence: confidenceScore,
+        },
+        savedBills
+      ),
+    [
+      shopName,
+      sellerGstin,
+      buyerGstin,
+      invoiceNumber,
+      billDate,
+      calculatedSubtotal,
+      taxAmount,
+      discountAmount,
+      calculatedGrandTotal,
+      confidenceScore,
+      savedBills,
+    ]
+  );
+
+  // Supplier-Wise / GSTIN-Wise Summary Rollup for GSTR-2B Reconciliation
+  const supplierSummaryRows = useMemo(() => computeSupplierSummary(filteredBills), [filteredBills]);
+
+  const handleOpenWorkspaceTab = useCallback(
+    (
+      tab: 'scanner' | 'master_sheet' | 'dashboard' | 'history' = 'scanner',
+      mode?: UserProfileMode
+    ) => {
+      if (mode) {
+        handleSwitchUserMode(mode);
+      }
+      setActiveTab(tab);
+      navigateTo('/app');
+    },
+    [navigateTo]
+  );
 
   const handleExportTxt = (textToDownload: string, filename = 'Extracted_Exact_Text.txt') => {
     const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8;' });
@@ -2320,31 +2663,105 @@ export function App() {
         </div>
       )}
 
-      {/* Top Navigation Header — Title is strictly Scan2SQL */}
+      {/* Top Navigation Header — Rebranded to LedgerSutra (https://casaarthiai.in) */}
       <header className="sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
+          <div
+            onClick={() => navigateTo('/')}
+            className="flex items-center gap-3 cursor-pointer group"
+          >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
               <ScanLine className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-bold text-base sm:text-lg tracking-tight">Scan2SQL</h1>
-                <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                  <Sparkles className="w-3 h-3" /> Smart Bill & Document Extractor
+                <span className="font-extrabold text-base sm:text-lg tracking-tight group-hover:text-indigo-500 transition-colors">
+                  {BRAND_NAME}
+                </span>
+                <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                  <Sparkles className="w-3 h-3" /> CA Invoice & GST Automation
                 </span>
               </div>
-              <p className="text-xs text-[var(--text-muted)] hidden sm:block">
-                Exact PDF/Image-to-Text, Normal User Cost Tracker & CA Multi-Bill Excel Merger
+              <p className="text-[11px] text-[var(--text-muted)] hidden sm:block">
+                {BRAND_TAGLINE}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* SaaS Route Links */}
+            <div className="hidden md:flex items-center gap-1 mr-1 text-xs font-semibold">
+              <button
+                onClick={() => navigateTo('/')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => navigateTo('/app')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/app'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Workspace
+              </button>
+              <button
+                onClick={() => navigateTo('/features')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/features'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Features
+              </button>
+              <button
+                onClick={() => navigateTo('/invoice-ocr-for-ca')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/invoice-ocr-for-ca'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                CA OCR
+              </button>
+              <button
+                onClick={() => navigateTo('/resources')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath.startsWith('/resources')
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Resources
+              </button>
+              <button
+                onClick={() => navigateTo('/pricing')}
+                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/pricing'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Pricing
+              </button>
+            </div>
+
+            {/* Application Tool Tabs */}
             <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)]">
               <button
-                onClick={() => setActiveTab('scanner')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                onClick={() => {
+                  setActiveTab('scanner');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'scanner'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -2354,19 +2771,27 @@ export function App() {
                 1. Scan Bill / PDF
               </button>
               <button
-                onClick={() => setActiveTab('master_sheet')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                onClick={() => {
+                  setActiveTab('master_sheet');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'master_sheet'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
-                2. Merged Excel Sheet ({savedBills.length})
+                2. Excel Sheet ({savedBills.length})
               </button>
               <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                onClick={() => {
+                  setActiveTab('dashboard');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'dashboard'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -2376,15 +2801,19 @@ export function App() {
                 3. Dashboard
               </button>
               <button
-                onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                onClick={() => {
+                  setActiveTab('history');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'history'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <Database className="w-3.5 h-3.5" />
-                4. Exact Text History
+                4. Text History
               </button>
             </nav>
 
@@ -2446,14 +2875,62 @@ export function App() {
             <Database className="w-3.5 h-3.5" />
             Text
           </button>
+          <button
+            onClick={() => navigateTo('/resources')}
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
+              currentPath.startsWith('/resources') ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Guides
+          </button>
         </div>
       </header>
 
       {/* Main Content Container */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 space-y-6">
-        {/* ===================================================================== */}
-        {/* TAB 1: DOCUMENT SCANNER, 100% EXACT OCR & DYNAMIC BILL EDITOR         */}
-        {/* ===================================================================== */}
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 space-y-8">
+        {/* Section 1: Hero Banner at the top of the root Homepage ('/') */}
+        {currentPath === '/' && (
+          <LedgerSutraHeroBanner
+            onOpenWorkspaceTab={handleOpenWorkspaceTab}
+            onTriggerUpload={() => fileInputRef.current?.click()}
+            savedBillsCount={savedBills.length}
+          />
+        )}
+
+        {/* Render Dedicated Marketing/SEO/Resource Page View when visiting non-root / non-app routes */}
+        {currentPath !== '/' && currentPath !== '/app' && (
+          <LedgerSutraRouteView
+            currentPath={currentPath}
+            onNavigate={navigateTo}
+            onOpenWorkspaceTab={handleOpenWorkspaceTab}
+            savedBillsCount={savedBills.length}
+          />
+        )}
+
+        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE */}
+        <div id="live-ocr-workspace" className="space-y-6 scroll-mt-20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h2 className="text-sm sm:text-base font-extrabold tracking-tight">
+                {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Multi-Format Excel Workspace
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[var(--text-muted)]">
+                Active Register: <strong>{savedBills.length} Bills</strong>
+              </span>
+              {currentPath !== '/app' && (
+                <button
+                  onClick={() => navigateTo('/app')}
+                  className="text-indigo-500 hover:underline font-bold cursor-pointer"
+                >
+                  Focus Mode (/app) →
+                </button>
+              )}
+            </div>
+          </div>
         {activeTab === 'scanner' && (
           <div className="space-y-6">
             {/* Top Action Bar: Mode Switcher (Normal User vs CA) + File Upload */}
@@ -2776,34 +3253,80 @@ export function App() {
                         className="w-full bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-indigo-500"
                       />
                     </div>
-                    {userMode === 'ca_mode' && (
-                      <>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase text-[var(--text-muted)] mb-1">
-                            Seller GSTIN
-                          </label>
-                          <input
-                            type="text"
-                            value={sellerGstin}
-                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase())}
-                            placeholder="e.g. 24ABCDE1234F1Z5"
-                            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-mono font-semibold focus:outline-none focus:border-indigo-500"
-                          />
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                        Seller GSTIN (15-Char)
+                      </label>
+                      <input
+                        type="text"
+                        value={sellerGstin}
+                        onChange={(e) => setSellerGstin(e.target.value.toUpperCase())}
+                        placeholder="e.g. 24ABCDE1234F1Z5"
+                        className="w-full bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-mono font-semibold focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                        Buyer GSTIN / State
+                      </label>
+                      <input
+                        type="text"
+                        value={buyerGstin || placeOfSupply}
+                        onChange={(e) => setBuyerGstin(e.target.value.toUpperCase())}
+                        placeholder="Optional Buyer GSTIN"
+                        className="w-full bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-mono font-semibold focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Real-Time CA GSTIN, Duplicate & Tax Math Validation Panel */}
+                  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-3.5 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-[var(--text-main)]">
+                        <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                        CA Pre-Accounting Validation &amp; GST Audit Status
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${
+                          currentBillAudit.status === 'VERIFIED'
+                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                            : currentBillAudit.status === 'EXCEPTION'
+                            ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                            : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                        }`}
+                      >
+                        {currentBillAudit.status === 'VERIFIED'
+                          ? 'GST & Math Verified'
+                          : currentBillAudit.status === 'EXCEPTION'
+                          ? 'Audit Exception Flagged'
+                          : 'Review Recommended'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {currentBillAudit.flags.map((flag, fIdx) => (
+                        <div
+                          key={fIdx}
+                          className={`p-2 rounded-lg border text-[11px] flex items-start gap-2 ${
+                            flag.severity === 'ok'
+                              ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                              : flag.severity === 'error'
+                              ? 'bg-rose-500/5 border-rose-500/20 text-rose-600 dark:text-rose-400'
+                              : 'bg-amber-500/5 border-amber-500/20 text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
+                          {flag.severity === 'ok' ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          ) : (
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          )}
+                          <div>
+                            <span className="font-bold block">{flag.label}</span>
+                            <span className="opacity-85 leading-snug block">{flag.detail}</span>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase text-[var(--text-muted)] mb-1">
-                            Buyer GSTIN / State
-                          </label>
-                          <input
-                            type="text"
-                            value={buyerGstin || placeOfSupply}
-                            onChange={(e) => setBuyerGstin(e.target.value)}
-                            placeholder="Optional Buyer GSTIN"
-                            className="w-full bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs font-mono font-semibold focus:outline-none focus:border-indigo-500"
-                          />
-                        </div>
-                      </>
-                    )}
+                      ))}
+                    </div>
                   </div>
 
                   {/* Products / Items List in this Bill */}
@@ -2972,6 +3495,81 @@ export function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Duplicate Invoice Warning & Merge Suggestion Banner */}
+                  {pendingDuplicateSave && (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-3 animate-in fade-in duration-200">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                              Duplicate Invoice &amp; Vendor Combination Detected
+                            </h4>
+                            <p className="text-xs text-[var(--text-main)] mt-0.5 leading-relaxed">
+                              An entry for Invoice{' '}
+                              <span className="font-mono font-bold text-indigo-500">
+                                {pendingDuplicateSave.existingBill.invoiceNumber}
+                              </span>{' '}
+                              from{' '}
+                              <span className="font-bold">
+                                {pendingDuplicateSave.existingBill.shopName}
+                              </span>{' '}
+                              already exists in your Master Sheet (dated{' '}
+                              <span className="font-mono">{pendingDuplicateSave.existingBill.billDate}</span>,{' '}
+                              {pendingDuplicateSave.existingBill.items.length} item(s), Total:{' '}
+                              <span className="font-mono font-bold">
+                                ₹{pendingDuplicateSave.existingBill.grandTotal.toFixed(2)}
+                              </span>
+                              ). Would you like to merge these items into the existing bill or add a separate row?
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setPendingDuplicateSave(null)}
+                          className="text-[var(--text-muted)] hover:text-[var(--text-main)] p-1 cursor-pointer"
+                          title="Dismiss Warning"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                          onClick={handleMergePendingIntoExistingBill}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          Merge Items &amp; Totals into Existing Row (₹
+                          {(
+                            pendingDuplicateSave.existingBill.grandTotal +
+                            pendingDuplicateSave.newBill.grandTotal
+                          ).toFixed(2)}
+                          )
+                        </button>
+                        <button
+                          onClick={handleReplaceExistingBillWithPending}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Overwrite Existing Row
+                        </button>
+                        <button
+                          onClick={handleForceAddPendingDuplicate}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add as Separate Row Anyway
+                        </button>
+                        <button
+                          onClick={() => setPendingDuplicateSave(null)}
+                          className="px-3 py-2 rounded-lg text-xs font-semibold text-[var(--text-muted)] hover:text-rose-500 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2995,10 +3593,10 @@ export function App() {
                     </span>
                   </div>
                   <h2 className="text-lg font-bold mt-1">
-                    Scan2SQL Merged Excel Sheet (Normal User & CA Audit)
+                    {BRAND_NAME} Merged Excel Register (Normal User &amp; CA GST Audit)
                   </h2>
                   <p className="text-xs text-[var(--text-muted)]">
-                    Every bill is stored on a single row with its Bill Name, Date, Bill No, Shop Name & Total Cost. Bills with multiple products (like Grocery Shopping) automatically expand Product 1, Product 2... columns!
+                    Every bill is stored on a single row with its Bill Name, Date, Bill No, Shop Name, GSTIN &amp; Total Cost. Bills with multiple products automatically expand Product 1, Product 2... columns!
                   </p>
                 </div>
 
@@ -3007,7 +3605,7 @@ export function App() {
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" /> Scan & Add Next Bill
+                    <Plus className="w-4 h-4" /> Scan &amp; Add Next Bill
                   </button>
                   <button
                     onClick={() => excelImportInputRef.current?.click()}
@@ -3019,7 +3617,28 @@ export function App() {
                     onClick={handleExportMasterExcelXlsx}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm cursor-pointer"
                   >
-                    <Download className="w-4 h-4" /> Export Merged Excel (.XLSX)
+                    <Download className="w-4 h-4" /> .XLSX
+                  </button>
+                  <button
+                    onClick={handleExportMasterCsv}
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 text-xs font-bold border border-[var(--border-color)] cursor-pointer"
+                    title="Export Register as UTF-8 CSV"
+                  >
+                    <Download className="w-3.5 h-3.5 text-indigo-500" /> .CSV
+                  </button>
+                  <button
+                    onClick={handleExportMasterJson}
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 text-xs font-bold border border-[var(--border-color)] cursor-pointer"
+                    title="Export Structured Invoices as JSON"
+                  >
+                    <Code2 className="w-3.5 h-3.5 text-indigo-500" /> .JSON
+                  </button>
+                  <button
+                    onClick={handleExportMasterSql}
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 text-xs font-bold border border-[var(--border-color)] cursor-pointer"
+                    title="Export Relational SQL CREATE TABLE + INSERT Script"
+                  >
+                    <Database className="w-3.5 h-3.5 text-indigo-500" /> .SQL
                   </button>
                 </div>
               </div>
@@ -3096,26 +3715,42 @@ export function App() {
 
               {/* Row Mode Switcher & Search */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)] w-fit">
+                <div className="flex flex-wrap items-center gap-1.5 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)] w-fit">
                   <button
-                    onClick={() => setMasterSheetMode('bill_wise')}
+                    onClick={() => {
+                      setShowSupplierSummary(false);
+                      setMasterSheetMode('bill_wise');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      masterSheetMode === 'bill_wise'
+                      !showSupplierSummary && masterSheetMode === 'bill_wise'
                         ? 'bg-indigo-600 text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                     }`}
                   >
-                    1 Bill = 1 Row (Recommended for Normal User & CA Summary)
+                    1 Bill = 1 Row (Summary)
                   </button>
                   <button
-                    onClick={() => setMasterSheetMode('item_wise')}
+                    onClick={() => {
+                      setShowSupplierSummary(false);
+                      setMasterSheetMode('item_wise');
+                    }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      masterSheetMode === 'item_wise'
+                      !showSupplierSummary && masterSheetMode === 'item_wise'
                         ? 'bg-indigo-600 text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                     }`}
                   >
                     CA Detailed Line-Item Rows
+                  </button>
+                  <button
+                    onClick={() => setShowSupplierSummary(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      showSupplierSummary
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    Supplier-Wise GSTR Rollup ({supplierSummaryRows.length})
                   </button>
                 </div>
 
@@ -3126,7 +3761,7 @@ export function App() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search bill, shop, date, product..."
+                      placeholder="Search bill, shop, GSTIN, product..."
                       className="bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
                     />
                   </div>
@@ -3139,16 +3774,128 @@ export function App() {
                 </div>
               </div>
 
-              {/* Master Spreadsheet Table */}
-              <div className="border border-[var(--border-color)] rounded-xl overflow-x-auto">
+              {/* Supplier-Wise / GSTIN-Wise Summary Table (when toggled) */}
+              {showSupplierSummary && (
+                <div className="border border-emerald-500/30 rounded-xl overflow-x-auto bg-emerald-500/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-500">
+                      Supplier-Wise / GSTIN-Wise Summary for GSTR-2B Reconciliation
+                    </span>
+                    <span className="text-[11px] text-[var(--text-muted)]">
+                      Grouped by Normalized 15-Char Seller GSTIN or Vendor Name
+                    </span>
+                  </div>
+                  <table className="w-full text-left border-collapse text-xs bg-[var(--bg-card)] rounded-lg overflow-hidden">
+                    <thead>
+                      <tr className="bg-[var(--bg-subtle)] text-[11px] font-bold uppercase text-[var(--text-muted)] border-b border-[var(--border-color)]">
+                        <th className="py-2.5 px-3">Supplier / Party Name</th>
+                        <th className="py-2.5 px-3">Seller GSTIN</th>
+                        <th className="py-2.5 px-3">GST State</th>
+                        <th className="py-2.5 px-3 text-right">Bills</th>
+                        <th className="py-2.5 px-3 text-right">Taxable (₹)</th>
+                        <th className="py-2.5 px-3 text-right">Total GST (₹)</th>
+                        <th className="py-2.5 px-3 text-right">Grand Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-color)]">
+                      {supplierSummaryRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-[var(--text-muted)]">
+                            No supplier records yet. Scan bills to generate GSTR vendor summaries.
+                          </td>
+                        </tr>
+                      ) : (
+                        supplierSummaryRows.map((sup) => (
+                          <tr key={sup.supplierKey} className="hover:bg-[var(--bg-subtle)]/50">
+                            <td className="py-2.5 px-3 font-bold">{sup.shopName}</td>
+                            <td className="py-2.5 px-3 font-mono">
+                              <span
+                                className={
+                                  sup.gstinValid ? 'text-emerald-500 font-semibold' : 'text-amber-500'
+                                }
+                              >
+                                {sup.sellerGstin}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-[var(--text-muted)]">{sup.stateName}</td>
+                            <td className="py-2.5 px-3 text-right font-mono">{sup.invoiceCount}</td>
+                            <td className="py-2.5 px-3 text-right font-mono">₹{sup.totalTaxable.toFixed(2)}</td>
+                            <td className="py-2.5 px-3 text-right font-mono text-amber-500">
+                              ₹{sup.totalTax.toFixed(2)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono font-bold text-indigo-500">
+                              ₹{sup.totalGrand.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Master Spreadsheet Table (Virtualized for High-Volume CA Ledgers) */}
+              {masterSheetRows.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-[11px] text-[var(--text-muted)]">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>
+                      Virtualized Grid: Showing rows{' '}
+                      <strong className="text-[var(--text-main)] font-mono">
+                        {virtualMasterWindow.startIndex + 1}–{virtualMasterWindow.endIndex}
+                      </strong>{' '}
+                      of{' '}
+                      <strong className="text-[var(--text-main)] font-mono">
+                        {masterSheetRows.length.toLocaleString('en-IN')}
+                      </strong>{' '}
+                      ({virtualMasterWindow.visibleRows.length} active DOM rows)
+                    </span>
+                  </div>
+                  {masterSheetRows.length > 15 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (masterTableScrollRef.current) {
+                            masterTableScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        }}
+                        className="px-2 py-0.5 rounded bg-[var(--bg-card)] hover:bg-indigo-500/10 border border-[var(--border-color)] text-[10px] font-semibold text-[var(--text-main)] cursor-pointer"
+                      >
+                        Jump to Top
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (masterTableScrollRef.current) {
+                            masterTableScrollRef.current.scrollTo({
+                              top: masterTableScrollRef.current.scrollHeight,
+                              behavior: 'smooth',
+                            });
+                          }
+                        }}
+                        className="px-2 py-0.5 rounded bg-[var(--bg-card)] hover:bg-indigo-500/10 border border-[var(--border-color)] text-[10px] font-semibold text-[var(--text-main)] cursor-pointer"
+                      >
+                        Jump to Bottom
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div
+                ref={masterTableScrollRef}
+                onScroll={handleMasterTableScroll}
+                className="border border-[var(--border-color)] rounded-xl overflow-auto max-h-[560px] relative"
+              >
                 <table className="w-full text-left border-collapse">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-[var(--bg-subtle)] shadow-2xs">
                     <tr className="bg-[var(--bg-subtle)] text-[11px] font-bold uppercase text-[var(--text-muted)] border-b border-[var(--border-color)]">
                       <th className="py-3 px-3 w-12">#</th>
                       {activeSelectedColumnDefs.map((col) => (
                         <th
                           key={col.key}
-                          className={`py-3 px-3 ${col.isNumeric ? 'text-right' : ''} ${
+                          className={`py-3 px-3 whitespace-nowrap ${col.isNumeric ? 'text-right' : ''} ${
                             col.category === 'MULTI_PRODUCT' ? 'text-emerald-500' : ''
                           }`}
                         >
@@ -3159,35 +3906,34 @@ export function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-color)] text-xs">
-                    <AnimatePresence initial={false}>
-                      {masterSheetRows.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={activeSelectedColumnDefs.length + 2}
-                            className="py-12 text-center text-[var(--text-muted)]"
-                          >
-                            No bills added yet. Upload a PDF or Image bill in the Scanner tab to add your first row!
-                          </td>
-                        </tr>
-                      ) : (
-                        masterSheetRows.map((row, idx) => {
-                          const isNewlyAdded = recentlyAddedBillIds.includes(row.billId);
+                    {masterSheetRows.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={activeSelectedColumnDefs.length + 2}
+                          className="py-12 text-center text-[var(--text-muted)]"
+                        >
+                          No bills added yet. Upload a PDF or Image bill in the Scanner tab to add your first row!
+                        </td>
+                      </tr>
+                    ) : (
+                      <>
+                        {virtualMasterWindow.paddingTop > 0 && (
+                          <tr aria-hidden="true" style={{ height: `${virtualMasterWindow.paddingTop}px` }}>
+                            <td colSpan={activeSelectedColumnDefs.length + 2} className="p-0 border-0" />
+                          </tr>
+                        )}
+                        {virtualMasterWindow.visibleRows.map((row, visibleIdx) => {
+                          const idx = virtualMasterWindow.startIndex + visibleIdx;
+                          const isNewlyAdded = recentlyAddedBillIdSet.has(row.billId);
                           return (
-                            <motion.tr
+                            <tr
                               key={row.id}
-                              initial={{ opacity: 0, x: -16, y: -6 }}
-                              animate={{ opacity: 1, x: 0, y: 0 }}
-                              exit={{ opacity: 0, x: 16 }}
-                              transition={{
-                                duration: 0.3,
-                                ease: [0.22, 1, 0.36, 1],
-                                delay: Math.min(idx * 0.025, 0.2),
-                              }}
+                              style={{ height: `${MASTER_ROW_HEIGHT}px` }}
                               className={`${
                                 isNewlyAdded ? 'excel-row-newly-added' : 'excel-row-slide-in'
                               } hover:bg-[var(--bg-subtle)]/60`}
                             >
-                              <td className="py-2.5 px-3 font-mono text-[var(--text-muted)]">
+                              <td className="py-2 px-3 font-mono text-[var(--text-muted)] whitespace-nowrap">
                                 <span className="inline-flex items-center gap-1.5">
                                   <span>{idx + 1}</span>
                                   {isNewlyAdded && (
@@ -3199,24 +3945,27 @@ export function App() {
                               </td>
                               {activeSelectedColumnDefs.map((col) => {
                                 const val = row.cells[col.key];
+                                const formattedVal =
+                                  col.isNumeric && typeof val === 'number'
+                                    ? col.key === 'quantity' || col.key === 'gstRate'
+                                      ? String(val)
+                                      : `₹${val.toFixed(2)}`
+                                    : val !== undefined && val !== ''
+                                    ? String(val)
+                                    : '-';
                                 return (
                                   <td
                                     key={col.key}
-                                    className={`py-2.5 px-3 ${
+                                    title={formattedVal}
+                                    className={`py-2 px-3 whitespace-nowrap max-w-[260px] truncate ${
                                       col.isNumeric ? 'text-right font-mono font-semibold' : ''
                                     } ${col.key === 'grandTotal' ? 'text-indigo-500 font-bold' : ''}`}
                                   >
-                                    {col.isNumeric && typeof val === 'number'
-                                      ? col.key === 'quantity' || col.key === 'gstRate'
-                                        ? val
-                                        : `₹${val.toFixed(2)}`
-                                      : val !== undefined && val !== ''
-                                      ? String(val)
-                                      : '-'}
+                                    {formattedVal}
                                   </td>
                                 );
                               })}
-                              <td className="py-2.5 px-3 text-right">
+                              <td className="py-2 px-3 text-right whitespace-nowrap">
                                 <button
                                   onClick={() => handleDeleteRecord(row.billId)}
                                   title="Remove Bill from Sheet"
@@ -3225,14 +3974,19 @@ export function App() {
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </td>
-                            </motion.tr>
+                            </tr>
                           );
-                        })
-                      )}
-                    </AnimatePresence>
+                        })}
+                        {virtualMasterWindow.paddingBottom > 0 && (
+                          <tr aria-hidden="true" style={{ height: `${virtualMasterWindow.paddingBottom}px` }}>
+                            <td colSpan={activeSelectedColumnDefs.length + 2} className="p-0 border-0" />
+                          </tr>
+                        )}
+                      </>
+                    )}
                   </tbody>
                   {masterSheetRows.length > 0 && (
-                    <tfoot>
+                    <tfoot className="sticky bottom-0 z-10 bg-[var(--bg-card)] shadow-[0_-1px_0_var(--border-color)]">
                       <tr className="bg-indigo-600/10 border-t-2 border-indigo-500/30 font-bold text-xs">
                         <td className="py-3 px-3 text-indigo-500">SUM</td>
                         {activeSelectedColumnDefs.map((col, i) => (
@@ -3538,6 +4292,17 @@ export function App() {
             )}
           </div>
         )}
+        </div>
+
+        {/* 11-Section Conversion-Focused CA Homepage (shown on root '/') */}
+        {currentPath === '/' && (
+          <LedgerSutraHomepageSections
+            onNavigate={navigateTo}
+            onOpenWorkspaceTab={handleOpenWorkspaceTab}
+            onTriggerUpload={() => fileInputRef.current?.click()}
+            savedBillsCount={savedBills.length}
+          />
+        )}
       </main>
 
       {/* NoSQL Raw JSON Document Modal */}
@@ -3547,7 +4312,7 @@ export function App() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold flex items-center gap-2">
                 <Code2 className="w-4 h-4 text-indigo-500" />
-                Scan2SQL Dynamic NoSQL Document Structure
+                {BRAND_NAME} Dynamic NoSQL Document Structure
               </h3>
               <button onClick={() => setShowNoSqlJsonModal(false)}>
                 <X className="w-4 h-4" />
@@ -3556,7 +4321,8 @@ export function App() {
             <pre className="text-xs font-mono bg-[var(--bg-subtle)] p-4 rounded-xl border border-[var(--border-color)] max-h-[420px] overflow-auto">
               {JSON.stringify(
                 {
-                  app: 'Scan2SQL',
+                  app: BRAND_NAME,
+                  domain: 'https://casaarthiai.in',
                   currentBill: {
                     fileName: uploadedFileName,
                     shopName,
@@ -3564,6 +4330,7 @@ export function App() {
                     invoiceNumber,
                     billDate,
                     grandTotal: calculatedGrandTotal,
+                    auditStatus: currentBillAudit.status,
                     productCount: billItems.length,
                     products: billItems,
                   },
@@ -3640,6 +4407,12 @@ export function App() {
           </div>
         </div>
       )}
+
+      {/* Comprehensive SaaS Footer with CA SEO Links, Resource Guides & Disclaimer */}
+      <LedgerSutraFooter
+        onNavigate={navigateTo}
+        onOpenWorkspaceTab={handleOpenWorkspaceTab}
+      />
     </div>
   );
 }
