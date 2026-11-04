@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper: Authenticated user with verified Google email
+    function isSignedInVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    // Helper: Owner check
+    function isOwner(userId) {
+      return isSignedInVerified() && request.auth.uid == userId;
+    }
+
+    // Helper: Valid wildcard ID format
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Helper: Bounded non-negative currency/numeric value
+    function isValidCurrency(val) {
+      return val is number && val >= 0 && val <= 10000000000;
+    }
+
+    // Pillar 2 & 3: Strict UserProfile validator
+    function isValidUserProfile(data, userId) {
+      let keys = ['uid', 'email', 'displayName', 'photoURL', 'userMode', 'selectedColumnsJson', 'updatedAt'];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.uid is string && data.uid == userId
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 150
+        && data.photoURL is string && data.photoURL.size() >= 0 && data.photoURL.size() <= 1000
+        && data.userMode is string && (data.userMode == 'normal_user' || data.userMode == 'ca_mode')
+        && data.selectedColumnsJson is string && data.selectedColumnsJson.size() >= 2 && data.selectedColumnsJson.size() <= 5000
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    // Pillar 2 & 3: Strict UserBill validator
+    function isValidUserBill(data, userId, billId) {
+      let keys = [
+        'id',
+        'ownerId',
+        'fileName',
+        'shopName',
+        'sellerGstin',
+        'buyerName',
+        'buyerGstin',
+        'invoiceNumber',
+        'billDate',
+        'placeOfSupply',
+        'voucherType',
+        'paymentMode',
+        'subtotal',
+        'cgstAmount',
+        'sgstAmount',
+        'igstAmount',
+        'taxAmount',
+        'discountAmount',
+        'grandTotal',
+        'confidence',
+        'rawText',
+        'createdAt',
+        'extraHeaderFieldsJson',
+        'itemsJson',
+        'syncedAt'
+      ];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.id is string && data.id == billId
+        && data.ownerId is string && data.ownerId == userId
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250
+        && data.shopName is string && data.shopName.size() >= 1 && data.shopName.size() <= 250
+        && data.sellerGstin is string && data.sellerGstin.size() >= 0 && data.sellerGstin.size() <= 30
+        && data.buyerName is string && data.buyerName.size() >= 0 && data.buyerName.size() <= 250
+        && data.buyerGstin is string && data.buyerGstin.size() >= 0 && data.buyerGstin.size() <= 30
+        && data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 120
+        && data.billDate is string && data.billDate.size() >= 1 && data.billDate.size() <= 40
+        && data.placeOfSupply is string && data.placeOfSupply.size() >= 0 && data.placeOfSupply.size() <= 120
+        && data.voucherType is string && data.voucherType.size() >= 1 && data.voucherType.size() <= 80
+        && data.paymentMode is string && data.paymentMode.size() >= 1 && data.paymentMode.size() <= 80
+        && isValidCurrency(data.subtotal)
+        && isValidCurrency(data.cgstAmount)
+        && isValidCurrency(data.sgstAmount)
+        && isValidCurrency(data.igstAmount)
+        && isValidCurrency(data.taxAmount)
+        && isValidCurrency(data.discountAmount)
+        && isValidCurrency(data.grandTotal)
+        && data.confidence is number && data.confidence >= 0 && data.confidence <= 100
+        && data.rawText is string && data.rawText.size() >= 0 && data.rawText.size() <= 50000
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 40
+        && data.extraHeaderFieldsJson is string && data.extraHeaderFieldsJson.size() >= 2 && data.extraHeaderFieldsJson.size() <= 10000
+        && data.itemsJson is string && data.itemsJson.size() >= 2 && data.itemsJson.size() <= 100000
+        && data.syncedAt is timestamp && data.syncedAt == request.time;
+    }
+
+    // Pillar 2 & 3: Strict UserDocument validator
+    function isValidUserDocument(data, userId, docId) {
+      let keys = [
+        'id',
+        'ownerId',
+        'fileName',
+        'fileType',
+        'docType',
+        'pageCount',
+        'ocrLanguage',
+        'extractedText',
+        'confidence',
+        'createdAt',
+        'syncedAt'
+      ];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.id is string && data.id == docId
+        && data.ownerId is string && data.ownerId == userId
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250
+        && data.fileType is string && data.fileType.size() >= 1 && data.fileType.size() <= 40
+        && data.docType is string && (data.docType == 'NORMAL_DOCUMENT' || data.docType == 'SHOP_BILL')
+        && data.pageCount is int && data.pageCount >= 1 && data.pageCount <= 500
+        && data.ocrLanguage is string && data.ocrLanguage.size() >= 1 && data.ocrLanguage.size() <= 30
+        && data.extractedText is string && data.extractedText.size() >= 0 && data.extractedText.size() <= 50000
+        && data.confidence is number && data.confidence >= 0 && data.confidence <= 100
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 40
+        && data.syncedAt is timestamp && data.syncedAt == request.time;
+    }
+
+    // User profile & settings document
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(request.resource.data, userId);
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(request.resource.data, userId)
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // User's personal saved bills / invoices subcollection
+      match /bills/{billId} {
+        allow get: if isValidId(userId) && isValidId(billId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isValidId(userId)
+          && isValidId(billId)
+          && isOwner(userId)
+          && isValidUserBill(request.resource.data, userId, billId);
+        allow update: if isValidId(userId)
+          && isValidId(billId)
+          && isOwner(userId)
+          && isValidUserBill(request.resource.data, userId, billId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.ownerId == resource.data.ownerId;
+        allow delete: if isValidId(userId) && isValidId(billId) && isOwner(userId);
+      }
+
+      // User's personal saved verbatim OCR documents subcollection
+      match /documents/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isValidId(userId)
+          && isValidId(docId)
+          && isOwner(userId)
+          && isValidUserDocument(request.resource.data, userId, docId);
+        allow update: if isValidId(userId)
+          && isValidId(docId)
+          && isOwner(userId)
+          && isValidUserDocument(request.resource.data, userId, docId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.ownerId == resource.data.ownerId;
+        allow delete: if isValidId(userId) && isValidId(docId) && isOwner(userId);
+      }
+    }
+  }
+}

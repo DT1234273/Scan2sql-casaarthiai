@@ -587,7 +587,7 @@ export async function generateSampleTestFile(spec: SampleTestFileSpec): Promise<
 
   if (spec.fileType === 'PDF') {
     const pdfBytes = buildPdfFromCanvasAndText(canvas, config.pdfTextLines);
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
     return new File([blob], spec.fileName, { type: 'application/pdf' });
   } else {
     const blob = await new Promise<Blob>((resolve, reject) => {

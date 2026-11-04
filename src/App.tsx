@@ -51,7 +51,23 @@ import {
   ShieldCheck,
   AlertTriangle,
   BookOpen,
+  LogIn,
+  LogOut,
+  Cloud,
 } from 'lucide-react';
+import {
+  auth,
+  onAuthStateChanged,
+  signInWithGooglePopup,
+  signOutGoogleUser,
+  saveUserProfileToFirestore,
+  saveBillToUserAccount,
+  deleteBillFromUserAccount,
+  saveDocumentToUserAccount,
+  deleteDocumentFromUserAccount,
+  subscribeToUserAccountHistory,
+  type User,
+} from './firebase';
 import {
   SAMPLE_TEST_FILES,
   SampleTestFileSpec,
@@ -148,6 +164,24 @@ export interface ColumnDefinition {
   label: string;
   category: 'HEADER' | 'ITEM' | 'DYNAMIC_HEADER' | 'DYNAMIC_ITEM' | 'MULTI_PRODUCT';
   isNumeric?: boolean;
+}
+
+export interface BatchQueueItem {
+  id: string;
+  file: File;
+  fileName: string;
+  fileSize: string;
+  fileType: string;
+  status: 'queued' | 'processing' | 'completed' | 'error';
+  progress: number;
+  stageLabel: string;
+  extractedSummary?: {
+    shopName: string;
+    invoiceNumber: string;
+    grandTotal: number;
+    itemCount: number;
+  };
+  errorMessage?: string;
 }
 
 // Base Columns — Notice fileName ("Bill / File Name"), billDate, invoiceNumber, shopName, and grandTotal ("Total Cost") are core!
@@ -858,7 +892,12 @@ export function App() {
   const qrScanLoopRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  // Persistent Collection State
+  // Google Authentication & Per-User Account History State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
+  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+
+  // Persistent Collection State (Guest session fallback when signed out; Firestore cloud when signed in)
   const [savedBills, setSavedBills] = useState<NoSQLBillRecord[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.BILLS);
@@ -901,24 +940,66 @@ export function App() {
   // DEFAULT TO 'bill_wise' (1 Bill = 1 Row!) so normal users never get 20 rows for 1 bill!
   const [masterSheetMode, setMasterSheetMode] = useState<'bill_wise' | 'item_wise'>('bill_wise');
 
+  // Listen to Firebase Auth state changes
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAuthReady(true);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Subscribe to the logged-in user's personal Firestore history (bills, documents, preferences)
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (!currentUser) {
+      return;
+    }
+
+    const unsubscribeSnapshot = subscribeToUserAccountHistory(currentUser.uid, {
+      onBillsUpdate: (cloudBills) => {
+        setSavedBills(cloudBills);
+      },
+      onDocumentsUpdate: (cloudDocs) => {
+        setSavedDocuments(cloudDocs);
+      },
+      onProfileUpdate: (profile) => {
+        if (profile.userMode) {
+          setUserMode(profile.userMode);
+        }
+        if (profile.selectedColumnKeys && profile.selectedColumnKeys.length > 0) {
+          setSelectedColumnKeys(profile.selectedColumnKeys);
+        }
+      },
+    });
+
+    return () => unsubscribeSnapshot();
+  }, [isAuthReady, currentUser]);
+
   // Switch presets cleanly when user toggles between Normal User Mode & CA Mode
   const handleSwitchUserMode = (mode: UserProfileMode) => {
     setUserMode(mode);
     localStorage.setItem(STORAGE_KEYS.USER_MODE, mode);
+    let nextCols: string[];
     if (mode === 'normal_user') {
       setMasterSheetMode('bill_wise');
-      // Include Normal User columns + any multi-product columns
       const multiProdKeys = allAvailableColumns
         .filter((c) => c.category === 'MULTI_PRODUCT')
         .map((c) => c.key);
-      setSelectedColumnKeys(Array.from(new Set([...NORMAL_USER_PRESET_KEYS, ...multiProdKeys])));
+      nextCols = Array.from(new Set([...NORMAL_USER_PRESET_KEYS, ...multiProdKeys]));
+      setSelectedColumnKeys(nextCols);
     } else {
-      setSelectedColumnKeys(CA_SUMMARY_PRESET_KEYS);
+      nextCols = CA_SUMMARY_PRESET_KEYS;
+      setSelectedColumnKeys(nextCols);
+    }
+    if (currentUser) {
+      saveUserProfileToFirestore(currentUser, mode, nextCols);
     }
   };
 
-  // Load initial server store if local is empty
+  // Load initial server store only in guest mode if local is empty
   useEffect(() => {
+    if (!isAuthReady || currentUser) return;
     fetch('/api/nosql/store')
       .then((r) => r.json())
       .then((res) => {
@@ -932,11 +1013,16 @@ export function App() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isAuthReady, currentUser]);
 
-  // Debounced persistence so saving large PDFs never blocks the UI thread or second upload
+  // Debounced persistence: when signed out, save to local guest storage; when signed in, sync preferences to Firestore
   useEffect(() => {
+    if (!isAuthReady) return;
     const timer = setTimeout(() => {
+      if (currentUser) {
+        saveUserProfileToFirestore(currentUser, userMode, selectedColumnKeys);
+        return;
+      }
       try {
         localStorage.setItem(STORAGE_KEYS.BILLS, JSON.stringify(savedBills));
         localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(savedDocuments));
@@ -953,9 +1039,9 @@ export function App() {
           selectedColumns: selectedColumnKeys,
         }),
       }).catch(() => {});
-    }, 300);
+    }, 350);
     return () => clearTimeout(timer);
-  }, [savedBills, savedDocuments, selectedColumnKeys]);
+  }, [savedBills, savedDocuments, selectedColumnKeys, isAuthReady, currentUser, userMode]);
 
   // Maximum number of products in any multi-product bill (e.g. Grocery Shopping bill with 5 products -> Product 1..Product 5 columns!)
   // NOTE: If all bills have <= 1 item, maxMultiProductCount is 0 so no extra Product columns clutter the table!
@@ -1074,6 +1160,54 @@ export function App() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4500);
   }, []);
+
+  // Google Sign-In & Sign-Out Handlers
+  const handleGoogleSignIn = useCallback(async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    try {
+      const guestBillsToMigrate = [...savedBills];
+      const guestDocsToMigrate = [...savedDocuments];
+      const user = await signInWithGooglePopup();
+      await saveUserProfileToFirestore(user, userMode, selectedColumnKeys);
+
+      // Migrate any unsaved guest session bills/documents into the user's personal Google account
+      if (guestBillsToMigrate.length > 0 || guestDocsToMigrate.length > 0) {
+        await Promise.all([
+          ...guestBillsToMigrate.map((b) => saveBillToUserAccount(user.uid, b)),
+          ...guestDocsToMigrate.map((d) => saveDocumentToUserAccount(user.uid, d)),
+        ]);
+        try {
+          localStorage.removeItem(STORAGE_KEYS.BILLS);
+          localStorage.removeItem(STORAGE_KEYS.DOCUMENTS);
+        } catch {
+          // ignore
+        }
+        showToast(
+          `Signed in as ${user.displayName || user.email} — synced ${guestBillsToMigrate.length} bill(s) to your account!`
+        );
+      } else {
+        showToast(`Signed in with Google as ${user.displayName || user.email}! Your history is now synced.`);
+      }
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user') {
+        showToast(`Google Sign-In error: ${err?.message || 'Could not sign in right now.'}`);
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [isSigningIn, savedBills, savedDocuments, userMode, selectedColumnKeys, showToast]);
+
+  const handleGoogleSignOut = useCallback(async () => {
+    try {
+      await signOutGoogleUser();
+      setSavedBills([]);
+      setSavedDocuments([]);
+      showToast('Signed out of your Google account.');
+    } catch (err: any) {
+      showToast(`Sign out failed: ${err?.message || 'Error'}`);
+    }
+  }, [showToast]);
 
   // Webcam QR Code Scanner Lifecycle
   const stopCameraStream = useCallback(() => {
@@ -1334,6 +1468,11 @@ export function App() {
         };
         setSavedBills((prev) => [newBill, ...prev]);
         markBillsAsRecentlyAdded([newBill.id]);
+
+        if (auth.currentUser) {
+          saveDocumentToUserAccount(auth.currentUser.uid, newDoc);
+          saveBillToUserAccount(auth.currentUser.uid, newBill);
+        }
       }
     },
     [ocrLang, markBillsAsRecentlyAdded]
@@ -1351,11 +1490,13 @@ export function App() {
     pageDataUrls: string[];
     embeddedCoordinateText: string;
     shouldAutoSave: boolean;
-  }) => {
-    const { fileName, fileType, pageDataUrls, embeddedCoordinateText, shouldAutoSave } = params;
+    onProgress?: (percent: number, stageLabel: string) => void;
+  }): Promise<{ shopName: string; invoiceNumber: string; grandTotal: number; itemCount: number }> => {
+    const { fileName, fileType, pageDataUrls, embeddedCoordinateText, shouldAutoSave, onProgress } = params;
 
     setScanStepIndex(1);
-    setOcrProgressPercent(30);
+    setOcrProgressPercent(35);
+    onProgress?.(38, 'Analyzing invoice layout & GST tax tables...');
 
     if (activeAbortControllerRef.current) {
       activeAbortControllerRef.current.abort();
@@ -1394,8 +1535,10 @@ export function App() {
           // CRITICAL: Only accept AI result if we actually have readable text (>= 15 chars)!
           // Otherwise fall through to guaranteed client-side Tesseract OCR below!
           if (combinedText.length >= 15) {
-            setScanStepIndex(3);
-            setOcrProgressPercent(100);
+            setScanStepIndex(2);
+            setOcrProgressPercent(82);
+            onProgress?.(82, 'Validating GSTIN, HSN codes & line items...');
+            await new Promise((r) => setTimeout(r, 110));
 
             const extraHeadersObj: Record<string, string> = {};
             if (Array.isArray(d.extraHeaderFields)) {
@@ -1477,6 +1620,12 @@ export function App() {
               !rawShopName || /demo\s*sample|not\s*a\s*real|synthetic\s*data/i.test(rawShopName)
                 ? fallbackCrossCheck.shopName || fileName.replace(/\.[^.]+$/, '')
                 : rawShopName;
+            const resolvedInvNo = String(
+              d.invoiceNumber || fallbackCrossCheck.invoiceNumber || `INV-${Date.now().toString().slice(-5)}`
+            );
+
+            setScanStepIndex(3);
+            setOcrProgressPercent(100);
 
             applyExtractedDataToState(
               fileName,
@@ -1490,9 +1639,7 @@ export function App() {
                 sellerGstin: String(d.sellerGstin || fallbackCrossCheck.sellerGstin || ''),
                 buyerName: String(d.buyerName || ''),
                 buyerGstin: String(d.buyerGstin || fallbackCrossCheck.buyerGstin || ''),
-                invoiceNumber: String(
-                  d.invoiceNumber || fallbackCrossCheck.invoiceNumber || `INV-${Date.now().toString().slice(-5)}`
-                ),
+                invoiceNumber: resolvedInvNo,
                 billDate: String(d.billDate || fallbackCrossCheck.billDate || new Date().toISOString().slice(0, 10)),
                 placeOfSupply: String(d.placeOfSupply || ''),
                 voucherType: String(d.voucherType || 'Tax Invoice'),
@@ -1509,7 +1656,14 @@ export function App() {
               },
               shouldAutoSave
             );
-            return;
+
+            onProgress?.(100, shouldAutoSave ? 'Added to Master Excel Sheet' : 'Extraction complete');
+            return {
+              shopName: cleanShopName,
+              invoiceNumber: resolvedInvNo,
+              grandTotal: grandTotalVal,
+              itemCount: finalItems.length || 1,
+            };
           }
         }
       }
@@ -1525,20 +1679,27 @@ export function App() {
     let fullRawText = embeddedCoordinateText.trim();
 
     if (fullRawText.length < 25 && pageDataUrls.length > 0) {
+      onProgress?.(45, 'Running High-DPI Optical Character Recognition...');
       const pageTexts: string[] = [];
       const pagesToOcr = Math.min(pageDataUrls.length, 3);
       for (let i = 0; i < pagesToOcr; i++) {
         const pageText = await recognizePageTextOptimal(pageDataUrls[i], ocrLang, (progress) => {
-          const pct = Math.round(((i + progress) / pagesToOcr) * 100);
-          setOcrProgressPercent(Math.max(30, pct));
+          const pct = Math.min(88, Math.max(45, Math.round(45 + ((i + progress) / pagesToOcr) * 43)));
+          setOcrProgressPercent(pct);
+          onProgress?.(pct, `OCR scanning page ${i + 1} of ${pagesToOcr} (${pct}%)...`);
         });
         if (pageText) {
           pageTexts.push(pagesToOcr > 1 ? `=== Page ${i + 1} ===\n${pageText}` : pageText);
         }
       }
       fullRawText = pageTexts.join('\n\n').trim();
+    } else {
+      onProgress?.(78, 'Parsing embedded coordinate text & GST columns...');
+      await new Promise((r) => setTimeout(r, 120));
     }
 
+    setScanStepIndex(2);
+    onProgress?.(92, 'Structuring GST summary & line items...');
     const fallbackParsed = parseFallbackBillFromRawText(fullRawText, fileName);
     setScanStepIndex(3);
     setOcrProgressPercent(100);
@@ -1548,13 +1709,20 @@ export function App() {
       fileType,
       pageDataUrls.length,
       {
-        exactRawText: fullRawText || 'No readable text detected in this image.',
-        docType: fallbackParsed.docType,
-        confidence: 95.0,
         ...fallbackParsed,
+        exactRawText: fullRawText || 'No readable text detected in this image.',
+        confidence: 95.0,
       },
       shouldAutoSave
     );
+
+    onProgress?.(100, shouldAutoSave ? 'Added to Master Excel Sheet' : 'Extraction complete');
+    return {
+      shopName: fallbackParsed.shopName || fileName.replace(/\.[^.]+$/, ''),
+      invoiceNumber: fallbackParsed.invoiceNumber || 'INV',
+      grandTotal: fallbackParsed.grandTotal || 0,
+      itemCount: fallbackParsed.billItems.length || 1,
+    };
   };
 
   // Manual Re-Scan / Deep Enhance Exact Text Button Handler (Always runs OCR if needed!)
@@ -1599,7 +1767,11 @@ export function App() {
   };
 
   // Process a single File (PDF or Image) with High-DPI rendering & memory cleanup
-  const processSingleFile = async (file: File, shouldAutoSave: boolean) => {
+  const processSingleFile = async (
+    file: File,
+    shouldAutoSave: boolean,
+    onProgress?: (percent: number, stageLabel: string) => void
+  ): Promise<{ shopName: string; invoiceNumber: string; grandTotal: number; itemCount: number }> => {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     const isPdf = ext === 'pdf';
 
@@ -1608,7 +1780,8 @@ export function App() {
     setUploadedFileType(isPdf ? 'PDF' : ext.toUpperCase());
     setExtractedText('Reading high-resolution document text...');
     setScanStepIndex(0);
-    setOcrProgressPercent(15);
+    setOcrProgressPercent(12);
+    onProgress?.(12, isPdf ? 'Opening PDF & initializing High-DPI renderer...' : 'Reading & enhancing invoice image...');
 
     if (isPdf) {
       const arrayBuffer = await file.arrayBuffer();
@@ -1624,6 +1797,10 @@ export function App() {
         const pageTextBlocks: string[] = [];
 
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          const renderPct = Math.round(14 + (pageNum / numPages) * 18);
+          setOcrProgressPercent(renderPct);
+          onProgress?.(renderPct, `Rendering PDF page ${pageNum} of ${numPages} at 2.0x DPI...`);
+
           const page = await pdf.getPage(pageNum);
           // Render at 2.0x High-DPI so small fonts, GSTINs, HSN codes & Hindi matras are razor-sharp
           const viewport = page.getViewport({ scale: 2.0 });
@@ -1633,7 +1810,7 @@ export function App() {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, canvas.width ? 0 : 0, canvas.width, canvas.height);
             await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
             const rawPageUrl = canvas.toDataURL('image/jpeg', 0.92);
             const enhancedPageUrl = await enhanceImageForSharpOcr(rawPageUrl);
@@ -1656,18 +1833,21 @@ export function App() {
           setExtractedText(fullEmbeddedText);
         }
 
-        await extractWithHybridEngine({
+        return await extractWithHybridEngine({
           fileName: file.name,
           fileType: 'PDF',
           pageDataUrls: renderedPageUrls,
           embeddedCoordinateText: fullEmbeddedText,
           shouldAutoSave,
+          onProgress,
         });
       } finally {
         try {
           if (pdf) {
             await pdf.cleanup();
-            await pdf.destroy();
+            if (typeof (pdf as any).destroy === 'function') {
+              await (pdf as any).destroy();
+            }
           }
           await loadingTask.destroy();
         } catch {
@@ -1682,20 +1862,154 @@ export function App() {
         reader.readAsDataURL(file);
       });
 
+      onProgress?.(24, 'Enhancing image contrast & sharpness for OCR...');
+      setOcrProgressPercent(24);
       // Enhance image contrast & sharpness for accurate OCR
       const enhancedDataUrl = await enhanceImageForSharpOcr(rawDataUrl);
 
       setPreviewImages([enhancedDataUrl]);
       setActivePageIndex(0);
 
-      await extractWithHybridEngine({
+      return await extractWithHybridEngine({
         fileName: file.name,
         fileType: ext.toUpperCase(),
         pageDataUrls: [enhancedDataUrl],
         embeddedCoordinateText: '',
         shouldAutoSave,
+        onProgress,
       });
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Batch Invoice Upload Queue & Individual Per-File Progress Tracking
+  // ---------------------------------------------------------------------------
+  const [batchQueue, setBatchQueue] = useState<BatchQueueItem[]>([]);
+  const [isBatchDragOver, setIsBatchDragOver] = useState<boolean>(false);
+  const batchFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const runBatchQueueItems = async (itemsToRun: BatchQueueItem[], totalInBatch: number) => {
+    if (itemsToRun.length === 0) return;
+    setIsProcessing(true);
+    let completedCount = 0;
+
+    try {
+      for (let i = 0; i < itemsToRun.length; i++) {
+        const item = itemsToRun[i];
+        setBatchStatusText(
+          totalInBatch > 1
+            ? `Batch Scanning Invoice ${i + 1} of ${itemsToRun.length}: ${item.fileName}`
+            : `Scanning Invoice: ${item.fileName}`
+        );
+
+        setBatchQueue((prev) =>
+          prev.map((q) =>
+            q.id === item.id
+              ? { ...q, status: 'processing', progress: 8, stageLabel: 'Initializing document scanner...', errorMessage: undefined }
+              : q
+          )
+        );
+
+        try {
+          const shouldSave = totalInBatch > 1 ? true : autoAppendToMaster;
+          const summary = await processSingleFile(item.file, shouldSave, (pct, stageLabel) => {
+            setBatchQueue((prev) =>
+              prev.map((q) =>
+                q.id === item.id
+                  ? {
+                      ...q,
+                      status: 'processing',
+                      progress: Math.max(q.progress, pct),
+                      stageLabel,
+                    }
+                  : q
+              )
+            );
+          });
+
+          completedCount++;
+          setBatchQueue((prev) =>
+            prev.map((q) =>
+              q.id === item.id
+                ? {
+                    ...q,
+                    status: 'completed',
+                    progress: 100,
+                    stageLabel: shouldSave ? 'Added to Master Excel Sheet' : 'Scan Complete',
+                    extractedSummary: summary,
+                  }
+                : q
+            )
+          );
+        } catch (fileErr: any) {
+          const errMsg = fileErr?.message || 'Failed to scan invoice';
+          setBatchQueue((prev) =>
+            prev.map((q) =>
+              q.id === item.id
+                ? {
+                    ...q,
+                    status: 'error',
+                    stageLabel: `Error: ${errMsg}`,
+                    errorMessage: errMsg,
+                  }
+                : q
+            )
+          );
+        }
+      }
+
+      if (itemsToRun.length > 1 && completedCount > 0) {
+        showToast(`Batch complete: ${completedCount} of ${itemsToRun.length} invoices scanned & added to Master Sheet!`);
+      } else if (itemsToRun.length === 1 && completedCount === 1) {
+        showToast(
+          autoAppendToMaster
+            ? `Scanned "${itemsToRun[0].fileName}" & added 1 row to Master Sheet!`
+            : `Scanned "${itemsToRun[0].fileName}" — review details below.`
+        );
+      }
+    } finally {
+      setIsProcessing(false);
+      setBatchStatusText('');
+    }
+  };
+
+  const enqueueAndProcessFiles = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+
+    const allowedExts = ['jpg', 'jpeg', 'png', 'pdf'];
+    const validFiles: File[] = [];
+
+    for (const file of files) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      if (!allowedExts.includes(ext)) {
+        showToast(`Skipped "${file.name}" — supported formats: PDF, JPG, JPEG, PNG.`);
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        showToast(`Skipped "${file.name}" — exceeds 20 MB limit.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    const newQueueItems: BatchQueueItem[] = validFiles.map((file, idx) => {
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      return {
+        id: `batch-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        file,
+        fileName: file.name,
+        fileSize: file.size >= 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`,
+        fileType: ext === 'pdf' ? 'PDF' : ext.toUpperCase(),
+        status: 'queued',
+        progress: 0,
+        stageLabel: 'Waiting in queue...',
+      };
+    });
+
+    setBatchQueue((prev) => [...newQueueItems, ...prev]);
+    await runBatchQueueItems(newQueueItems, newQueueItems.length);
   };
 
   // Handle Single or Multiple File Upload
@@ -1707,46 +2021,62 @@ export function App() {
     const files: File[] = Array.from(fileList);
     e.target.value = '';
 
-    const allowedExts = ['jpg', 'jpeg', 'png', 'pdf'];
-    for (const file of files) {
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      if (!allowedExts.includes(ext)) {
-        showToast(`Invalid file "${file.name}". Supported: JPG, JPEG, PNG, PDF.`);
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        showToast(`File "${file.name}" exceeds 20 MB limit.`);
-        return;
-      }
-    }
+    await enqueueAndProcessFiles(files);
+  };
 
-    setIsProcessing(true);
+  const handleBatchDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBatchDragOver(false);
+    if (isProcessing) {
+      showToast('A batch scan is currently in progress. Please wait for it to finish.');
+      return;
+    }
+    const droppedFiles = Array.from(e.dataTransfer?.files || []);
+    if (droppedFiles.length > 0) {
+      await enqueueAndProcessFiles(droppedFiles);
+    }
+  };
+
+  const handleRetryQueueItem = async (itemId: string) => {
+    if (isProcessing) return;
+    const target = batchQueue.find((q) => q.id === itemId);
+    if (!target) return;
+    await runBatchQueueItems([target], batchQueue.length);
+  };
+
+  const handleRetryAllFailedQueueItems = async () => {
+    if (isProcessing) return;
+    const failedItems = batchQueue.filter((q) => q.status === 'error' || q.status === 'queued');
+    if (failedItems.length === 0) return;
+    await runBatchQueueItems(failedItems, batchQueue.length);
+  };
+
+  const handleRemoveQueueItem = (itemId: string) => {
+    setBatchQueue((prev) => prev.filter((q) => q.id !== itemId));
+  };
+
+  const handleClearCompletedQueueItems = () => {
+    setBatchQueue((prev) => prev.filter((q) => q.status !== 'completed'));
+  };
+
+  const handleClearAllQueueItems = () => {
+    if (isProcessing) return;
+    setBatchQueue([]);
+  };
+
+  const handleLoadSampleBatchQueue = async () => {
+    if (isProcessing) return;
     try {
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        if (files.length > 1) {
-          setBatchStatusText(`Scanning Bill ${i + 1} of ${files.length}: ${f.name}`);
-        } else {
-          setBatchStatusText('');
-        }
-        const shouldSave = files.length > 1 ? true : autoAppendToMaster;
-        await processSingleFile(f, shouldSave);
+      const specsToLoad = SAMPLE_TEST_FILES.slice(0, 3);
+      const generatedFiles: File[] = [];
+      for (const spec of specsToLoad) {
+        const f = await generateSampleTestFile(spec);
+        generatedFiles.push(f);
       }
-      if (files.length > 1) {
-        showToast(`Merged ${files.length} bills into your Master Excel Sheet!`);
-        setActiveTab('master_sheet');
-      } else {
-        showToast(
-          autoAppendToMaster
-            ? `Scanned "${files[0].name}" & added 1 row to Master Sheet!`
-            : `Scanned "${files[0].name}" — review details below.`
-        );
-      }
+      await enqueueAndProcessFiles(generatedFiles);
     } catch (err: any) {
-      showToast(`Error processing document: ${err?.message || 'Unknown error'}`);
-    } finally {
-      setIsProcessing(false);
-      setBatchStatusText('');
+      showToast(`Could not load demo batch: ${err?.message || 'Error'}`);
     }
   };
 
@@ -1887,6 +2217,11 @@ export function App() {
       });
 
       setSavedBills((prev) => [...importedBills, ...prev]);
+      if (currentUser) {
+        importedBills.forEach((b) => {
+          saveBillToUserAccount(currentUser.uid, b);
+        });
+      }
       markBillsAsRecentlyAdded(importedBills.map((b) => b.id));
       showToast(`Imported ${importedBills.length} bills from "${file.name}" into Master Sheet!`);
       setActiveTab('master_sheet');
@@ -2075,6 +2410,9 @@ export function App() {
 
     setPendingDuplicateSave(null);
     setSavedBills((prev) => [newBill, ...prev]);
+    if (currentUser) {
+      saveBillToUserAccount(currentUser.uid, newBill);
+    }
     markBillsAsRecentlyAdded([newBill.id]);
     showToast(`Added "${newBill.shopName}" (₹${newBill.grandTotal.toFixed(2)}) as 1 Row in Master Sheet!`);
   };
@@ -2083,7 +2421,7 @@ export function App() {
     if (!pendingDuplicateSave) return;
     const { newBill, existingBill } = pendingDuplicateSave;
 
-    const mergedItems: BillLineItem[] = [
+    const mergedItems: NoSQLBillItem[] = [
       ...existingBill.items,
       ...newBill.items.map((it, idx) => ({
         ...it,
@@ -2091,17 +2429,10 @@ export function App() {
       })),
     ];
 
-    const mergedExtraHeaders = [...existingBill.extraHeaderFields];
-    newBill.extraHeaderFields.forEach((field) => {
-      const existingIdx = mergedExtraHeaders.findIndex(
-        (f) => f.label.trim().toLowerCase() === field.label.trim().toLowerCase()
-      );
-      if (existingIdx >= 0) {
-        mergedExtraHeaders[existingIdx] = field;
-      } else {
-        mergedExtraHeaders.push(field);
-      }
-    });
+    const mergedExtraHeaders: Record<string, string> = {
+      ...(existingBill.extraHeaderFields || {}),
+      ...(newBill.extraHeaderFields || {}),
+    };
 
     const mergedSubtotal = Number((existingBill.subtotal + newBill.subtotal).toFixed(2));
     const mergedCgst = Number((existingBill.cgstAmount + newBill.cgstAmount).toFixed(2));
@@ -2129,6 +2460,9 @@ export function App() {
     };
 
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? mergedRecord : b)));
+    if (currentUser) {
+      saveBillToUserAccount(currentUser.uid, mergedRecord);
+    }
     markBillsAsRecentlyAdded([existingBill.id]);
     setPendingDuplicateSave(null);
     showToast(
@@ -2144,6 +2478,9 @@ export function App() {
       id: existingBill.id,
     };
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? updatedRecord : b)));
+    if (currentUser) {
+      saveBillToUserAccount(currentUser.uid, updatedRecord);
+    }
     markBillsAsRecentlyAdded([existingBill.id]);
     setPendingDuplicateSave(null);
     showToast(
@@ -2155,6 +2492,9 @@ export function App() {
     if (!pendingDuplicateSave) return;
     const { newBill } = pendingDuplicateSave;
     setSavedBills((prev) => [newBill, ...prev]);
+    if (currentUser) {
+      saveBillToUserAccount(currentUser.uid, newBill);
+    }
     markBillsAsRecentlyAdded([newBill.id]);
     setPendingDuplicateSave(null);
     showToast(`Added duplicate Invoice "${newBill.invoiceNumber}" as a new row in Master Sheet!`);
@@ -2578,6 +2918,10 @@ export function App() {
   const handleDeleteRecord = (id: string) => {
     setSavedBills((prev) => prev.filter((b) => b.id !== id));
     setSavedDocuments((prev) => prev.filter((d) => d.id !== id));
+    if (currentUser) {
+      deleteBillFromUserAccount(currentUser.uid, id);
+      deleteDocumentFromUserAccount(currentUser.uid, id);
+    }
     showToast(`Deleted record.`);
   };
 
@@ -2817,6 +3161,48 @@ export function App() {
               </button>
             </nav>
 
+            {/* Google Account Login / Profile Controls */}
+            {currentUser ? (
+              <div className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                {currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt={currentUser.displayName || 'User'}
+                    referrerPolicy="no-referrer"
+                    className="w-6 h-6 rounded-full object-cover border border-emerald-500/40"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">
+                    {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div className="hidden sm:block max-w-[130px]">
+                  <p className="text-[11px] font-bold leading-tight truncate">
+                    {currentUser.displayName || currentUser.email?.split('@')[0]}
+                  </p>
+                  <p className="text-[9px] text-emerald-500 font-semibold flex items-center gap-0.5 leading-tight">
+                    <Cloud className="w-2.5 h-2.5" /> Saved in Account
+                  </p>
+                </div>
+                <button
+                  onClick={handleGoogleSignOut}
+                  title="Sign Out of Google Account"
+                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={isSigningIn}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-sm shadow-indigo-500/20 transition-all cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+              </button>
+            )}
+
             <button
               onClick={toggleTheme}
               aria-label="Toggle Light/Dark Theme"
@@ -2917,10 +3303,25 @@ export function App() {
                 {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Multi-Format Excel Workspace
               </h2>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-[var(--text-muted)]">
-                Active Register: <strong>{savedBills.length} Bills</strong>
-              </span>
+            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+              {currentUser ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold">
+                  <Cloud className="w-3.5 h-3.5" />
+                  Account History ({currentUser.email}): <strong>{savedBills.length} Bills</strong> •{' '}
+                  <strong>{savedDocuments.length} Docs</strong>
+                </span>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  <span>Guest Session ({savedBills.length} Bills)</span>
+                  <button
+                    onClick={handleGoogleSignIn}
+                    disabled={isSigningIn}
+                    className="font-bold text-indigo-500 hover:underline cursor-pointer"
+                  >
+                    Sign in with Google to save history in your account →
+                  </button>
+                </div>
+              )}
               {currentPath !== '/app' && (
                 <button
                   onClick={() => navigateTo('/app')}
@@ -3004,6 +3405,342 @@ export function App() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Dedicated Batch Invoice Upload & File Processing Queue Section */}
+            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3.5">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-bold tracking-tight">
+                        Batch Invoice Upload &amp; File Processing Queue
+                      </h3>
+                      <span className="text-[11px] font-mono tabular-nums font-semibold px-2 py-0.5 rounded-md bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-color)]">
+                        {batchQueue.filter((q) => q.status === 'completed').length} / {batchQueue.length} Completed
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      Drop or select multiple PDF, JPG, or PNG invoices together. Track individual OCR &amp; GST extraction progress for every file in real time.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={batchFileInputRef}
+                    type="file"
+                    multiple
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => batchFileInputRef.current?.click()}
+                    disabled={isProcessing}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Select Multiple Invoices
+                  </button>
+                  <button
+                    onClick={handleLoadSampleBatchQueue}
+                    disabled={isProcessing}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:text-indigo-500 disabled:opacity-50 text-xs font-semibold border border-[var(--border-color)] transition-all cursor-pointer"
+                    title="Generate and scan 3 sample GST & retail invoices in batch mode"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                    Run Demo Batch (3 Invoices)
+                  </button>
+                  {batchQueue.some((q) => q.status === 'error') && (
+                    <button
+                      onClick={handleRetryAllFailedQueueItems}
+                      disabled={isProcessing}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Retry Failed
+                    </button>
+                  )}
+                  {batchQueue.some((q) => q.status === 'completed') && (
+                    <button
+                      onClick={handleClearCompletedQueueItems}
+                      disabled={isProcessing}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)] text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      Clear Completed
+                    </button>
+                  )}
+                  {batchQueue.length > 0 && (
+                    <button
+                      onClick={handleClearAllQueueItems}
+                      disabled={isProcessing}
+                      className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 disabled:opacity-40 border border-[var(--border-color)] text-xs font-semibold transition-all cursor-pointer"
+                      title="Clear all items from queue"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Clear All
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Multi-File Drag & Drop Zone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isProcessing) setIsBatchDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsBatchDragOver(false);
+                }}
+                onDrop={handleBatchDrop}
+                onClick={() => {
+                  if (!isProcessing) batchFileInputRef.current?.click();
+                }}
+                className={`rounded-xl border-2 border-dashed p-4 sm:p-5 transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                  isBatchDragOver
+                    ? 'border-indigo-500 bg-indigo-500/10'
+                    : 'border-[var(--border-color)] hover:border-indigo-500/60 bg-[var(--bg-subtle)]/60'
+                }`}
+              >
+                <div className="flex items-center gap-3.5 text-center sm:text-left flex-col sm:flex-row">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold">
+                      Drag &amp; drop multiple invoice PDFs or images here, or click to browse
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                      Supports multi-select (.PDF, .JPG, .JPEG, .PNG up to 20 MB per file) • Auto-merges into Master Excel Sheet
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-mono tabular-nums px-2.5 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-muted)] font-semibold">
+                    PDF • JPG • PNG
+                  </span>
+                </div>
+              </div>
+
+              {/* Batch Queue Progress Summary & Individual File Queue Rows */}
+              {batchQueue.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  {/* Overall Batch Progress Bar & Metrics */}
+                  {(() => {
+                    const totalFiles = batchQueue.length;
+                    const completedFiles = batchQueue.filter((q) => q.status === 'completed').length;
+                    const processingFiles = batchQueue.filter((q) => q.status === 'processing').length;
+                    const queuedFiles = batchQueue.filter((q) => q.status === 'queued').length;
+                    const errorFiles = batchQueue.filter((q) => q.status === 'error').length;
+                    const overallPercent = Math.round(
+                      batchQueue.reduce((sum, q) => sum + q.progress, 0) / Math.max(1, totalFiles)
+                    );
+                    const batchTotalAmount = batchQueue.reduce(
+                      (sum, q) => sum + (q.extractedSummary?.grandTotal || 0),
+                      0
+                    );
+
+                    return (
+                      <div className="rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] p-3.5 space-y-2.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="font-bold">
+                              Overall Batch Progress:{' '}
+                              <span className="font-mono tabular-nums text-indigo-500">{overallPercent}%</span>
+                            </span>
+                            <span className="text-[var(--text-muted)] font-mono tabular-nums">
+                              Total: <strong>{totalFiles}</strong>
+                            </span>
+                            <span className="text-emerald-500 font-mono tabular-nums font-semibold">
+                              Done: {completedFiles}
+                            </span>
+                            {(processingFiles > 0 || queuedFiles > 0) && (
+                              <span className="text-indigo-500 font-mono tabular-nums font-semibold">
+                                Active/Queued: {processingFiles + queuedFiles}
+                              </span>
+                            )}
+                            {errorFiles > 0 && (
+                              <span className="text-rose-500 font-mono tabular-nums font-semibold">
+                                Failed: {errorFiles}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {batchTotalAmount > 0 && (
+                              <span className="text-xs font-bold font-mono tabular-nums text-emerald-500">
+                                Batch Total: ₹{batchTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            )}
+                            {completedFiles > 0 && (
+                              <button
+                                onClick={() => setActiveTab('master_sheet')}
+                                className="text-xs font-bold text-indigo-500 hover:underline flex items-center gap-1 cursor-pointer"
+                              >
+                                <FileSpreadsheet className="w-3.5 h-3.5" />
+                                View in Excel Sheet →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="w-full h-2 bg-[var(--bg-card)] rounded-full overflow-hidden border border-[var(--border-color)]">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-300"
+                            style={{ width: `${overallPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Individual File Queue List */}
+                  <div className="max-h-[320px] overflow-y-auto space-y-2 pr-1">
+                    {batchQueue.map((item, idx) => {
+                      const isItemScanning = item.status === 'processing';
+                      const isItemDone = item.status === 'completed';
+                      const isItemError = item.status === 'error';
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`rounded-xl border p-3 transition-all ${
+                            isItemScanning
+                              ? 'border-indigo-500/50 bg-indigo-500/5'
+                              : isItemDone
+                              ? 'border-emerald-500/25 bg-[var(--bg-subtle)]/50'
+                              : isItemError
+                              ? 'border-rose-500/40 bg-rose-500/5'
+                              : 'border-[var(--border-color)] bg-[var(--bg-subtle)]/30'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-[11px] font-mono tabular-nums text-[var(--text-muted)] w-5 shrink-0">
+                                #{idx + 1}
+                              </span>
+                              <span
+                                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border shrink-0 ${
+                                  item.fileType === 'PDF'
+                                    ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
+                                    : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                }`}
+                              >
+                                {item.fileType}
+                              </span>
+                              <span className="text-xs font-bold truncate" title={item.fileName}>
+                                {item.fileName}
+                              </span>
+                              <span className="text-[11px] font-mono tabular-nums text-[var(--text-muted)] shrink-0">
+                                ({item.fileSize})
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isItemScanning && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-500">
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                  Scanning
+                                </span>
+                              )}
+                              {isItemDone && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Completed
+                                </span>
+                              )}
+                              {isItemError && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-500">
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  Failed
+                                </span>
+                              )}
+                              {item.status === 'queued' && (
+                                <span className="text-[11px] font-semibold text-[var(--text-muted)]">
+                                  Queued
+                                </span>
+                              )}
+
+                              <span className="text-xs font-mono tabular-nums font-bold w-10 text-right">
+                                {item.progress}%
+                              </span>
+
+                              {isItemError && !isProcessing && (
+                                <button
+                                  onClick={() => handleRetryQueueItem(item.id)}
+                                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[11px] font-semibold border border-amber-500/20 cursor-pointer"
+                                  title="Retry scanning this invoice"
+                                >
+                                  Retry
+                                </button>
+                              )}
+
+                              {!isItemScanning && (
+                                <button
+                                  onClick={() => handleRemoveQueueItem(item.id)}
+                                  className="p-1 rounded-lg hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                                  title="Remove from queue"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Individual File Progress Bar */}
+                          <div className="w-full h-2 bg-[var(--bg-card)] rounded-full overflow-hidden border border-[var(--border-color)]">
+                            <div
+                              className={`h-full transition-all duration-300 ${
+                                isItemError
+                                  ? 'bg-rose-500'
+                                  : isItemDone
+                                  ? 'bg-emerald-500'
+                                  : isItemScanning
+                                  ? 'bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500'
+                                  : 'bg-slate-400/40'
+                              }`}
+                              style={{ width: `${Math.max(item.status === 'processing' ? 8 : 0, item.progress)}%` }}
+                            />
+                          </div>
+
+                          {/* Stage Label & Extracted Summary */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mt-2 text-[11px]">
+                            <span className="text-[var(--text-muted)] truncate">{item.stageLabel}</span>
+                            {item.extractedSummary && (
+                              <div className="flex flex-wrap items-center gap-2 font-mono tabular-nums text-[11px]">
+                                <span className="font-sans font-semibold text-[var(--text-main)] truncate max-w-[180px]">
+                                  {item.extractedSummary.shopName}
+                                </span>
+                                <span className="text-[var(--text-muted)]">•</span>
+                                <span className="text-[var(--text-muted)]">
+                                  #{item.extractedSummary.invoiceNumber}
+                                </span>
+                                <span className="text-[var(--text-muted)]">•</span>
+                                <span className="text-[var(--text-muted)]">
+                                  {item.extractedSummary.itemCount} {item.extractedSummary.itemCount === 1 ? 'item' : 'items'}
+                                </span>
+                                <span className="text-[var(--text-muted)]">•</span>
+                                <span className="font-bold text-emerald-500">
+                                  ₹{item.extractedSummary.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Interactive Scanning Progress Banner */}
@@ -4122,7 +4859,7 @@ export function App() {
                               borderRadius: '12px',
                               fontSize: '12px',
                             }}
-                            formatter={(value: number, name: string) => [`₹${Number(value).toFixed(2)}`, name]}
+                            formatter={(value: any, name: any) => [`₹${Number(value || 0).toFixed(2)}`, String(name || '')]}
                           />
                           <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                           <Area
@@ -4174,7 +4911,7 @@ export function App() {
                               borderRadius: '12px',
                               fontSize: '12px',
                             }}
-                            formatter={(value: number, name: string) => [`₹${Number(value).toFixed(2)}`, name]}
+                            formatter={(value: any, name: any) => [`₹${Number(value || 0).toFixed(2)}`, String(name || '')]}
                           />
                           <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                           <Bar
@@ -4240,13 +4977,25 @@ export function App() {
         {/* ===================================================================== */}
         {activeTab === 'history' && (
           <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold">Saved Verbatim Text History ({savedDocuments.length})</h2>
                 <p className="text-xs text-[var(--text-muted)]">
-                  View, copy, or download the exact extracted text of every scanned PDF or Image
+                  {currentUser
+                    ? `Synced to your personal Google account (${currentUser.email})`
+                    : 'View, copy, or download the exact extracted text of every scanned PDF or Image'}
                 </p>
               </div>
+              {!currentUser && (
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isSigningIn}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google to Save History'}</span>
+                </button>
+              )}
             </div>
 
             {savedDocuments.length === 0 ? (
@@ -4280,6 +5029,13 @@ export function App() {
                           className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold cursor-pointer"
                         >
                           Download .TXT
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRecord(doc.id)}
+                          title="Delete Document from History"
+                          className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-rose-500 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

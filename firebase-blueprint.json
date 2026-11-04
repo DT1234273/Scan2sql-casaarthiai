@@ -1,0 +1,263 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user's account profile and workspace preferences in LedgerSutra.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching the document ID."
+        },
+        "email": {
+          "type": "string",
+          "description": "Verified Google account email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name from Google account."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Optional avatar URL from Google account."
+        },
+        "userMode": {
+          "type": "string",
+          "enum": ["normal_user", "ca_mode"],
+          "description": "Preferred workspace mode (normal_user or ca_mode)."
+        },
+        "selectedColumnsJson": {
+          "type": "string",
+          "description": "JSON-serialized string array of active spreadsheet column keys."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when preferences were last updated."
+        }
+      },
+      "required": ["uid", "email", "displayName", "photoURL", "userMode", "selectedColumnsJson", "updatedAt"]
+    },
+    "UserBill": {
+      "title": "UserBill",
+      "description": "Extracted invoice or bill record saved in an authenticated user's personal LedgerSutra history.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique bill record identifier matching document ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this bill record."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original uploaded PDF or image file name."
+        },
+        "shopName": {
+          "type": "string",
+          "description": "Supplier, vendor, or shop name."
+        },
+        "sellerGstin": {
+          "type": "string",
+          "description": "15-character supplier GSTIN if present."
+        },
+        "buyerName": {
+          "type": "string",
+          "description": "Buyer or client name if present."
+        },
+        "buyerGstin": {
+          "type": "string",
+          "description": "15-character buyer GSTIN if present."
+        },
+        "invoiceNumber": {
+          "type": "string",
+          "description": "Invoice or receipt number."
+        },
+        "billDate": {
+          "type": "string",
+          "description": "Invoice date string (YYYY-MM-DD)."
+        },
+        "placeOfSupply": {
+          "type": "string",
+          "description": "Place of supply / GST state."
+        },
+        "voucherType": {
+          "type": "string",
+          "description": "Accounting voucher category (e.g. Tax Invoice)."
+        },
+        "paymentMode": {
+          "type": "string",
+          "description": "Payment mode (e.g. Cash / UPI, Card, NEFT)."
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "Net taxable value before tax."
+        },
+        "cgstAmount": {
+          "type": "number",
+          "description": "CGST tax amount."
+        },
+        "sgstAmount": {
+          "type": "number",
+          "description": "SGST tax amount."
+        },
+        "igstAmount": {
+          "type": "number",
+          "description": "IGST tax amount."
+        },
+        "taxAmount": {
+          "type": "number",
+          "description": "Total tax / GST amount."
+        },
+        "discountAmount": {
+          "type": "number",
+          "description": "Total discount amount."
+        },
+        "grandTotal": {
+          "type": "number",
+          "description": "Final grand total payable amount."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "OCR extraction confidence score (0-100)."
+        },
+        "rawText": {
+          "type": "string",
+          "description": "Exact verbatim extracted OCR text."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Formatted creation timestamp string."
+        },
+        "extraHeaderFieldsJson": {
+          "type": "string",
+          "description": "JSON-serialized Record<string, string> of custom dynamic header fields."
+        },
+        "itemsJson": {
+          "type": "string",
+          "description": "JSON-serialized array of NoSQLBillItem line items."
+        },
+        "syncedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last cloud sync."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "fileName",
+        "shopName",
+        "sellerGstin",
+        "buyerName",
+        "buyerGstin",
+        "invoiceNumber",
+        "billDate",
+        "placeOfSupply",
+        "voucherType",
+        "paymentMode",
+        "subtotal",
+        "cgstAmount",
+        "sgstAmount",
+        "igstAmount",
+        "taxAmount",
+        "discountAmount",
+        "grandTotal",
+        "confidence",
+        "rawText",
+        "createdAt",
+        "extraHeaderFieldsJson",
+        "itemsJson",
+        "syncedAt"
+      ]
+    },
+    "UserDocument": {
+      "title": "UserDocument",
+      "description": "Verbatim OCR text document saved in an authenticated user's personal LedgerSutra history.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique document record identifier matching document ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this document record."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original uploaded file name."
+        },
+        "fileType": {
+          "type": "string",
+          "description": "File extension/type (PDF, JPG, PNG)."
+        },
+        "docType": {
+          "type": "string",
+          "enum": ["NORMAL_DOCUMENT", "SHOP_BILL"],
+          "description": "Detected document classification."
+        },
+        "pageCount": {
+          "type": "integer",
+          "description": "Number of pages processed."
+        },
+        "ocrLanguage": {
+          "type": "string",
+          "description": "OCR language code used (e.g. eng+hin)."
+        },
+        "extractedText": {
+          "type": "string",
+          "description": "Verbatim extracted text from the document."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "OCR confidence score (0-100)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Formatted creation timestamp string."
+        },
+        "syncedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last cloud sync."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "fileName",
+        "fileType",
+        "docType",
+        "pageCount",
+        "ocrLanguage",
+        "extractedText",
+        "confidence",
+        "createdAt",
+        "syncedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores per-user profile and workspace preferences isolated by userId."
+    },
+    "/users/{userId}/bills/{billId}": {
+      "schema": {
+        "$ref": "#/entities/UserBill"
+      },
+      "description": "Stores the authenticated user's extracted invoices and bills."
+    },
+    "/users/{userId}/documents/{docId}": {
+      "schema": {
+        "$ref": "#/entities/UserDocument"
+      },
+      "description": "Stores the authenticated user's verbatim OCR document text history."
+    }
+  }
+}
