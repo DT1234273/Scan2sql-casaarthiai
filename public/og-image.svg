@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="60" y="60" width="1080" height="510" rx="28" fill="#1e293b" stroke="#4f46e5" stroke-width="2"/>
+  <rect x="110" y="110" width="220" height="44" rx="8" fill="#312e81"/>
+  <text x="130" y="138" fill="#a5b4fc" font-family="sans-serif" font-size="18" font-weight="700">LEDGERSUTRA FOR CA FIRMS</text>
+  <text x="110" y="235" fill="#ffffff" font-family="sans-serif" font-size="52" font-weight="800">GST Invoice to Tally &amp; Excel,</text>
+  <text x="110" y="305" fill="#818cf8" font-family="sans-serif" font-size="52" font-weight="800">built for Indian CA firms</text>
+  <text x="110" y="375" fill="#cbd5e1" font-family="sans-serif" font-size="24">Extract GSTIN, HSN, line items &amp; tax splits • TallyPrime XML • GSTR-2B Reconciliation</text>
+  <rect x="110" y="435" width="250" height="56" rx="12" fill="#4f46e5"/>
+  <text x="142" y="471" fill="#ffffff" font-family="sans-serif" font-size="22" font-weight="700">TallyPrime XML</text>
+  <rect x="380" y="435" width="270" height="56" rx="12" fill="#065f46"/>
+  <text x="412" y="471" fill="#6ee7b7" font-family="sans-serif" font-size="22" font-weight="700">GSTR-2B Matching</text>
+  <rect x="670" y="435" width="310" height="56" rx="12" fill="#334155"/>
+  <text x="702" y="471" fill="#e2e8f0" font-family="sans-serif" font-size="22" font-weight="700">Client-Wise Workspace</text>
+</svg>

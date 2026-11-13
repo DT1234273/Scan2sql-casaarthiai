@@ -1,26 +1,22 @@
-# LedgerSutra Firestore Security Specification (Phase 0)
+# LedgerSutra — Firestore Security Specification
 
-## 1. Data Invariants & Access Model
-- **Strict Per-User Isolation**: Every document lives under `/users/{userId}`, `/users/{userId}/bills/{billId}`, or `/users/{userId}/documents/{docId}`.
-- **Authentication & Verified Email**: All reads and writes require `request.auth != null && request.auth.token.email_verified == true && request.auth.uid == userId`.
-- **Wildcard ID Validation**: `userId`, `billId`, and `docId` must satisfy `isValidId` (`id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$')`).
-- **Immutability**:
-  - `/users/{userId}`: `uid` must equal `userId` on create and cannot change on update (`request.resource.data.uid == resource.data.uid`).
-  - `/users/{userId}/bills/{billId}`: `id` must equal `billId`, `ownerId` must equal `userId`, and both `id` and `ownerId` are immutable on update.
-  - `/users/{userId}/documents/{docId}`: `id` must equal `docId`, `ownerId` must equal `userId`, and both `id` and `ownerId` are immutable on update.
-- **Server Timestamp Enforcement**:
-  - `updatedAt` in `UserProfile` and `syncedAt` in `UserBill` / `UserDocument` must equal `request.time`.
+## 1. Zero-Trust Architecture & Ownership Invariants
+- **Global Default Deny**: `match /{document=**} { allow read, write: if false; }`
+- **Verified Google Identity**: Every read/write requires `request.auth != null && request.auth.token.email_verified == true`.
+- **Strict Tenant Isolation**: All data lives under `/users/{userId}` where `request.auth.uid == userId`.
 
-## 2. "Dirty Dozen" Attack Payloads to Reject
-1. **Unauthenticated read/write**: `auth == null` attempting to read or write `/users/user_1/bills/bill_1`.
-2. **Unverified email token**: `auth.token.email_verified == false` attempting to create a profile or bill.
-3. **Cross-tenant horizontal privilege escalation**: `user_2` attempting to read, update, or delete `/users/user_1/bills/bill_1`.
-4. **Unexpected extra keys (Schema Pollution)**: Payload containing `isAdmin: true` or `extraField: "hack"` not in `hasOnly([...])`.
-5. **Missing required keys**: Payload omitting `ownerId`, `grandTotal`, or `syncedAt`.
-6. **Type confusion**: Passing a string `"100"` for `grandTotal` instead of a `number`, or a float `1.5` for `pageCount` instead of an `int`.
-7. **Out-of-bounds strings**: `rawText` or `extractedText` exceeding 50,000 characters or `shopName` with 0 characters.
-8. **Negative or astronomical monetary values**: `grandTotal < 0` or `grandTotal > 10000000000`.
-9. **Forged timestamps**: `syncedAt` set to a past or future timestamp instead of `request.time`.
-10. **Ownership hijacking on update**: Updating `ownerId` or `id` on an existing bill document.
-11. **Invalid enum values**: `userMode` set to `"superadmin"` instead of `"normal_user"` or `"ca_mode"`, or `docType` set to `"INVOICE"`.
-12. **Malformed wildcard ID**: Document ID containing spaces or special characters outside `^[a-zA-Z0-9_\-]+$`.
+## 2. Firestore Paths & Schema Validation
+1. `/users/{userId}` (`UserProfile`):
+   - Fields: `uid`, `email`, `displayName`, `photoURL`, `userMode`, `firmRole`, `selectedColumnsJson`, `tallySettingsJson`, `updatedAt`.
+   - Enforces `hasAll` and `hasOnly` allowlist, string length limits, and `updatedAt == request.time`.
+2. `/users/{userId}/clients/{clientId}` (`ClientProfile`):
+   - Fields: `id`, `ownerId`, `name`, `gstin`, `pan`, `financialYear`, `notes`, `archived`, `createdAt`, `updatedAt`.
+3. `/users/{userId}/clients/{clientId}/bills/{billId}` (`UserBill`):
+   - Fields: `id`, `ownerId`, `clientId`, `approvalStatus` (`draft` | `pending_review` | `approved` | `rejected`), `fileName`, `shopName`, `sellerGstin`, `buyerName`, `buyerGstin`, `invoiceNumber`, `billDate`, `placeOfSupply`, `voucherType`, `paymentMode`, `subtotal`, `cgstAmount`, `sgstAmount`, `igstAmount`, `taxAmount`, `discountAmount`, `grandTotal`, `confidence`, `rawText`, `createdAt`, `extraHeaderFieldsJson`, `itemsJson`, `syncedAt`.
+   - **Role Enforcement**: `canApproveOrReject(userId, approvalStatus)` verifies that if `approvalStatus` is `'approved'` or `'rejected'`, the user's `firmRole` must be `'owner'` or `'reviewer'`. `'staff'` role can only write `'draft'` or `'pending_review'`.
+4. `/users/{userId}/clients/{clientId}/documents/{docId}` (`UserDocument`):
+   - Stores client-scoped verbatim OCR text documents.
+5. `/users/{userId}/teamMembers/{memberId}` (`TeamMember`):
+   - Restricted to `userFirmRole(userId) == 'owner'`.
+6. `/users/{userId}/apiKeys/{keyId}` (`UserApiKey`):
+   - Restricted to `userFirmRole(userId) == 'owner'`. Stores only SHA-256 `keyHash` and `keyPrefix`, never plaintext keys.

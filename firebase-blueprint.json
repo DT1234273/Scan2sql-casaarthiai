@@ -2,7 +2,7 @@
   "entities": {
     "UserProfile": {
       "title": "UserProfile",
-      "description": "Authenticated user's account profile and workspace preferences in LedgerSutra.",
+      "description": "Authenticated user's account profile, Tally settings, and workspace preferences in LedgerSutra.",
       "type": "object",
       "properties": {
         "uid": {
@@ -26,9 +26,18 @@
           "enum": ["normal_user", "ca_mode"],
           "description": "Preferred workspace mode (normal_user or ca_mode)."
         },
+        "firmRole": {
+          "type": "string",
+          "enum": ["owner", "reviewer", "staff"],
+          "description": "Active role within the CA firm workspace."
+        },
         "selectedColumnsJson": {
           "type": "string",
           "description": "JSON-serialized string array of active spreadsheet column keys."
+        },
+        "tallySettingsJson": {
+          "type": "string",
+          "description": "JSON-serialized TallySettings object."
         },
         "updatedAt": {
           "type": "string",
@@ -36,11 +45,81 @@
           "description": "Server timestamp when preferences were last updated."
         }
       },
-      "required": ["uid", "email", "displayName", "photoURL", "userMode", "selectedColumnsJson", "updatedAt"]
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "photoURL",
+        "userMode",
+        "firmRole",
+        "selectedColumnsJson",
+        "tallySettingsJson",
+        "updatedAt"
+      ]
+    },
+    "ClientProfile": {
+      "title": "ClientProfile",
+      "description": "CA firm client profile under /users/{userId}/clients/{clientId}.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique client identifier matching document ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the CA firm owner."
+        },
+        "name": {
+          "type": "string",
+          "description": "Legal or trade name of the client."
+        },
+        "gstin": {
+          "type": "string",
+          "description": "15-character client GSTIN if registered."
+        },
+        "pan": {
+          "type": "string",
+          "description": "10-character client PAN."
+        },
+        "financialYear": {
+          "type": "string",
+          "description": "Active financial year (e.g. 2026-27)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Audit or filing notes for the client."
+        },
+        "archived": {
+          "type": "boolean",
+          "description": "Whether the client workspace is archived."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Formatted creation timestamp string."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the last update."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "gstin",
+        "pan",
+        "financialYear",
+        "notes",
+        "archived",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "UserBill": {
       "title": "UserBill",
-      "description": "Extracted invoice or bill record saved in an authenticated user's personal LedgerSutra history.",
+      "description": "Extracted invoice or bill record saved under a client workspace.",
       "type": "object",
       "properties": {
         "id": {
@@ -50,6 +129,15 @@
         "ownerId": {
           "type": "string",
           "description": "UID of the user who owns this bill record."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Client workspace ID."
+        },
+        "approvalStatus": {
+          "type": "string",
+          "enum": ["draft", "pending_review", "approved", "rejected"],
+          "description": "Workflow approval status of the bill."
         },
         "fileName": {
           "type": "string",
@@ -133,7 +221,7 @@
         },
         "extraHeaderFieldsJson": {
           "type": "string",
-          "description": "JSON-serialized Record<string, string> of custom dynamic header fields."
+          "description": "JSON-serialized Record<string, string> of custom dynamic header fields and audit trail."
         },
         "itemsJson": {
           "type": "string",
@@ -148,6 +236,8 @@
       "required": [
         "id",
         "ownerId",
+        "clientId",
+        "approvalStatus",
         "fileName",
         "shopName",
         "sellerGstin",
@@ -175,7 +265,7 @@
     },
     "UserDocument": {
       "title": "UserDocument",
-      "description": "Verbatim OCR text document saved in an authenticated user's personal LedgerSutra history.",
+      "description": "Verbatim OCR text document saved under a client workspace.",
       "type": "object",
       "properties": {
         "id": {
@@ -185,6 +275,10 @@
         "ownerId": {
           "type": "string",
           "description": "UID of the user who owns this document record."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Client workspace ID."
         },
         "fileName": {
           "type": "string",
@@ -228,6 +322,7 @@
       "required": [
         "id",
         "ownerId",
+        "clientId",
         "fileName",
         "fileType",
         "docType",
@@ -238,6 +333,113 @@
         "createdAt",
         "syncedAt"
       ]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "CA firm team member and role assignment.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Team member record ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firm owner UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "Team member Google email."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "reviewer", "staff"],
+          "description": "Assigned role."
+        },
+        "assignedClientsJson": {
+          "type": "string",
+          "description": "JSON array of clientIds assigned to this member."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "invited"],
+          "description": "Invitation status."
+        },
+        "invitedAt": {
+          "type": "string",
+          "description": "Formatted invitation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "email",
+        "name",
+        "role",
+        "assignedClientsJson",
+        "status",
+        "invitedAt",
+        "updatedAt"
+      ]
+    },
+    "UserApiKey": {
+      "title": "UserApiKey",
+      "description": "Hashed API key for programmatic /api/v1/extract access.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "API key record ID."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Owner UID."
+        },
+        "label": {
+          "type": "string",
+          "description": "Key description label."
+        },
+        "keyPrefix": {
+          "type": "string",
+          "description": "Visible prefix of the key."
+        },
+        "keyHash": {
+          "type": "string",
+          "description": "SHA-256 hex digest of the secret key."
+        },
+        "revoked": {
+          "type": "boolean",
+          "description": "Whether the key has been revoked."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Formatted creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "label",
+        "keyPrefix",
+        "keyHash",
+        "revoked",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -245,19 +447,37 @@
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
-      "description": "Stores per-user profile and workspace preferences isolated by userId."
+      "description": "Stores per-user profile, Tally settings, and workspace preferences."
     },
-    "/users/{userId}/bills/{billId}": {
+    "/users/{userId}/clients/{clientId}": {
+      "schema": {
+        "$ref": "#/entities/ClientProfile"
+      },
+      "description": "Stores CA firm client profiles."
+    },
+    "/users/{userId}/clients/{clientId}/bills/{billId}": {
       "schema": {
         "$ref": "#/entities/UserBill"
       },
-      "description": "Stores the authenticated user's extracted invoices and bills."
+      "description": "Stores client-scoped extracted invoices and bills."
     },
-    "/users/{userId}/documents/{docId}": {
+    "/users/{userId}/clients/{clientId}/documents/{docId}": {
       "schema": {
         "$ref": "#/entities/UserDocument"
       },
-      "description": "Stores the authenticated user's verbatim OCR document text history."
+      "description": "Stores client-scoped verbatim OCR documents."
+    },
+    "/users/{userId}/teamMembers/{memberId}": {
+      "schema": {
+        "$ref": "#/entities/TeamMember"
+      },
+      "description": "Stores CA firm team members and role assignments."
+    },
+    "/users/{userId}/apiKeys/{keyId}": {
+      "schema": {
+        "$ref": "#/entities/UserApiKey"
+      },
+      "description": "Stores SHA-256 hashed API keys for /api/v1/extract."
     }
   }
 }

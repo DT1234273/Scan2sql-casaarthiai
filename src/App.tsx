@@ -66,8 +66,34 @@ import {
   saveDocumentToUserAccount,
   deleteDocumentFromUserAccount,
   subscribeToUserAccountHistory,
+  saveClientToFirestore,
+  deleteClientFromFirestore,
+  saveTallySettingsToFirestore,
+  saveTeamMemberToFirestore,
+  deleteTeamMemberFromFirestore,
+  createAndSaveApiKeyToFirestore,
+  revokeApiKeyInFirestore,
+  deleteEntireUserAccountDataFromFirestore,
   type User,
 } from './firebase';
+import {
+  CAClientProfile,
+  DEFAULT_CLIENT_ID,
+  DEFAULT_CLIENT_PROFILE,
+  TallySettings,
+  DEFAULT_TALLY_SETTINGS,
+  TeamMemberRecord,
+  FirmRole,
+  UserApiKeyRecord,
+  BillApprovalStatus,
+  BillAuditTrailEntry,
+} from './caWorkspaceTypes';
+import {
+  TallyExportModal,
+  Gstr2bReconciliationTab,
+  ClientsAndTeamPanel,
+  AccuracyAndApiPanel,
+} from './components/CAWorkspacePanels';
 import {
   SAMPLE_TEST_FILES,
   SampleTestFileSpec,
@@ -84,6 +110,7 @@ import {
 import {
   BRAND_NAME,
   BRAND_TAGLINE,
+  SITE_DOMAIN,
   normalizePathname,
   syncDocumentSeoTags,
 } from './seoContent';
@@ -123,6 +150,7 @@ export interface NoSQLBillItem {
 
 export interface NoSQLBillRecord {
   id: string;
+  clientId?: string;
   fileName: string;
   shopName: string;
   sellerGstin: string;
@@ -145,10 +173,37 @@ export interface NoSQLBillRecord {
   createdAt: string;
   extraHeaderFields: Record<string, string>;
   items: NoSQLBillItem[];
+  // Part 4 & Part 5 Extended Fields
+  approvalStatus?: BillApprovalStatus;
+  rejectionReason?: string;
+  needsReview?: boolean;
+  auditTrail?: BillAuditTrailEntry[];
+  irn?: string;
+  ewayBillNo?: string;
+  eInvoiceQr?: string;
+  supplierAddress?: string;
+  supplierState?: string;
+  buyerAddress?: string;
+  buyerState?: string;
+  supplierPan?: string;
+  bankName?: string;
+  bankAccountNo?: string;
+  bankIfsc?: string;
+  poNumber?: string;
+  dueDate?: string;
+  paymentTerms?: string;
+  currency?: string;
+  otherCharges?: number;
+  roundOff?: number;
+  isBillOfEntry?: boolean;
+  boeNumber?: string;
+  boeDate?: string;
+  portCode?: string;
 }
 
 export interface SavedDocumentRecord {
   id: string;
+  clientId?: string;
   fileName: string;
   fileType: string;
   docType: DocType;
@@ -187,15 +242,31 @@ export interface BatchQueueItem {
 // Base Columns — Notice fileName ("Bill / File Name"), billDate, invoiceNumber, shopName, and grandTotal ("Total Cost") are core!
 const STANDARD_COLUMNS: ColumnDefinition[] = [
   { key: 'fileName', label: 'Bill / File Name', category: 'HEADER' },
+  { key: 'approvalStatus', label: 'Approval Status', category: 'HEADER' },
   { key: 'billDate', label: 'Bill Date', category: 'HEADER' },
+  { key: 'dueDate', label: 'Due Date', category: 'HEADER' },
   { key: 'invoiceNumber', label: 'Bill / Invoice No', category: 'HEADER' },
   { key: 'shopName', label: 'Shop / Party Name', category: 'HEADER' },
   { key: 'sellerGstin', label: 'Seller GSTIN', category: 'HEADER' },
+  { key: 'supplierPan', label: 'Supplier PAN', category: 'HEADER' },
+  { key: 'supplierState', label: 'Supplier State', category: 'HEADER' },
+  { key: 'supplierAddress', label: 'Supplier Address', category: 'HEADER' },
   { key: 'buyerName', label: 'Buyer Name', category: 'HEADER' },
   { key: 'buyerGstin', label: 'Buyer GSTIN', category: 'HEADER' },
+  { key: 'buyerAddress', label: 'Buyer Address', category: 'HEADER' },
   { key: 'placeOfSupply', label: 'Place of Supply', category: 'HEADER' },
   { key: 'voucherType', label: 'Bill Category / Type', category: 'HEADER' },
   { key: 'paymentMode', label: 'Payment Mode', category: 'HEADER' },
+  { key: 'paymentTerms', label: 'Payment Terms', category: 'HEADER' },
+  { key: 'poNumber', label: 'PO Number', category: 'HEADER' },
+  { key: 'irn', label: 'e-Invoice IRN', category: 'HEADER' },
+  { key: 'ewayBillNo', label: 'e-Way Bill No', category: 'HEADER' },
+  { key: 'eInvoiceQr', label: 'e-Invoice QR Data', category: 'HEADER' },
+  { key: 'bankName', label: 'Bank Name', category: 'HEADER' },
+  { key: 'bankAccountNo', label: 'Bank A/C No', category: 'HEADER' },
+  { key: 'bankIfsc', label: 'Bank IFSC', category: 'HEADER' },
+  { key: 'boeNumber', label: 'Bill of Entry No', category: 'HEADER' },
+  { key: 'currency', label: 'Currency', category: 'HEADER' },
   { key: 'itemName', label: 'Item Summary / Description', category: 'ITEM' },
   { key: 'hsnSac', label: 'HSN / SAC', category: 'ITEM' },
   { key: 'quantity', label: 'Total Qty', category: 'ITEM', isNumeric: true },
@@ -207,6 +278,8 @@ const STANDARD_COLUMNS: ColumnDefinition[] = [
   { key: 'cgstAmount', label: 'CGST Amt', category: 'ITEM', isNumeric: true },
   { key: 'sgstAmount', label: 'SGST Amt', category: 'ITEM', isNumeric: true },
   { key: 'igstAmount', label: 'IGST Amt', category: 'ITEM', isNumeric: true },
+  { key: 'otherCharges', label: 'Other Charges', category: 'HEADER', isNumeric: true },
+  { key: 'roundOff', label: 'Round-Off', category: 'HEADER', isNumeric: true },
   { key: 'taxAmount', label: 'Total Tax / GST', category: 'HEADER', isNumeric: true },
   { key: 'grandTotal', label: 'Total Cost / Grand Total', category: 'HEADER', isNumeric: true },
 ];
@@ -263,10 +336,13 @@ const SCANNING_STEPS = [
 ];
 
 const STORAGE_KEYS = {
-  DOCUMENTS: 'scan2sql_documents_v3',
-  BILLS: 'scan2sql_bills_v3',
-  SELECTED_COLUMNS: 'scan2sql_selected_columns_v3',
-  USER_MODE: 'scan2sql_user_mode_v3',
+  DOCUMENTS: 'ledgersutra_documents_v4',
+  BILLS: 'ledgersutra_bills_v4',
+  SELECTED_COLUMNS: 'ledgersutra_selected_columns_v4',
+  USER_MODE: 'ledgersutra_user_mode_v4',
+  CLIENTS: 'ledgersutra_clients_v4',
+  ACTIVE_CLIENT_ID: 'ledgersutra_active_client_id_v4',
+  TALLY_SETTINGS: 'ledgersutra_tally_settings_v4',
 };
 
 // ---------------------------------------------------------------------------
@@ -773,7 +849,7 @@ export function App() {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('scan2sql-theme');
+      const saved = localStorage.getItem('ledgersutra-theme');
       if (saved === 'dark' || saved === 'light') return saved;
     }
     return 'light';
@@ -786,7 +862,7 @@ export function App() {
     } else {
       root.removeAttribute('data-theme');
     }
-    localStorage.setItem('scan2sql-theme', theme);
+    localStorage.setItem('ledgersutra-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
@@ -798,7 +874,9 @@ export function App() {
   });
 
   // Main Navigation Tabs
-  const [activeTab, setActiveTab] = useState<'scanner' | 'master_sheet' | 'dashboard' | 'history'>('scanner');
+  const [activeTab, setActiveTab] = useState<
+    'scanner' | 'master_sheet' | 'gstr2b' | 'clients_team' | 'accuracy_api' | 'dashboard' | 'history'
+  >('scanner');
 
   // Clean URL Route State for Multi-Page SEO Architecture & CA Resource Center
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -875,6 +953,45 @@ export function App() {
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
 
+  // Part 5 Extended Invoice & Bill of Entry Fields
+  const [irn, setIrn] = useState('');
+  const [ewayBillNo, setEwayBillNo] = useState('');
+  const [eInvoiceQr, setEInvoiceQr] = useState('');
+  const [supplierPan, setSupplierPan] = useState('');
+  const [supplierAddress, setSupplierAddress] = useState('');
+  const [supplierState, setSupplierState] = useState('');
+  const [buyerAddress, setBuyerAddress] = useState('');
+  const [buyerState, setBuyerState] = useState('');
+  const [poNumber, setPoNumber] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankAccountNo, setBankAccountNo] = useState('');
+  const [bankIfsc, setBankIfsc] = useState('');
+  const [currency, setCurrency] = useState('INR');
+  const [otherCharges, setOtherCharges] = useState<number>(0);
+  const [roundOff, setRoundOff] = useState<number>(0);
+  const [boeNumber, setBoeNumber] = useState('');
+
+  // Part 1, 3, 4, 5.3, 6 State: Clients, Tally Settings, Team RBAC, API Keys, Live GSTIN Verify
+  const [clients, setClients] = useState<CAClientProfile[]>([DEFAULT_CLIENT_PROFILE]);
+  const [activeClientId, setActiveClientId] = useState<string>(DEFAULT_CLIENT_ID);
+  const [tallySettings, setTallySettings] = useState<TallySettings>(DEFAULT_TALLY_SETTINGS);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberRecord[]>([]);
+  const [currentFirmRole, setCurrentFirmRole] = useState<FirmRole>('Owner/CA');
+  const [apiKeys, setApiKeys] = useState<UserApiKeyRecord[]>([]);
+  const [isTallyModalOpen, setIsTallyModalOpen] = useState(false);
+  const [reviewQueueFilter, setReviewQueueFilter] = useState<
+    'ALL' | 'NEEDS_REVIEW' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED'
+  >('ALL');
+  const [gstVerifyConfigured, setGstVerifyConfigured] = useState(true);
+  const [gstVerifyLoading, setGstVerifyLoading] = useState(false);
+  const [gstVerifyResult, setGstVerifyResult] = useState<{
+    status: string;
+    tradeName?: string;
+    legalName?: string;
+  } | null>(null);
+
   // Dynamic Column Builder Inputs
   const [newItemColumnName, setNewItemColumnName] = useState('');
   const [newHeaderFieldKey, setNewHeaderFieldKey] = useState('');
@@ -896,6 +1013,14 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+
+  // Check if live GSTIN verification API is configured on server (Part 5.3)
+  useEffect(() => {
+    fetch('/api/gstin/status-config')
+      .then((r) => r.json())
+      .then((d) => setGstVerifyConfigured(Boolean(d?.configured)))
+      .catch(() => setGstVerifyConfigured(false));
+  }, []);
 
   // Persistent Collection State (Guest session fallback when signed out; Firestore cloud when signed in)
   const [savedBills, setSavedBills] = useState<NoSQLBillRecord[]>(() => {
@@ -949,14 +1074,19 @@ export function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Subscribe to the logged-in user's personal Firestore history (bills, documents, preferences)
+  // Subscribe to the logged-in user's personal Firestore history (clients, bills, documents, Tally settings, team, API keys)
   useEffect(() => {
     if (!isAuthReady) return;
     if (!currentUser) {
       return;
     }
 
-    const unsubscribeSnapshot = subscribeToUserAccountHistory(currentUser.uid, {
+    const unsubscribeSnapshot = subscribeToUserAccountHistory(currentUser.uid, activeClientId, {
+      onClientsUpdate: (cloudClients) => {
+        if (cloudClients.length > 0) {
+          setClients(cloudClients);
+        }
+      },
       onBillsUpdate: (cloudBills) => {
         setSavedBills(cloudBills);
       },
@@ -970,11 +1100,23 @@ export function App() {
         if (profile.selectedColumnKeys && profile.selectedColumnKeys.length > 0) {
           setSelectedColumnKeys(profile.selectedColumnKeys);
         }
+        if (profile.firmRole) {
+          setCurrentFirmRole(profile.firmRole);
+        }
+      },
+      onTallySettingsUpdate: (settings) => {
+        setTallySettings(settings);
+      },
+      onTeamMembersUpdate: (members) => {
+        setTeamMembers(members);
+      },
+      onApiKeysUpdate: (keys) => {
+        setApiKeys(keys);
       },
     });
 
     return () => unsubscribeSnapshot();
-  }, [isAuthReady, currentUser]);
+  }, [isAuthReady, currentUser, activeClientId]);
 
   // Switch presets cleanly when user toggles between Normal User Mode & CA Mode
   const handleSwitchUserMode = (mode: UserProfileMode) => {
@@ -1441,8 +1583,32 @@ export function App() {
         };
         setSavedDocuments((prev) => [newDoc, ...prev]);
 
+        const auditCheck = auditBillDraftOrRecord(
+          {
+            shopName: result.shopName,
+            sellerGstin: result.sellerGstin,
+            buyerGstin: result.buyerGstin,
+            invoiceNumber: result.invoiceNumber,
+            billDate: result.billDate,
+            subtotal: result.subtotal || result.grandTotal || 0,
+            taxAmount: result.taxAmount || 0,
+            discountAmount: result.discountAmount || 0,
+            grandTotal: result.grandTotal || result.subtotal || 0,
+            confidence: result.confidence,
+          },
+          []
+        );
+        const autoNeedsReview = auditCheck.status !== 'VERIFIED' || (result.confidence || 100) < 85;
+        const initialApproval: BillApprovalStatus =
+          currentFirmRole === 'Staff'
+            ? 'Pending Review'
+            : autoNeedsReview
+            ? 'Pending Review'
+            : 'Approved';
+
         const newBill: NoSQLBillRecord = {
           id: `BILL-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          clientId: activeClientId,
           fileName,
           shopName: result.shopName || fileName.replace(/\.[^.]+$/, ''),
           sellerGstin: result.sellerGstin || '',
@@ -1465,17 +1631,48 @@ export function App() {
           createdAt: nowStr,
           extraHeaderFields: result.extraHeaderFields || {},
           items: result.billItems || [],
+          approvalStatus: initialApproval,
+          needsReview: autoNeedsReview,
+          auditTrail: [
+            {
+              action: 'Uploaded',
+              byEmail: auth.currentUser?.email || 'Local Workspace User',
+              byRole: currentFirmRole,
+              timestamp: nowStr,
+              note: `Extracted via LedgerSutra (${initialApproval})`,
+            },
+          ],
+          irn: (result as any).irn || '',
+          ewayBillNo: (result as any).ewayBillNo || '',
+          eInvoiceQr: (result as any).eInvoiceQr || '',
+          supplierPan:
+            (result as any).supplierPan ||
+            (result.sellerGstin && result.sellerGstin.length >= 12 ? result.sellerGstin.slice(2, 12) : ''),
+          supplierAddress: (result as any).supplierAddress || '',
+          supplierState: (result as any).supplierState || result.placeOfSupply || '',
+          buyerAddress: (result as any).buyerAddress || '',
+          buyerState: (result as any).buyerState || '',
+          poNumber: (result as any).poNumber || '',
+          dueDate: (result as any).dueDate || '',
+          paymentTerms: (result as any).paymentTerms || '',
+          bankName: (result as any).bankName || '',
+          bankAccountNo: (result as any).bankAccountNo || '',
+          bankIfsc: (result as any).bankIfsc || '',
+          currency: (result as any).currency || 'INR',
+          otherCharges: Number((result as any).otherCharges) || 0,
+          roundOff: Number((result as any).roundOff) || 0,
+          boeNumber: (result as any).boeNumber || '',
         };
         setSavedBills((prev) => [newBill, ...prev]);
         markBillsAsRecentlyAdded([newBill.id]);
 
         if (auth.currentUser) {
-          saveDocumentToUserAccount(auth.currentUser.uid, newDoc);
-          saveBillToUserAccount(auth.currentUser.uid, newBill);
+          saveDocumentToUserAccount(auth.currentUser.uid, newDoc, activeClientId);
+          saveBillToUserAccount(auth.currentUser.uid, newBill, activeClientId);
         }
       }
     },
-    [ocrLang, markBillsAsRecentlyAdded]
+    [ocrLang, markBillsAsRecentlyAdded, activeClientId, currentFirmRole]
   );
 
   // ---------------------------------------------------------------------------
@@ -2348,10 +2545,11 @@ export function App() {
     setBillItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // State for duplicate invoiceNumber + shopName warning & merge suggestion
+  // State for duplicate invoiceNumber + shopName detection modal & resolution
   const [pendingDuplicateSave, setPendingDuplicateSave] = useState<{
     newBill: NoSQLBillRecord;
     existingBill: NoSQLBillRecord;
+    matchCount: number;
   } | null>(null);
 
   // Manual Save / Append Current Bill to Master Sheet
@@ -2365,8 +2563,17 @@ export function App() {
     const resolvedShopName = shopName.trim() || 'Shop / Vendor';
     const resolvedInvoiceNumber = invoiceNumber.trim() || `INV-${Date.now().toString().slice(-5)}`;
 
+    const autoNeedsReview = currentBillAudit.status !== 'VERIFIED' || (confidenceScore || 100) < 85;
+    const initialApproval: BillApprovalStatus =
+      currentFirmRole === 'Staff'
+        ? 'Pending Review'
+        : autoNeedsReview
+        ? 'Pending Review'
+        : 'Approved';
+
     const newBill: NoSQLBillRecord = {
       id: `BILL-${Date.now()}`,
+      clientId: activeClientId,
       fileName: uploadedFileName || 'Manual_Bill.pdf',
       shopName: resolvedShopName,
       sellerGstin: sellerGstin.trim(),
@@ -2389,21 +2596,55 @@ export function App() {
       createdAt: nowStr,
       extraHeaderFields,
       items: billItems,
+      approvalStatus: initialApproval,
+      needsReview: autoNeedsReview,
+      auditTrail: [
+        {
+          action: 'Uploaded',
+          byEmail: currentUser?.email || 'Local Workspace User',
+          byRole: currentFirmRole,
+          timestamp: nowStr,
+          note: `Saved from Scanner Editor (${initialApproval})`,
+        },
+      ],
+      irn: irn.trim(),
+      ewayBillNo: ewayBillNo.trim(),
+      eInvoiceQr: eInvoiceQr.trim(),
+      supplierPan:
+        supplierPan.trim() || (sellerGstin.trim().length >= 12 ? sellerGstin.trim().slice(2, 12) : ''),
+      supplierAddress: supplierAddress.trim(),
+      supplierState: supplierState.trim() || placeOfSupply.trim(),
+      buyerAddress: buyerAddress.trim(),
+      buyerState: buyerState.trim(),
+      poNumber: poNumber.trim(),
+      dueDate: dueDate.trim(),
+      paymentTerms: paymentTerms.trim(),
+      bankName: bankName.trim(),
+      bankAccountNo: bankAccountNo.trim(),
+      bankIfsc: bankIfsc.trim(),
+      currency: currency.trim() || 'INR',
+      otherCharges,
+      roundOff,
+      boeNumber: boeNumber.trim(),
     };
 
-    // Check for existing invoiceNumber + shopName combination in savedBills
-    const normalizedInv = resolvedInvoiceNumber.toLowerCase();
-    const normalizedShop = resolvedShopName.toLowerCase();
-    const existingDuplicate = savedBills.find(
+    // Check savedBills collection for any existing bill with the same invoiceNumber and shopName
+    const normalizedInv = resolvedInvoiceNumber.trim().toLowerCase();
+    const normalizedShop = resolvedShopName.trim().toLowerCase();
+    const matchingBills = savedBills.filter(
       (b) =>
         b.invoiceNumber.trim().toLowerCase() === normalizedInv &&
         b.shopName.trim().toLowerCase() === normalizedShop
     );
 
-    if (existingDuplicate) {
-      setPendingDuplicateSave({ newBill, existingBill: existingDuplicate });
+    if (matchingBills.length > 0) {
+      setPendingDuplicateSave({
+        newBill,
+        existingBill: matchingBills[0],
+        matchCount: matchingBills.length,
+      });
       showToast(
-        `Duplicate Warning: Invoice "${resolvedInvoiceNumber}" for "${resolvedShopName}" already exists in Master Sheet.`
+        `Duplicate Detected: Invoice "${resolvedInvoiceNumber}" for "${resolvedShopName}" already exists.`
       );
       return;
     }
@@ -2411,7 +2652,7 @@ export function App() {
     setPendingDuplicateSave(null);
     setSavedBills((prev) => [newBill, ...prev]);
     if (currentUser) {
-      saveBillToUserAccount(currentUser.uid, newBill);
+      saveBillToUserAccount(currentUser.uid, newBill, activeClientId);
     }
     markBillsAsRecentlyAdded([newBill.id]);
     showToast(`Added "${newBill.shopName}" (₹${newBill.grandTotal.toFixed(2)}) as 1 Row in Master Sheet!`);
@@ -2441,6 +2682,10 @@ export function App() {
     const mergedTax = Number((existingBill.taxAmount + newBill.taxAmount).toFixed(2));
     const mergedDiscount = Number((existingBill.discountAmount + newBill.discountAmount).toFixed(2));
     const mergedGrandTotal = Number((existingBill.grandTotal + newBill.grandTotal).toFixed(2));
+    const combinedRawText =
+      newBill.rawText && newBill.rawText !== existingBill.rawText
+        ? [existingBill.rawText, newBill.rawText].filter(Boolean).join('\n\n--- MERGED BILL ---\n\n')
+        : existingBill.rawText;
 
     const mergedRecord: NoSQLBillRecord = {
       ...existingBill,
@@ -2455,18 +2700,19 @@ export function App() {
       taxAmount: mergedTax,
       discountAmount: mergedDiscount,
       grandTotal: mergedGrandTotal,
+      rawText: combinedRawText,
       extraHeaderFields: mergedExtraHeaders,
       items: mergedItems,
     };
 
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? mergedRecord : b)));
     if (currentUser) {
-      saveBillToUserAccount(currentUser.uid, mergedRecord);
+      saveBillToUserAccount(currentUser.uid, mergedRecord, activeClientId);
     }
     markBillsAsRecentlyAdded([existingBill.id]);
     setPendingDuplicateSave(null);
     showToast(
-      `Merged ${newBill.items.length} item(s) into existing Invoice "${existingBill.invoiceNumber}" (New Total: ₹${mergedGrandTotal.toFixed(2)})!`
+      `Merged ${newBill.items.length} item(s) into Invoice "${existingBill.invoiceNumber}" (New Total: ₹${mergedGrandTotal.toFixed(2)})!`
     );
   };
 
@@ -2479,12 +2725,12 @@ export function App() {
     };
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? updatedRecord : b)));
     if (currentUser) {
-      saveBillToUserAccount(currentUser.uid, updatedRecord);
+      saveBillToUserAccount(currentUser.uid, updatedRecord, activeClientId);
     }
     markBillsAsRecentlyAdded([existingBill.id]);
     setPendingDuplicateSave(null);
     showToast(
-      `Updated existing Invoice "${existingBill.invoiceNumber}" for "${existingBill.shopName}" (₹${updatedRecord.grandTotal.toFixed(2)})!`
+      `Overwrote existing Invoice "${existingBill.invoiceNumber}" for "${existingBill.shopName}" (₹${updatedRecord.grandTotal.toFixed(2)})!`
     );
   };
 
@@ -2493,11 +2739,11 @@ export function App() {
     const { newBill } = pendingDuplicateSave;
     setSavedBills((prev) => [newBill, ...prev]);
     if (currentUser) {
-      saveBillToUserAccount(currentUser.uid, newBill);
+      saveBillToUserAccount(currentUser.uid, newBill, activeClientId);
     }
     markBillsAsRecentlyAdded([newBill.id]);
     setPendingDuplicateSave(null);
-    showToast(`Added duplicate Invoice "${newBill.invoiceNumber}" as a new row in Master Sheet!`);
+    showToast(`Saved duplicate Invoice "${newBill.invoiceNumber}" as a new entry in Master Sheet!`);
   };
 
   // ---------------------------------------------------------------------------
@@ -2512,6 +2758,25 @@ export function App() {
 
   const filteredBills = useMemo(() => {
     return savedBills.filter((b) => {
+      // Client scope filter (in guest mode, filter by activeClientId or default_client)
+      if (!currentUser && b.clientId && b.clientId !== activeClientId) {
+        return false;
+      }
+      // Review Queue & Approval Status filter (Part 4 & Part 5.4)
+      const status = b.approvalStatus || 'Approved';
+      if (reviewQueueFilter === 'NEEDS_REVIEW' && !b.needsReview && status !== 'Pending Review') {
+        return false;
+      }
+      if (reviewQueueFilter === 'PENDING_APPROVAL' && status !== 'Pending Review') {
+        return false;
+      }
+      if (reviewQueueFilter === 'APPROVED' && status !== 'Approved') {
+        return false;
+      }
+      if (reviewQueueFilter === 'REJECTED' && status !== 'Rejected') {
+        return false;
+      }
+
       const q = searchQuery.toLowerCase();
       const matchesQ =
         !q ||
@@ -2524,7 +2789,7 @@ export function App() {
       const matchesDate = !dateFilter || b.billDate.includes(dateFilter);
       return matchesQ && matchesDate;
     });
-  }, [savedBills, searchQuery, dateFilter]);
+  }, [savedBills, searchQuery, dateFilter, currentUser, activeClientId, reviewQueueFilter]);
 
   const masterSheetRows = useMemo(() => {
     const rows: Array<{ id: string; billId: string; cells: Record<string, string | number> }> = [];
@@ -2887,7 +3152,14 @@ export function App() {
 
   const handleOpenWorkspaceTab = useCallback(
     (
-      tab: 'scanner' | 'master_sheet' | 'dashboard' | 'history' = 'scanner',
+      tab:
+        | 'scanner'
+        | 'master_sheet'
+        | 'dashboard'
+        | 'history'
+        | 'gstr2b'
+        | 'clients_team'
+        | 'accuracy_api' = 'scanner',
       mode?: UserProfileMode
     ) => {
       if (mode) {
@@ -2919,10 +3191,127 @@ export function App() {
     setSavedBills((prev) => prev.filter((b) => b.id !== id));
     setSavedDocuments((prev) => prev.filter((d) => d.id !== id));
     if (currentUser) {
-      deleteBillFromUserAccount(currentUser.uid, id);
-      deleteDocumentFromUserAccount(currentUser.uid, id);
+      deleteBillFromUserAccount(currentUser.uid, id, activeClientId);
+      deleteDocumentFromUserAccount(currentUser.uid, id, activeClientId);
     }
     showToast(`Deleted record.`);
+  };
+
+  const activeClientObj = useMemo(
+    () => clients.find((c) => c.id === activeClientId) || DEFAULT_CLIENT_PROFILE,
+    [clients, activeClientId]
+  );
+
+  const [showExtendedFieldsEditor, setShowExtendedFieldsEditor] = useState<boolean>(false);
+
+  const handleVerifyLiveGstin = async () => {
+    const clean = sellerGstin.trim().toUpperCase();
+    if (clean.length !== 15) {
+      showToast('Enter a valid 15-character Seller GSTIN first.');
+      return;
+    }
+    setGstVerifyLoading(true);
+    setGstVerifyResult(null);
+    try {
+      const resp = await fetch('/api/gstin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gstin: clean }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        showToast(data?.error || 'GSTIN verification failed.');
+      } else {
+        setGstVerifyResult({
+          status: data?.data?.status || data?.data?.sts || 'Verified',
+          tradeName: data?.data?.tradeName || data?.data?.tradeNam || data?.data?.lgnm || '',
+          legalName: data?.data?.legalName || data?.data?.lgnm || '',
+        });
+        showToast(`Verified GSTIN ${clean} with live API.`);
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Unable to connect to GSTIN verification endpoint.');
+    } finally {
+      setGstVerifyLoading(false);
+    }
+  };
+
+  const handleApproveOrRejectBill = (
+    billId: string,
+    newStatus: BillApprovalStatus,
+    rejectionReason?: string
+  ) => {
+    if (currentFirmRole === 'Staff' && (newStatus === 'Approved' || newStatus === 'Rejected')) {
+      showToast('Role restriction: Only Owner/CA or Reviewer can Approve or Reject bills.');
+      return;
+    }
+    const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    setSavedBills((prev) =>
+      prev.map((b) => {
+        if (b.id !== billId) return b;
+        const entry: BillAuditTrailEntry = {
+          action:
+            newStatus === 'Approved'
+              ? 'Approved'
+              : newStatus === 'Rejected'
+              ? 'Rejected'
+              : 'Submitted for Review',
+          byEmail: currentUser?.email || 'Local CA Reviewer',
+          byRole: currentFirmRole,
+          timestamp: nowStr,
+          note: rejectionReason || `Status updated to ${newStatus}`,
+        };
+        const updated: NoSQLBillRecord = {
+          ...b,
+          approvalStatus: newStatus,
+          rejectionReason: newStatus === 'Rejected' ? rejectionReason || 'Flagged by reviewer' : '',
+          needsReview: newStatus === 'Approved' ? false : b.needsReview,
+          auditTrail: [...(b.auditTrail || []), entry],
+        };
+        if (currentUser) {
+          saveBillToUserAccount(currentUser.uid, updated, activeClientId);
+        }
+        return updated;
+      })
+    );
+    showToast(`Bill marked as "${newStatus}".`);
+  };
+
+  const handleJumpToFixBill = (billId: string) => {
+    const target = savedBills.find((b) => b.id === billId);
+    if (!target) return;
+    setUploadedFileName(target.fileName);
+    setShopName(target.shopName);
+    setSellerGstin(target.sellerGstin);
+    setBuyerName(target.buyerName);
+    setBuyerGstin(target.buyerGstin);
+    setInvoiceNumber(target.invoiceNumber);
+    setBillDate(target.billDate);
+    setPlaceOfSupply(target.placeOfSupply);
+    setVoucherType(target.voucherType);
+    setPaymentMode(target.paymentMode);
+    setCgstAmount(target.cgstAmount);
+    setSgstAmount(target.sgstAmount);
+    setIgstAmount(target.igstAmount);
+    setTaxAmount(target.taxAmount);
+    setDiscountAmount(target.discountAmount);
+    setBillItems(target.items || []);
+    setExtractedText(target.rawText || '');
+    setIrn(target.irn || '');
+    setEwayBillNo(target.ewayBillNo || '');
+    setSupplierPan(target.supplierPan || '');
+    setPoNumber(target.poNumber || '');
+    setDueDate(target.dueDate || '');
+    setPaymentTerms(target.paymentTerms || '');
+    setBankName(target.bankName || '');
+    setBankAccountNo(target.bankAccountNo || '');
+    setBankIfsc(target.bankIfsc || '');
+    setOtherCharges(target.otherCharges || 0);
+    setRoundOff(target.roundOff || 0);
+    setBoeNumber(target.boeNumber || '');
+    setIsTallyModalOpen(false);
+    setActiveTab('scanner');
+    showToast(`Loaded "${target.invoiceNumber}" into Scanner Editor for correction.`);
   };
 
   const currentPreviewImg = previewImages[activePageIndex] || null;
@@ -3007,7 +3396,244 @@ export function App() {
         </div>
       )}
 
-      {/* Top Navigation Header — Rebranded to LedgerSutra (https://casaarthiai.in) */}
+      {/* Duplicate Bill Detection & Resolution Modal */}
+      {pendingDuplicateSave && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-xs p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="duplicate-invoice-modal-title"
+        >
+          <div className="w-full max-w-2xl rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-[var(--border-color)] bg-amber-500/10">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3
+                      id="duplicate-invoice-modal-title"
+                      className="text-base font-bold text-[var(--text-main)]"
+                    >
+                      Duplicate Invoice Detected
+                    </h3>
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      {pendingDuplicateSave.matchCount > 1
+                        ? `${pendingDuplicateSave.matchCount} Existing Matches`
+                        : 'Exact Match Found'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                    An entry with Invoice Number{' '}
+                    <span className="font-mono font-bold text-indigo-500">
+                      {pendingDuplicateSave.existingBill.invoiceNumber}
+                    </span>{' '}
+                    and Shop Name{' '}
+                    <span className="font-bold text-[var(--text-main)]">
+                      {pendingDuplicateSave.existingBill.shopName}
+                    </span>{' '}
+                    already exists in your Master Sheet. Choose how you would like to proceed:
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingDuplicateSave(null)}
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+                aria-label="Close duplicate invoice modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Side-by-Side Comparison of Existing Record vs Incoming Bill */}
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Existing Record Card */}
+                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Existing Record in Sheet
+                    </span>
+                    <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                      {pendingDuplicateSave.existingBill.billDate}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-[var(--text-main)] truncate">
+                      {pendingDuplicateSave.existingBill.shopName}
+                    </div>
+                    <div className="text-xs font-mono text-indigo-500 font-semibold mt-0.5">
+                      Inv #{pendingDuplicateSave.existingBill.invoiceNumber}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[var(--border-color)] text-xs">
+                    <div>
+                      <span className="block text-[11px] text-[var(--text-muted)]">Line Items</span>
+                      <span className="font-mono font-bold tabular-nums">
+                        {pendingDuplicateSave.existingBill.items.length} item(s)
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[11px] text-[var(--text-muted)]">Taxable / GST</span>
+                      <span className="font-mono font-semibold tabular-nums">
+                        ₹{pendingDuplicateSave.existingBill.subtotal.toFixed(2)} / ₹
+                        {pendingDuplicateSave.existingBill.taxAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
+                    <span className="text-xs text-[var(--text-muted)] font-medium">Grand Total</span>
+                    <span className="text-sm font-mono font-black tabular-nums text-[var(--text-main)]">
+                      ₹{pendingDuplicateSave.existingBill.grandTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Incoming New Record Card */}
+                <div className="rounded-xl border border-indigo-500/40 bg-indigo-500/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-500">
+                      Current Bill to Save
+                    </span>
+                    <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                      {pendingDuplicateSave.newBill.billDate}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-[var(--text-main)] truncate">
+                      {pendingDuplicateSave.newBill.shopName}
+                    </div>
+                    <div className="text-xs font-mono text-indigo-500 font-semibold mt-0.5">
+                      Inv #{pendingDuplicateSave.newBill.invoiceNumber}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-500/20 text-xs">
+                    <div>
+                      <span className="block text-[11px] text-[var(--text-muted)]">Line Items</span>
+                      <span className="font-mono font-bold tabular-nums">
+                        {pendingDuplicateSave.newBill.items.length} item(s)
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[11px] text-[var(--text-muted)]">Taxable / GST</span>
+                      <span className="font-mono font-semibold tabular-nums">
+                        ₹{pendingDuplicateSave.newBill.subtotal.toFixed(2)} / ₹
+                        {pendingDuplicateSave.newBill.taxAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-between">
+                    <span className="text-xs text-[var(--text-muted)] font-medium">Grand Total</span>
+                    <span className="text-sm font-mono font-black tabular-nums text-indigo-500">
+                      ₹{pendingDuplicateSave.newBill.grandTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resolution Action Choices */}
+              <div className="space-y-2.5">
+                <div className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Select Resolution Action
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Option 1: Merge Items */}
+                  <button
+                    type="button"
+                    onClick={handleMergePendingIntoExistingBill}
+                    className="flex flex-col justify-between text-left p-3.5 rounded-xl border border-indigo-500/40 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition-all cursor-pointer group"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">1. Merge Items</span>
+                        <Layers className="w-4 h-4 text-indigo-200 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <p className="text-[11px] text-indigo-100 leading-snug">
+                        Append {pendingDuplicateSave.newBill.items.length} item(s) into the existing record and combine totals.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-indigo-400/30 flex items-center justify-between text-[11px] font-mono font-bold tabular-nums">
+                      <span>
+                        {pendingDuplicateSave.existingBill.items.length +
+                          pendingDuplicateSave.newBill.items.length}{' '}
+                        Items
+                      </span>
+                      <span>
+                        ₹
+                        {(
+                          pendingDuplicateSave.existingBill.grandTotal +
+                          pendingDuplicateSave.newBill.grandTotal
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Overwrite Record */}
+                  <button
+                    type="button"
+                    onClick={handleReplaceExistingBillWithPending}
+                    className="flex flex-col justify-between text-left p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all cursor-pointer group"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">2. Overwrite Record</span>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <p className="text-[11px] text-emerald-100 leading-snug">
+                        Replace the existing Master Sheet record with this newly extracted bill.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-mono font-bold tabular-nums">
+                      <span>{pendingDuplicateSave.newBill.items.length} Items</span>
+                      <span>₹{pendingDuplicateSave.newBill.grandTotal.toFixed(2)}</span>
+                    </div>
+                  </button>
+
+                  {/* Option 3: Save as Duplicate Entry */}
+                  <button
+                    type="button"
+                    onClick={handleForceAddPendingDuplicate}
+                    className="flex flex-col justify-between text-left p-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:border-indigo-500/40 text-[var(--text-main)] transition-all cursor-pointer group"
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">3. Save as Duplicate</span>
+                        <Plus className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+                      </div>
+                      <p className="text-[11px] text-[var(--text-muted)] leading-snug">
+                        Keep the existing bill unchanged and add this bill as a separate row.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-[var(--border-color)] flex items-center justify-between text-[11px] font-mono font-bold tabular-nums text-indigo-500">
+                      <span>+1 New Row</span>
+                      <span>₹{pendingDuplicateSave.newBill.grandTotal.toFixed(2)}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-[var(--bg-subtle)] border-t border-[var(--border-color)] flex items-center justify-between">
+              <span className="text-[11px] text-[var(--text-muted)]">
+                Tip: Merging items keeps 1 row per invoice while preserving all line-item details.
+              </span>
+              <button
+                type="button"
+                onClick={() => setPendingDuplicateSave(null)}
+                className="px-4 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Navigation Header — LedgerSutra */}
       <header className="sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
           <div
@@ -3023,7 +3649,7 @@ export function App() {
                   {BRAND_NAME}
                 </span>
                 <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                  <Sparkles className="w-3 h-3" /> CA Invoice & GST Automation
+                  <Sparkles className="w-3 h-3" /> CA Invoice &amp; GST Automation
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-muted)] hidden sm:block">
@@ -3033,11 +3659,42 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Client Switcher Dropdown (Part 3.2) */}
+            <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] px-2 py-1 rounded-xl border border-[var(--border-color)]">
+              <Briefcase className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <select
+                aria-label="Select Active Client Workspace"
+                value={activeClientId}
+                onChange={(e) => {
+                  setActiveClientId(e.target.value);
+                  const chosen = clients.find((c) => c.id === e.target.value);
+                  if (chosen) showToast(`Switched workspace to "${chosen.name}" (${chosen.financialYear})`);
+                }}
+                className="bg-transparent text-xs font-bold text-[var(--text-main)] focus:outline-none max-w-[140px] truncate cursor-pointer"
+              >
+                {clients
+                  .filter((c) => !c.archived || c.id === activeClientId)
+                  .map((c) => (
+                    <option key={c.id} value={c.id} className="bg-[var(--bg-card)] text-[var(--text-main)]">
+                      {c.name} ({c.financialYear})
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => handleOpenWorkspaceTab('clients_team')}
+                title="Add / Manage Clients & Team"
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 cursor-pointer"
+              >
+                +Client
+              </button>
+            </div>
+
             {/* SaaS Route Links */}
             <div className="hidden md:flex items-center gap-1 mr-1 text-xs font-semibold">
               <button
                 onClick={() => navigateTo('/')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
                   currentPath === '/'
                     ? 'text-indigo-500 bg-indigo-500/10 font-bold'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -3047,7 +3704,7 @@ export function App() {
               </button>
               <button
                 onClick={() => navigateTo('/app')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
                   currentPath === '/app'
                     ? 'text-indigo-500 bg-indigo-500/10 font-bold'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -3056,44 +3713,34 @@ export function App() {
                 Workspace
               </button>
               <button
-                onClick={() => navigateTo('/features')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/features'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Features
-              </button>
-              <button
-                onClick={() => navigateTo('/invoice-ocr-for-ca')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/invoice-ocr-for-ca'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                CA OCR
-              </button>
-              <button
-                onClick={() => navigateTo('/resources')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath.startsWith('/resources')
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Resources
-              </button>
-              <button
                 onClick={() => navigateTo('/pricing')}
-                className={`px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
                   currentPath === '/pricing'
                     ? 'text-indigo-500 bg-indigo-500/10 font-bold'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 Pricing
+              </button>
+              <button
+                onClick={() => navigateTo('/blog')}
+                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath.startsWith('/blog')
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                Blog
+              </button>
+              <button
+                onClick={() => navigateTo('/api-docs')}
+                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                  currentPath === '/api-docs'
+                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                API
               </button>
             </div>
 
@@ -3105,14 +3752,14 @@ export function App() {
                   const wsEl = document.getElementById('live-ocr-workspace');
                   if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'scanner'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <ScanLine className="w-3.5 h-3.5" />
-                1. Scan Bill / PDF
+                Scan
               </button>
               <button
                 onClick={() => {
@@ -3120,14 +3767,59 @@ export function App() {
                   const wsEl = document.getElementById('live-ocr-workspace');
                   if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'master_sheet'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
-                2. Excel Sheet ({savedBills.length})
+                Sheet ({savedBills.length})
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('gstr2b');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'gstr2b'
+                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                GSTR-2B
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('clients_team');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'clients_team'
+                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                Clients
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('accuracy_api');
+                  const wsEl = document.getElementById('live-ocr-workspace');
+                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'accuracy_api'
+                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                QA &amp; API
               </button>
               <button
                 onClick={() => {
@@ -3135,14 +3827,14 @@ export function App() {
                   const wsEl = document.getElementById('live-ocr-workspace');
                   if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'dashboard'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                3. Dashboard
+                Analytics
               </button>
               <button
                 onClick={() => {
@@ -3150,14 +3842,14 @@ export function App() {
                   const wsEl = document.getElementById('live-ocr-workspace');
                   if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeTab === 'history'
                     ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 <Database className="w-3.5 h-3.5" />
-                4. Text History
+                Text
               </button>
             </nav>
 
@@ -3181,7 +3873,7 @@ export function App() {
                     {currentUser.displayName || currentUser.email?.split('@')[0]}
                   </p>
                   <p className="text-[9px] text-emerald-500 font-semibold flex items-center gap-0.5 leading-tight">
-                    <Cloud className="w-2.5 h-2.5" /> Saved in Account
+                    <Cloud className="w-2.5 h-2.5" /> {currentFirmRole}
                   </p>
                 </div>
                 <button
@@ -3224,10 +3916,10 @@ export function App() {
         </div>
 
         {/* Mobile Navigation Bar */}
-        <div className="lg:hidden flex items-center justify-around border-t border-[var(--border-color)] bg-[var(--bg-card)] px-2 py-1.5">
+        <div className="lg:hidden flex items-center justify-around border-t border-[var(--border-color)] bg-[var(--bg-card)] px-2 py-1.5 overflow-x-auto gap-1">
           <button
             onClick={() => setActiveTab('scanner')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
               activeTab === 'scanner' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
             }`}
           >
@@ -3236,39 +3928,39 @@ export function App() {
           </button>
           <button
             onClick={() => setActiveTab('master_sheet')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
               activeTab === 'master_sheet' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
             }`}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            Excel ({savedBills.length})
+            Sheet ({savedBills.length})
           </button>
           <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
-              activeTab === 'dashboard' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
+            onClick={() => setActiveTab('gstr2b')}
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
+              activeTab === 'gstr2b' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
             }`}
           >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            Dashboard
+            <ShieldCheck className="w-3.5 h-3.5" />
+            GSTR-2B
           </button>
           <button
-            onClick={() => setActiveTab('history')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
-              activeTab === 'history' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
+            onClick={() => setActiveTab('clients_team')}
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
+              activeTab === 'clients_team' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
             }`}
           >
-            <Database className="w-3.5 h-3.5" />
-            Text
+            <Briefcase className="w-3.5 h-3.5" />
+            Clients
           </button>
           <button
-            onClick={() => navigateTo('/resources')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 rounded-lg text-[11px] font-semibold ${
-              currentPath.startsWith('/resources') ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
+            onClick={() => setActiveTab('accuracy_api')}
+            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
+              activeTab === 'accuracy_api' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" />
-            Guides
+            <Code2 className="w-3.5 h-3.5" />
+            API/QA
           </button>
         </div>
       </header>
@@ -4017,28 +4709,60 @@ export function App() {
                   </div>
 
                   {/* Real-Time CA GSTIN, Duplicate & Tax Math Validation Panel */}
-                  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-3.5 space-y-2">
+                  <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-3.5 space-y-2.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-[var(--text-main)]">
                         <ShieldCheck className="w-4 h-4 text-indigo-500" />
                         CA Pre-Accounting Validation &amp; GST Audit Status
                       </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${
-                          currentBillAudit.status === 'VERIFIED'
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      <div className="flex flex-wrap items-center gap-2">
+                        {gstVerifyConfigured ? (
+                          <button
+                            type="button"
+                            onClick={handleVerifyLiveGstin}
+                            disabled={gstVerifyLoading}
+                            className="px-2.5 py-0.5 rounded-md bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[10px] font-bold cursor-pointer"
+                          >
+                            {gstVerifyLoading ? 'Verifying GSTIN...' : 'Verify GSTIN status'}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-card)] px-2 py-0.5 rounded border border-[var(--border-color)]">
+                            GSTIN verification available when API is configured
+                          </span>
+                        )}
+                        <span
+                          className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${
+                            currentBillAudit.status === 'VERIFIED'
+                              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                              : currentBillAudit.status === 'EXCEPTION'
+                              ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                              : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                          }`}
+                        >
+                          {currentBillAudit.status === 'VERIFIED'
+                            ? 'GST & Math Verified'
                             : currentBillAudit.status === 'EXCEPTION'
-                            ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                            : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                        }`}
-                      >
-                        {currentBillAudit.status === 'VERIFIED'
-                          ? 'GST & Math Verified'
-                          : currentBillAudit.status === 'EXCEPTION'
-                          ? 'Audit Exception Flagged'
-                          : 'Review Recommended'}
-                      </span>
+                            ? 'Audit Exception Flagged'
+                            : 'Review Recommended'}
+                        </span>
+                      </div>
                     </div>
+
+                    {gstVerifyResult && (
+                      <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-500 flex flex-wrap items-center justify-between gap-2">
+                        <span>
+                          <strong>Live GSTIN Status:</strong> {gstVerifyResult.status}{' '}
+                          {gstVerifyResult.tradeName ? `• ${gstVerifyResult.tradeName}` : ''}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setGstVerifyResult(null)}
+                          className="text-[10px] underline cursor-pointer"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {currentBillAudit.flags.map((flag, fIdx) => (
@@ -4063,6 +4787,170 @@ export function App() {
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Collapsible Part 5 Extended Fields Editor */}
+                    <div className="pt-2 border-t border-[var(--border-color)]">
+                      <button
+                        type="button"
+                        onClick={() => setShowExtendedFieldsEditor((prev) => !prev)}
+                        className="text-[11px] font-bold text-indigo-500 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <ChevronRight
+                          className={`w-3.5 h-3.5 transition-transform ${
+                            showExtendedFieldsEditor ? 'rotate-90' : ''
+                          }`}
+                        />
+                        Extended E-Invoice, Bank, PO &amp; Bill of Entry Fields (IRN, E-Way Bill, PAN, IFSC, Round-Off)
+                      </button>
+
+                      {showExtendedFieldsEditor && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-3 pt-2 border-t border-[var(--border-color)] text-xs">
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              E-Invoice IRN
+                            </label>
+                            <input
+                              type="text"
+                              value={irn}
+                              onChange={(e) => setIrn(e.target.value)}
+                              placeholder="64-char IRN hash"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              E-Way Bill No
+                            </label>
+                            <input
+                              type="text"
+                              value={ewayBillNo}
+                              onChange={(e) => setEwayBillNo(e.target.value)}
+                              placeholder="12-digit EWB"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Supplier PAN
+                            </label>
+                            <input
+                              type="text"
+                              value={supplierPan}
+                              onChange={(e) => setSupplierPan(e.target.value.toUpperCase())}
+                              placeholder="ABCDE1234F"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              PO Number
+                            </label>
+                            <input
+                              type="text"
+                              value={poNumber}
+                              onChange={(e) => setPoNumber(e.target.value)}
+                              placeholder="PO-2026-01"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Due Date
+                            </label>
+                            <input
+                              type="date"
+                              value={dueDate}
+                              onChange={(e) => setDueDate(e.target.value)}
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Payment Terms
+                            </label>
+                            <input
+                              type="text"
+                              value={paymentTerms}
+                              onChange={(e) => setPaymentTerms(e.target.value)}
+                              placeholder="Net 30 Days"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Bank Name
+                            </label>
+                            <input
+                              type="text"
+                              value={bankName}
+                              onChange={(e) => setBankName(e.target.value)}
+                              placeholder="HDFC / ICICI / SBI"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Bank A/C No
+                            </label>
+                            <input
+                              type="text"
+                              value={bankAccountNo}
+                              onChange={(e) => setBankAccountNo(e.target.value)}
+                              placeholder="Account Number"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Bank IFSC
+                            </label>
+                            <input
+                              type="text"
+                              value={bankIfsc}
+                              onChange={(e) => setBankIfsc(e.target.value.toUpperCase())}
+                              placeholder="HDFC0001234"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Other Charges (₹)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={otherCharges}
+                              onChange={(e) => setOtherCharges(parseFloat(e.target.value) || 0)}
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Round-Off (₹)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={roundOff}
+                              onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Bill of Entry (BOE) No
+                            </label>
+                            <input
+                              type="text"
+                              value={boeNumber}
+                              onChange={(e) => setBoeNumber(e.target.value)}
+                              placeholder="For Import BOE"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -4339,10 +5227,16 @@ export function App() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
+                    onClick={() => setIsTallyModalOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" /> Scan &amp; Add Next Bill
+                    <Download className="w-4 h-4" /> Export to Tally (XML) / Zoho / Busy
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 text-xs font-semibold border border-[var(--border-color)] cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-indigo-500" /> Scan &amp; Add Next Bill
                   </button>
                   <button
                     onClick={() => excelImportInputRef.current?.click()}
@@ -4378,6 +5272,59 @@ export function App() {
                     <Database className="w-3.5 h-3.5 text-indigo-500" /> .SQL
                   </button>
                 </div>
+              </div>
+
+              {/* Review Queue & Approval Status Filter Strip (Part 4.2 & Part 5.4) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mr-1">
+                    Review Queue &amp; Approval Filter:
+                  </span>
+                  {(
+                    [
+                      { key: 'ALL', label: `All Bills (${savedBills.length})` },
+                      {
+                        key: 'NEEDS_REVIEW',
+                        label: `Needs Review Queue (${
+                          savedBills.filter((b) => b.needsReview || b.approvalStatus === 'Pending Review').length
+                        })`,
+                      },
+                      {
+                        key: 'PENDING_APPROVAL',
+                        label: `Pending Approval (${
+                          savedBills.filter((b) => b.approvalStatus === 'Pending Review').length
+                        })`,
+                      },
+                      {
+                        key: 'APPROVED',
+                        label: `Approved (${
+                          savedBills.filter((b) => !b.approvalStatus || b.approvalStatus === 'Approved').length
+                        })`,
+                      },
+                      {
+                        key: 'REJECTED',
+                        label: `Rejected (${savedBills.filter((b) => b.approvalStatus === 'Rejected').length})`,
+                      },
+                    ] as const
+                  ).map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setReviewQueueFilter(tab.key)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                        reviewQueueFilter === tab.key
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-color)] hover:text-[var(--text-main)]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  Active Client: <strong className="text-[var(--text-main)]">{activeClientObj.name}</strong> • Role:{' '}
+                  <strong className="text-indigo-500">{currentFirmRole}</strong>
+                </span>
               </div>
 
               {/* Column Presets & Checkboxes */}
@@ -4639,7 +5586,7 @@ export function App() {
                           {col.label.replace(' (Extra)', '')}
                         </th>
                       ))}
-                      <th className="py-3 px-3 text-right w-16">Delete</th>
+                      <th className="py-3 px-3 text-right w-40">Approval / Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-color)] text-xs">
@@ -4649,7 +5596,7 @@ export function App() {
                           colSpan={activeSelectedColumnDefs.length + 2}
                           className="py-12 text-center text-[var(--text-muted)]"
                         >
-                          No bills added yet. Upload a PDF or Image bill in the Scanner tab to add your first row!
+                          No bills match the current filter. Upload a PDF or Image bill in the Scanner tab to add your first row!
                         </td>
                       </tr>
                     ) : (
@@ -4662,6 +5609,8 @@ export function App() {
                         {virtualMasterWindow.visibleRows.map((row, visibleIdx) => {
                           const idx = virtualMasterWindow.startIndex + visibleIdx;
                           const isNewlyAdded = recentlyAddedBillIdSet.has(row.billId);
+                          const billObj = savedBills.find((b) => b.id === row.billId);
+                          const approvalStatus = billObj?.approvalStatus || 'Approved';
                           return (
                             <tr
                               key={row.id}
@@ -4676,6 +5625,14 @@ export function App() {
                                   {isNewlyAdded && (
                                     <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
                                       NEW
+                                    </span>
+                                  )}
+                                  {billObj?.needsReview && (
+                                    <span
+                                      title="Needs CA Review"
+                                      className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                                    >
+                                      REVIEW
                                     </span>
                                   )}
                                 </span>
@@ -4703,13 +5660,45 @@ export function App() {
                                 );
                               })}
                               <td className="py-2 px-3 text-right whitespace-nowrap">
-                                <button
-                                  onClick={() => handleDeleteRecord(row.billId)}
-                                  title="Remove Bill from Sheet"
-                                  className="text-[var(--text-muted)] hover:text-rose-500 p-1 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                <div className="inline-flex items-center gap-1">
+                                  {currentFirmRole !== 'Staff' && approvalStatus !== 'Approved' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApproveOrRejectBill(row.billId, 'Approved')}
+                                      title="Approve Bill for Tally & GSTR-2B"
+                                      className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold cursor-pointer"
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  {currentFirmRole !== 'Staff' && approvalStatus !== 'Rejected' && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleApproveOrRejectBill(row.billId, 'Rejected', 'Tax / GSTIN discrepancy')
+                                      }
+                                      title="Reject Bill"
+                                      className="px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-500 text-[10px] font-bold cursor-pointer"
+                                    >
+                                      Reject
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleJumpToFixBill(row.billId)}
+                                    title="Edit / Fix in Scanner"
+                                    className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500 text-[10px] font-bold cursor-pointer"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteRecord(row.billId)}
+                                    title="Remove Bill from Sheet"
+                                    className="text-[var(--text-muted)] hover:text-rose-500 p-1 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -5048,7 +6037,174 @@ export function App() {
             )}
           </div>
         )}
+        {/* ===================================================================== */}
+        {/* TAB 5: GSTR-2B RECONCILIATION ENGINE (PART 2)                         */}
+        {/* ===================================================================== */}
+        {activeTab === 'gstr2b' && (
+          <Gstr2bReconciliationTab
+            bills={savedBills}
+            activeClient={activeClientObj}
+            showToast={showToast}
+          />
+        )}
+
+        {/* ===================================================================== */}
+        {/* TAB 6: CLIENT-WISE WORKSPACE & TEAM ACCESS (PARTS 3 & 4)              */}
+        {/* ===================================================================== */}
+        {activeTab === 'clients_team' && (
+          <ClientsAndTeamPanel
+            clients={clients}
+            activeClientId={activeClientId}
+            onSelectClient={(id) => {
+              setActiveClientId(id);
+              const found = clients.find((c) => c.id === id);
+              if (found) showToast(`Switched active client to "${found.name}"`);
+            }}
+            onSaveClient={async (client) => {
+              setClients((prev) => {
+                const exists = prev.some((c) => c.id === client.id);
+                return exists ? prev.map((c) => (c.id === client.id ? client : c)) : [...prev, client];
+              });
+              if (currentUser) {
+                await saveClientToFirestore(currentUser.uid, client);
+              }
+            }}
+            onDeleteClient={async (clientId) => {
+              setClients((prev) => prev.filter((c) => c.id !== clientId));
+              if (activeClientId === clientId) setActiveClientId(DEFAULT_CLIENT_ID);
+              if (currentUser) {
+                await deleteClientFromFirestore(currentUser.uid, clientId);
+              }
+              showToast('Deleted client workspace.');
+            }}
+            bills={savedBills}
+            teamMembers={teamMembers}
+            currentFirmRole={currentFirmRole}
+            onChangeFirmRole={setCurrentFirmRole}
+            onSaveTeamMember={async (member) => {
+              setTeamMembers((prev) => [...prev.filter((m) => m.id !== member.id), member]);
+              if (currentUser) {
+                await saveTeamMemberToFirestore(currentUser.uid, member);
+              }
+            }}
+            onRemoveTeamMember={async (memberId) => {
+              setTeamMembers((prev) => prev.filter((m) => m.id !== memberId));
+              if (currentUser) {
+                await deleteTeamMemberFromFirestore(currentUser.uid, memberId);
+              }
+              showToast('Removed team member.');
+            }}
+            showToast={showToast}
+          />
+        )}
+
+        {/* ===================================================================== */}
+        {/* TAB 7: ACCURACY BENCHMARK, API KEYS & PRIVACY DELETE (PARTS 5, 6, 9)  */}
+        {/* ===================================================================== */}
+        {activeTab === 'accuracy_api' && (
+          <AccuracyAndApiPanel
+            bills={savedBills}
+            apiKeys={apiKeys}
+            isLoggedIn={Boolean(currentUser)}
+            onGenerateApiKey={async (label) => {
+              if (currentUser) {
+                return createAndSaveApiKeyToFirestore(currentUser.uid, label);
+              }
+              const randomBytes = new Uint8Array(24);
+              window.crypto.getRandomValues(randomBytes);
+              const hexPart = Array.from(randomBytes)
+                .map((b) => b.toString(16).padStart(2, '0'))
+                .join('');
+              const rawKey = `ls_live_${hexPart}`;
+              const hashBuf = await window.crypto.subtle.digest(
+                'SHA-256',
+                new TextEncoder().encode(rawKey)
+              );
+              const keyHash = Array.from(new Uint8Array(hashBuf))
+                .map((b) => b.toString(16).padStart(2, '0'))
+                .join('');
+              const record = {
+                id: `key_${Date.now()}`,
+                name: label,
+                label,
+                keyPrefix: rawKey.slice(0, 12),
+                keyHash,
+                createdAt: new Date().toISOString(),
+                status: 'active' as const,
+                revoked: false,
+                ownerUid: 'local_user',
+              };
+              try {
+                await fetch('/api/v1/keys/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    keyHash,
+                    keyPrefix: record.keyPrefix,
+                    name: label,
+                    uid: 'local_user',
+                    action: 'register',
+                  }),
+                });
+              } catch {
+                // Ignore network failure
+              }
+              setApiKeys((prev) => [record, ...prev]);
+              showToast('Generated new API key.');
+              return { rawKey, record };
+            }}
+            onRevokeApiKey={async (keyId, keyHash) => {
+              if (currentUser) {
+                await revokeApiKeyInFirestore(currentUser.uid, keyId);
+              } else {
+                setApiKeys((prev) =>
+                  prev.map((k) =>
+                    k.id === keyId ? { ...k, status: 'revoked', revoked: true } : k
+                  )
+                );
+                if (keyHash) {
+                  try {
+                    await fetch('/api/v1/keys/register', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ keyHash, action: 'revoke' }),
+                    });
+                  } catch {
+                    // Ignore network failure
+                  }
+                }
+              }
+              showToast('API key revoked.');
+            }}
+            onDeleteAllUserData={async () => {
+              setSavedBills([]);
+              setSavedDocuments([]);
+              if (currentUser) {
+                await deleteEntireUserAccountDataFromFirestore(currentUser.uid);
+              }
+              localStorage.removeItem('ledgersutra_bills_v4');
+              showToast('All your workspace bills, clients, and documents have been permanently deleted.');
+            }}
+            showToast={showToast}
+          />
+        )}
         </div>
+
+        {/* TallyPrime XML, Zoho Books CSV & Busy Excel Export Modal (Part 1) */}
+        <TallyExportModal
+          isOpen={isTallyModalOpen}
+          onClose={() => setIsTallyModalOpen(false)}
+          bills={filteredBills}
+          tallySettings={tallySettings}
+          onSaveTallySettings={(next) => {
+            setTallySettings(next);
+            if (currentUser) {
+              saveTallySettingsToFirestore(currentUser.uid, next);
+            }
+          }}
+          onJumpToFixBill={handleJumpToFixBill}
+          showToast={showToast}
+        />
 
         {/* 11-Section Conversion-Focused CA Homepage (shown on root '/') */}
         {currentPath === '/' && (
@@ -5078,7 +6234,7 @@ export function App() {
               {JSON.stringify(
                 {
                   app: BRAND_NAME,
-                  domain: 'https://casaarthiai.in',
+                  domain: SITE_DOMAIN,
                   currentBill: {
                     fileName: uploadedFileName,
                     shopName,
@@ -5173,4 +6329,64 @@ export function App() {
   );
 }
 
-export default App;
+// Part 9.4: Production Error Boundary wrapping the entire application
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMessage: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return {
+      hasError: true,
+      errorMessage: error?.message || 'An unexpected UI error occurred.',
+    };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[LedgerSutra ErrorBoundary]', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-6">
+          <div className="max-w-md w-full rounded-2xl border border-rose-500/30 bg-slate-900 p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-2 text-rose-400 font-bold text-base">
+              <AlertTriangle className="w-5 h-5" />
+              <span>LedgerSutra Workspace Recovery</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              The interface encountered an unexpected rendering error. Your saved invoices and client workspaces in Firestore remain safe.
+            </p>
+            <pre className="text-[11px] font-mono bg-slate-950 p-3 rounded-lg border border-slate-800 text-rose-300 overflow-x-auto">
+              {this.state.errorMessage}
+            </pre>
+            <button
+              type="button"
+              onClick={() => {
+                this.setState({ hasError: false, errorMessage: '' });
+                window.location.reload();
+              }}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
+            >
+              Reload LedgerSutra Workspace
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function WrappedApp() {
+  return (
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
+  );
+}

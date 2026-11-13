@@ -1,22 +1,23 @@
 /**
  * @file firestore.rules.test.ts
- * Specification test suite verifying LedgerSutra Firestore security invariants
- * and "Dirty Dozen" negative test payloads.
+ * Specification test suite verifying LedgerSutra Firestore security invariants,
+ * Client-Wise Workspace isolation, Role-Based Approval Workflow (Owner/Reviewer/Staff),
+ * and Hashed API Keys.
  */
 
 export interface SecurityTestCase {
   description: string;
   path: string;
   operation: 'get' | 'list' | 'create' | 'update' | 'delete';
-  auth: { uid: string; email_verified: boolean } | null;
+  auth: { uid: string; email_verified: boolean; firmRole?: 'owner' | 'reviewer' | 'staff' } | null;
   payload?: Record<string, unknown>;
   expectedAllow: boolean;
 }
 
 export const SECURITY_RULE_TEST_CASES: SecurityTestCase[] = [
   {
-    description: '1. Reject unauthenticated read on user bills',
-    path: '/users/user_123/bills/BILL-1001',
+    description: '1. Reject unauthenticated read on client bills',
+    path: '/users/user_123/clients/client_default/bills/BILL-1001',
     operation: 'get',
     auth: null,
     expectedAllow: false,
@@ -29,37 +30,60 @@ export const SECURITY_RULE_TEST_CASES: SecurityTestCase[] = [
     expectedAllow: false,
   },
   {
-    description: '3. Reject cross-user read on another user bill history',
-    path: '/users/user_123/bills/BILL-1001',
+    description: '3. Reject cross-user read on another user client workspace',
+    path: '/users/user_123/clients/client_default/bills/BILL-1001',
     operation: 'get',
     auth: { uid: 'attacker_999', email_verified: true },
     expectedAllow: false,
   },
   {
-    description: '4. Reject extra undeclared properties (schema pollution)',
+    description: '4. Reject extra undeclared properties (schema pollution) on UserProfile',
     path: '/users/user_123',
     operation: 'create',
     auth: { uid: 'user_123', email_verified: true },
     payload: {
       uid: 'user_123',
-      email: 'ca@firm.in',
+      email: 'ca@ledgersutra.in',
       displayName: 'CA Rajesh',
       photoURL: '',
       userMode: 'ca_mode',
+      firmRole: 'owner',
       selectedColumnsJson: '["fileName","grandTotal"]',
+      tallySettingsJson: '{}',
       updatedAt: 'SERVER_TIMESTAMP',
       isAdmin: true,
     },
     expectedAllow: false,
   },
   {
-    description: '5. Allow owner with verified email to create valid bill history item',
-    path: '/users/user_123/bills/BILL-1001',
+    description: '5. Allow owner with verified email to create ClientProfile',
+    path: '/users/user_123/clients/client_mehta',
     operation: 'create',
-    auth: { uid: 'user_123', email_verified: true },
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'owner' },
+    payload: {
+      id: 'client_mehta',
+      ownerId: 'user_123',
+      name: 'Mehta Textiles Pvt Ltd',
+      gstin: '24AABCM1234F1Z5',
+      pan: 'AABCM1234F',
+      financialYear: '2026-27',
+      notes: 'Monthly GSTR-1 & 2B client',
+      archived: false,
+      createdAt: '2026-04-01 10:00',
+      updatedAt: 'SERVER_TIMESTAMP',
+    },
+    expectedAllow: true,
+  },
+  {
+    description: '6. Allow Staff role to create a bill in draft or pending_review status',
+    path: '/users/user_123/clients/client_default/bills/BILL-1001',
+    operation: 'create',
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'staff' },
     payload: {
       id: 'BILL-1001',
       ownerId: 'user_123',
+      clientId: 'client_default',
+      approvalStatus: 'pending_review',
       fileName: 'Invoice_101.pdf',
       shopName: 'Shree Traders',
       sellerGstin: '24AAACS1234F1Z5',
@@ -83,6 +107,79 @@ export const SECURITY_RULE_TEST_CASES: SecurityTestCase[] = [
       extraHeaderFieldsJson: '{}',
       itemsJson: '[]',
       syncedAt: 'SERVER_TIMESTAMP',
+    },
+    expectedAllow: true,
+  },
+  {
+    description: '7. Reject Staff role attempting to directly mark a bill as approved',
+    path: '/users/user_123/clients/client_default/bills/BILL-1001',
+    operation: 'update',
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'staff' },
+    payload: {
+      id: 'BILL-1001',
+      ownerId: 'user_123',
+      clientId: 'client_default',
+      approvalStatus: 'approved',
+    },
+    expectedAllow: false,
+  },
+  {
+    description: '8. Allow Reviewer or Owner role to approve or reject a bill',
+    path: '/users/user_123/clients/client_default/bills/BILL-1001',
+    operation: 'update',
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'reviewer' },
+    payload: {
+      id: 'BILL-1001',
+      ownerId: 'user_123',
+      clientId: 'client_default',
+      approvalStatus: 'approved',
+      fileName: 'Invoice_101.pdf',
+      shopName: 'Shree Traders',
+      sellerGstin: '24AAACS1234F1Z5',
+      buyerName: 'Mehta & Co',
+      buyerGstin: '',
+      invoiceNumber: 'INV-101',
+      billDate: '2026-10-15',
+      placeOfSupply: '24-Gujarat',
+      voucherType: 'Tax Invoice',
+      paymentMode: 'NEFT',
+      subtotal: 1000,
+      cgstAmount: 90,
+      sgstAmount: 90,
+      igstAmount: 0,
+      taxAmount: 180,
+      discountAmount: 0,
+      grandTotal: 1180,
+      confidence: 99,
+      rawText: 'Tax Invoice Shree Traders',
+      createdAt: '2026-10-15 10:30',
+      extraHeaderFieldsJson: '{}',
+      itemsJson: '[]',
+      syncedAt: 'SERVER_TIMESTAMP',
+    },
+    expectedAllow: true,
+  },
+  {
+    description: '9. Reject Staff or Reviewer attempting to invite team members or create API keys (Owner only)',
+    path: '/users/user_123/teamMembers/MEM-1',
+    operation: 'create',
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'reviewer' },
+    expectedAllow: false,
+  },
+  {
+    description: '10. Allow Owner to create SHA-256 hashed API key record',
+    path: '/users/user_123/apiKeys/KEY-1',
+    operation: 'create',
+    auth: { uid: 'user_123', email_verified: true, firmRole: 'owner' },
+    payload: {
+      id: 'KEY-1',
+      ownerId: 'user_123',
+      label: 'Tally Bridge Production Key',
+      keyPrefix: 'ls_live_9a8f',
+      keyHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      revoked: false,
+      createdAt: '2026-11-04 10:00',
+      updatedAt: 'SERVER_TIMESTAMP',
     },
     expectedAllow: true,
   },

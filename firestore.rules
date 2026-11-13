@@ -17,6 +17,20 @@ service cloud.firestore {
       return isSignedInVerified() && request.auth.uid == userId;
     }
 
+    // Helper: Check active firmRole on user profile (defaults to 'owner' for workspace owner)
+    function userFirmRole(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc != null && userDoc.data != null && 'firmRole' in userDoc.data
+        ? userDoc.data.firmRole
+        : 'owner';
+    }
+
+    // Helper: Check whether caller can approve/reject bills (Owner or Reviewer only; Staff cannot approve/reject)
+    function canApproveOrReject(userId, approvalStatus) {
+      return (approvalStatus == 'draft' || approvalStatus == 'pending_review')
+        || (isOwner(userId) && (userFirmRole(userId) == 'owner' || userFirmRole(userId) == 'reviewer'));
+    }
+
     // Helper: Valid wildcard ID format
     function isValidId(id) {
       return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
@@ -27,25 +41,67 @@ service cloud.firestore {
       return val is number && val >= 0 && val <= 10000000000;
     }
 
-    // Pillar 2 & 3: Strict UserProfile validator
+    // Strict UserProfile validator
     function isValidUserProfile(data, userId) {
-      let keys = ['uid', 'email', 'displayName', 'photoURL', 'userMode', 'selectedColumnsJson', 'updatedAt'];
-      return data.keys().hasAll(keys)
-        && data.keys().hasOnly(keys)
+      let requiredKeys = [
+        'uid',
+        'email',
+        'displayName',
+        'photoURL',
+        'userMode',
+        'firmRole',
+        'selectedColumnsJson',
+        'tallySettingsJson',
+        'updatedAt'
+      ];
+      return data.keys().hasAll(requiredKeys)
+        && data.keys().hasOnly(requiredKeys)
         && data.uid is string && data.uid == userId
         && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
         && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 150
         && data.photoURL is string && data.photoURL.size() >= 0 && data.photoURL.size() <= 1000
         && data.userMode is string && (data.userMode == 'normal_user' || data.userMode == 'ca_mode')
+        && data.firmRole is string && (data.firmRole == 'owner' || data.firmRole == 'reviewer' || data.firmRole == 'staff')
         && data.selectedColumnsJson is string && data.selectedColumnsJson.size() >= 2 && data.selectedColumnsJson.size() <= 5000
+        && data.tallySettingsJson is string && data.tallySettingsJson.size() >= 2 && data.tallySettingsJson.size() <= 5000
         && data.updatedAt is timestamp && data.updatedAt == request.time;
     }
 
-    // Pillar 2 & 3: Strict UserBill validator
-    function isValidUserBill(data, userId, billId) {
+    // Strict ClientProfile validator
+    function isValidClientProfile(data, userId, clientId) {
       let keys = [
         'id',
         'ownerId',
+        'name',
+        'gstin',
+        'pan',
+        'financialYear',
+        'notes',
+        'archived',
+        'createdAt',
+        'updatedAt'
+      ];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.id is string && data.id == clientId
+        && data.ownerId is string && data.ownerId == userId
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 200
+        && data.gstin is string && data.gstin.size() >= 0 && data.gstin.size() <= 30
+        && data.pan is string && data.pan.size() >= 0 && data.pan.size() <= 20
+        && data.financialYear is string && data.financialYear.size() >= 4 && data.financialYear.size() <= 20
+        && data.notes is string && data.notes.size() >= 0 && data.notes.size() <= 2000
+        && data.archived is bool
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 40
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    // Strict Client-Scoped UserBill validator
+    function isValidClientBill(data, userId, clientId, billId) {
+      let keys = [
+        'id',
+        'ownerId',
+        'clientId',
+        'approvalStatus',
         'fileName',
         'shopName',
         'sellerGstin',
@@ -74,6 +130,10 @@ service cloud.firestore {
         && data.keys().hasOnly(keys)
         && data.id is string && data.id == billId
         && data.ownerId is string && data.ownerId == userId
+        && data.clientId is string && data.clientId == clientId
+        && data.approvalStatus is string
+        && (data.approvalStatus == 'draft' || data.approvalStatus == 'pending_review' || data.approvalStatus == 'approved' || data.approvalStatus == 'rejected')
+        && canApproveOrReject(userId, data.approvalStatus)
         && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250
         && data.shopName is string && data.shopName.size() >= 1 && data.shopName.size() <= 250
         && data.sellerGstin is string && data.sellerGstin.size() >= 0 && data.sellerGstin.size() <= 30
@@ -99,11 +159,12 @@ service cloud.firestore {
         && data.syncedAt is timestamp && data.syncedAt == request.time;
     }
 
-    // Pillar 2 & 3: Strict UserDocument validator
-    function isValidUserDocument(data, userId, docId) {
+    // Strict Client-Scoped UserDocument validator
+    function isValidClientDocument(data, userId, clientId, docId) {
       let keys = [
         'id',
         'ownerId',
+        'clientId',
         'fileName',
         'fileType',
         'docType',
@@ -118,6 +179,7 @@ service cloud.firestore {
         && data.keys().hasOnly(keys)
         && data.id is string && data.id == docId
         && data.ownerId is string && data.ownerId == userId
+        && data.clientId is string && data.clientId == clientId
         && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 250
         && data.fileType is string && data.fileType.size() >= 1 && data.fileType.size() <= 40
         && data.docType is string && (data.docType == 'NORMAL_DOCUMENT' || data.docType == 'SHOP_BILL')
@@ -127,6 +189,56 @@ service cloud.firestore {
         && data.confidence is number && data.confidence >= 0 && data.confidence <= 100
         && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 40
         && data.syncedAt is timestamp && data.syncedAt == request.time;
+    }
+
+    // Strict TeamMember validator
+    function isValidTeamMember(data, userId, memberId) {
+      let keys = [
+        'id',
+        'ownerId',
+        'email',
+        'name',
+        'role',
+        'assignedClientsJson',
+        'status',
+        'invitedAt',
+        'updatedAt'
+      ];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.id is string && data.id == memberId
+        && data.ownerId is string && data.ownerId == userId
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 150
+        && data.role is string && (data.role == 'owner' || data.role == 'reviewer' || data.role == 'staff')
+        && data.assignedClientsJson is string && data.assignedClientsJson.size() >= 2 && data.assignedClientsJson.size() <= 4000
+        && data.status is string && (data.status == 'active' || data.status == 'invited')
+        && data.invitedAt is string && data.invitedAt.size() >= 1 && data.invitedAt.size() <= 40
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    // Strict UserApiKey validator
+    function isValidUserApiKey(data, userId, keyId) {
+      let keys = [
+        'id',
+        'ownerId',
+        'label',
+        'keyPrefix',
+        'keyHash',
+        'revoked',
+        'createdAt',
+        'updatedAt'
+      ];
+      return data.keys().hasAll(keys)
+        && data.keys().hasOnly(keys)
+        && data.id is string && data.id == keyId
+        && data.ownerId is string && data.ownerId == userId
+        && data.label is string && data.label.size() >= 1 && data.label.size() <= 120
+        && data.keyPrefix is string && data.keyPrefix.size() >= 4 && data.keyPrefix.size() <= 24
+        && data.keyHash is string && data.keyHash.size() >= 32 && data.keyHash.size() <= 128
+        && data.revoked is bool
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 40
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
     }
 
     // User profile & settings document
@@ -142,38 +254,103 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid;
       allow delete: if isValidId(userId) && isOwner(userId);
 
-      // User's personal saved bills / invoices subcollection
-      match /bills/{billId} {
-        allow get: if isValidId(userId) && isValidId(billId) && isOwner(userId);
+      // Client-wise Workspace subcollection
+      match /clients/{clientId} {
+        allow get: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
         allow list: if isValidId(userId) && isOwner(userId);
         allow create: if isValidId(userId)
-          && isValidId(billId)
+          && isValidId(clientId)
           && isOwner(userId)
-          && isValidUserBill(request.resource.data, userId, billId);
+          && isValidClientProfile(request.resource.data, userId, clientId);
         allow update: if isValidId(userId)
-          && isValidId(billId)
+          && isValidId(clientId)
           && isOwner(userId)
-          && isValidUserBill(request.resource.data, userId, billId)
+          && isValidClientProfile(request.resource.data, userId, clientId)
           && request.resource.data.id == resource.data.id
           && request.resource.data.ownerId == resource.data.ownerId;
-        allow delete: if isValidId(userId) && isValidId(billId) && isOwner(userId);
+        allow delete: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
+
+        match /bills/{billId} {
+          allow get: if isValidId(userId) && isValidId(clientId) && isValidId(billId) && isOwner(userId);
+          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
+          allow create: if isValidId(userId)
+            && isValidId(clientId)
+            && isValidId(billId)
+            && isOwner(userId)
+            && isValidClientBill(request.resource.data, userId, clientId, billId);
+          allow update: if isValidId(userId)
+            && isValidId(clientId)
+            && isValidId(billId)
+            && isOwner(userId)
+            && isValidClientBill(request.resource.data, userId, clientId, billId)
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.ownerId == resource.data.ownerId;
+          allow delete: if isValidId(userId) && isValidId(clientId) && isValidId(billId) && isOwner(userId);
+        }
+
+        match /documents/{docId} {
+          allow get: if isValidId(userId) && isValidId(clientId) && isValidId(docId) && isOwner(userId);
+          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
+          allow create: if isValidId(userId)
+            && isValidId(clientId)
+            && isValidId(docId)
+            && isOwner(userId)
+            && isValidClientDocument(request.resource.data, userId, clientId, docId);
+          allow update: if isValidId(userId)
+            && isValidId(clientId)
+            && isValidId(docId)
+            && isOwner(userId)
+            && isValidClientDocument(request.resource.data, userId, clientId, docId)
+            && request.resource.data.id == resource.data.id
+            && request.resource.data.ownerId == resource.data.ownerId;
+          allow delete: if isValidId(userId) && isValidId(clientId) && isValidId(docId) && isOwner(userId);
+        }
       }
 
-      // User's personal saved verbatim OCR documents subcollection
-      match /documents/{docId} {
-        allow get: if isValidId(userId) && isValidId(docId) && isOwner(userId);
+      // Team Members subcollection (Owner Only)
+      match /teamMembers/{memberId} {
+        allow get: if isValidId(userId) && isValidId(memberId) && isOwner(userId);
         allow list: if isValidId(userId) && isOwner(userId);
         allow create: if isValidId(userId)
-          && isValidId(docId)
+          && isValidId(memberId)
           && isOwner(userId)
-          && isValidUserDocument(request.resource.data, userId, docId);
+          && userFirmRole(userId) == 'owner'
+          && isValidTeamMember(request.resource.data, userId, memberId);
         allow update: if isValidId(userId)
-          && isValidId(docId)
+          && isValidId(memberId)
           && isOwner(userId)
-          && isValidUserDocument(request.resource.data, userId, docId)
+          && userFirmRole(userId) == 'owner'
+          && isValidTeamMember(request.resource.data, userId, memberId)
           && request.resource.data.id == resource.data.id
           && request.resource.data.ownerId == resource.data.ownerId;
-        allow delete: if isValidId(userId) && isValidId(docId) && isOwner(userId);
+        allow delete: if isValidId(userId) && isValidId(memberId) && isOwner(userId) && userFirmRole(userId) == 'owner';
+      }
+
+      // Hashed API Keys subcollection (Owner Only)
+      match /apiKeys/{keyId} {
+        allow get: if isValidId(userId) && isValidId(keyId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        allow create: if isValidId(userId)
+          && isValidId(keyId)
+          && isOwner(userId)
+          && userFirmRole(userId) == 'owner'
+          && isValidUserApiKey(request.resource.data, userId, keyId);
+        allow update: if isValidId(userId)
+          && isValidId(keyId)
+          && isOwner(userId)
+          && userFirmRole(userId) == 'owner'
+          && isValidUserApiKey(request.resource.data, userId, keyId)
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.ownerId == resource.data.ownerId;
+        allow delete: if isValidId(userId) && isValidId(keyId) && isOwner(userId) && userFirmRole(userId) == 'owner';
+      }
+
+      // Legacy root bills & documents (read & delete permitted for migration to /clients/client_default)
+      match /bills/{billId} {
+        allow get, list, delete: if isValidId(userId) && isOwner(userId);
+      }
+      match /documents/{docId} {
+        allow get, list, delete: if isValidId(userId) && isOwner(userId);
       }
     }
   }

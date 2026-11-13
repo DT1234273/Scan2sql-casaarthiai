@@ -1,6 +1,6 @@
-export const SITE_DOMAIN = 'https://casaarthiai.in';
+export const SITE_DOMAIN = 'https://www.ledgersutra.in';
 export const BRAND_NAME = 'LedgerSutra';
-export const BRAND_TAGLINE = 'AI-Powered Invoice & Document Automation for CA Firms';
+export const BRAND_TAGLINE = 'GST Invoice to Tally & Excel, Built for Indian CA Firms';
 
 export interface FaqItem {
   question: string;
@@ -17,6 +17,7 @@ export interface SeoLandingPageSpec {
   metaDescription: string;
   primaryKeywords: string[];
   problemStatement: string;
+  longFormParagraphs?: string[];
   workflowSteps: Array<{ title: string; detail: string }>;
   keyCapabilities: Array<{ title: string; description: string }>;
   extractedFields: string[];
@@ -45,34 +46,64 @@ export interface ResourceArticleSpec {
 
 export const HOMEPAGE_FAQS: FaqItem[] = [
   {
-    question: 'What types of invoices and bills can LedgerSutra process?',
+    question: 'What is the extraction accuracy on Indian GST invoices?',
     answer:
-      'LedgerSutra processes digital PDFs, scanned multi-page PDFs, and mobile or scanner images (JPG, JPEG, PNG). It handles B2B GST tax invoices, retail purchase bills, wholesale distributor invoices, thermal receipts, and bilingual English + Hindi bills.',
+      'Extraction accuracy depends on invoice print and scan quality (digital PDF vs. low-light WhatsApp photo). Rather than publishing fixed marketing percentages, LedgerSutra provides a built-in Accuracy Test tool where you can upload your own client invoices and a ground-truth Excel sheet to measure field-level accuracy on your real documents.',
   },
   {
-    question: 'How does LedgerSutra help Chartered Accountants during monthly GSTR-1, GSTR-2B, and GSTR-3B preparation?',
+    question: 'What document formats are supported?',
     answer:
-      'Instead of typing supplier GSTINs, invoice numbers, dates, HSN/SAC codes, taxable values, and CGST/SGST/IGST splits manually into spreadsheets, CAs and article assistants can upload client folders in bulk. LedgerSutra extracts structured fields, validates 15-character GSTIN state codes, checks tax math consistency, flags duplicates, and exports clean Excel (.xlsx), CSV, JSON, or SQL registers.',
+      'LedgerSutra supports single-page and multi-page PDFs (both digital ERP PDFs and scanned PDFs), mobile camera photos (JPG, JPEG, PNG, WEBP), Bill of Entry import documents, and e-invoice QR images.',
   },
   {
-    question: 'What is the difference between Normal User Mode and CA / GST Audit Mode?',
+    question: 'Does LedgerSutra work on handwritten or faded thermal invoices?',
     answer:
-      'Normal User Mode consolidates each bill onto a single row (1 Bill = 1 Row) with Bill Name, Date, Invoice No, Shop Name, and Total Cost—while automatically expanding Product 1, Product 2... columns when a receipt contains multiple items. CA / GST Audit Mode unlocks Seller & Buyer GSTIN validation, HSN/SAC codes, Taxable Value, CGST/SGST/IGST columns, line-item audit view, and Supplier-Wise GSTR reconciliation summaries.',
+      'Accuracy depends on handwriting legibility and ink contrast. Printed, computer-generated, and clear thermal GST invoices extract reliably, while handwritten or heavily smudged bills are automatically flagged with a "Needs Review" status so your staff can verify fields side-by-side.',
   },
   {
-    question: 'Does LedgerSutra work if an uploaded invoice is tilted, shadowed, or a scanned image without a digital text layer?',
+    question: 'Is the XML export directly compatible with TallyPrime?',
     answer:
-      'Yes. LedgerSutra combines PDF coordinate text extraction with High-DPI canvas contrast normalization and hybrid AI Vision + bilingual Tesseract OCR (English + Devanagari Hindi). Even if a document is a flat photograph or scan, the engine extracts verbatim text and structured line items.',
+      'Yes. LedgerSutra generates TallyPrime-importable XML using the standard ENVELOPE > IMPORTDATA > Vouchers schema with configurable Purchase, CGST, SGST, IGST, and Round-Off ledger names, plus an option to auto-create missing supplier ledgers.',
   },
   {
-    question: 'Can I append newly scanned client bills into an existing Excel purchase register?',
+    question: 'How does the GSTR-2B reconciliation engine work?',
     answer:
-      'Yes. Using the "Append to Existing Excel (.xlsx)" workflow, you can import your existing client spreadsheet, scan additional bills in the same session, and export a single merged multi-sheet Excel workbook without losing prior rows.',
+      'Upload the GSTR-2B JSON or Excel file downloaded from the GST portal. LedgerSutra matches portal B2B invoices against your scanned purchase register by Supplier GSTIN and normalized invoice number, then falls back to fuzzy amount + date matching with a configurable tolerance (default ₹1).',
   },
   {
-    question: 'How is client financial data stored and protected?',
+    question: 'How is client financial data secured and stored?',
     answer:
-      'Uploaded files are processed in your active workspace session with local browser storage and optional workspace sync so you don’t lose work on page refresh. You retain full control to delete individual invoice rows or clear your workspace history at any time.',
+      'Authentication uses Google Sign-In via Firebase Authentication. All client workspaces, bills, and audit logs are isolated per authenticated user in Firestore over HTTPS encryption in transit. You can delete any client workspace or your entire account data at any time.',
+  },
+  {
+    question: 'What are the pricing plans and is there a CA-firm pilot?',
+    answer:
+      'We offer placeholder tiers (Free Demo, Pro Practice, and CA Firm Multi-Client) while onboarding early practices. Custom CA-firm pilot offers are available—use the "Try free demo" or "Book a demo" buttons to test with your own invoices first.',
+  },
+  {
+    question: 'How many invoices can I upload in a single batch?',
+    answer:
+      'The batch processing queue lets you select and process dozens of PDFs and images sequentially with per-file progress bars, retry controls, and automatic Master Sheet insertion without reloading the browser.',
+  },
+  {
+    question: 'Can I manage multiple clients separately for my CA practice?',
+    answer:
+      'Yes. You can create separate Client profiles (Name, GSTIN, PAN, Financial Year, Notes) and switch between clients from the header. All scanning, Master Sheet views, GSTR-2B reconciliation, and Tally XML exports stay strictly scoped to the active client.',
+  },
+  {
+    question: 'Do you support team access and maker-checker approval workflows?',
+    answer:
+      'Yes. Firm owners can assign Owner/CA, Reviewer, and Staff (upload-only) roles. Staff can scan and submit bills for review, while only Owners and Reviewers can mark bills as Approved or Rejected, with a per-bill audit trail.',
+  },
+  {
+    question: 'Is there an API for integrating invoice extraction into our own ERP or practice tool?',
+    answer:
+      'Yes. You can generate SHA-256 hashed API keys in Settings > API and call POST /api/v1/extract with a multipart invoice file to receive structured JSON.',
+  },
+  {
+    question: 'Which languages and support channels are available?',
+    answer:
+      'Our hybrid OCR pipeline supports English and Devanagari Hindi (eng+hin) for regional bills. Support and CA onboarding assistance are available via the Contact page.',
   },
 ];
 
@@ -613,9 +644,452 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
       },
     ],
   },
+
+  '/gst-invoice-to-tally': {
+    slug: 'gst-invoice-to-tally',
+    path: '/gst-invoice-to-tally',
+    badge: 'TallyPrime XML Voucher Import',
+    h1: 'Convert GST Invoices to TallyPrime XML Vouchers Automatically',
+    subtitle:
+      'Extract supplier GSTIN, invoice number, date, taxable value, and CGST/SGST/IGST splits from PDF or photo bills and generate TallyPrime-ready XML purchase vouchers in one click.',
+    metaTitle: 'GST Invoice to TallyPrime XML Converter for CA Firms — LedgerSutra',
+    metaDescription:
+      'Convert PDF and image GST purchase invoices directly into TallyPrime-importable XML vouchers with automatic party ledger creation and pre-export GST audit.',
+    primaryKeywords: [
+      'GST invoice to Tally XML',
+      'import PDF invoice into TallyPrime',
+      'purchase bill to Tally converter India',
+      'CA firm Tally automation software',
+    ],
+    problemStatement:
+      'Every month, article assistants and junior accountants in Indian CA firms spend days manually keying purchase vouchers into TallyPrime—selecting party ledgers, typing 16-character invoice numbers, splitting taxable amounts, and matching CGST, SGST, IGST, and round-off entries.',
+    longFormParagraphs: [
+      'Manual purchase voucher entry in TallyPrime is one of the most time-consuming bottlenecks in an Indian Chartered Accountant practice. Whether a client submits digital ERP PDFs, multi-page distributor bills, or WhatsApp photographs of paper invoices, someone has to verify the 15-character supplier GSTIN, check whether the transaction is intra-state (CGST + SGST) or inter-state (IGST), and ensure the ledger totals balance to the exact rupee.',
+      'LedgerSutra eliminates repetitive voucher typing by combining hybrid OCR extraction with a purpose-built TallyPrime XML generator. When you upload a single bill or a batch of client invoices, LedgerSutra extracts the supplier name, Seller GSTIN, invoice number, invoice date, HSN/SAC line items, taxable subtotal, CGST, SGST, IGST, other charges, and round-off automatically.',
+      'Before generating the XML file, LedgerSutra runs a deterministic Pre-Export Validation check. Any voucher with a missing invoice number, unrecognized date, invalid 15-digit GSTIN format/checksum, or tax math variance is flagged on the validation screen with a "Fix Now" link or an option to skip blocked bills. This ensures broken vouchers never pollute your client’s Tally company data.',
+      'In the Tally Settings panel, you can map your exact TallyPrime Company Name, Purchase Ledger Name, Input CGST, Input SGST, Input IGST, and Round-Off ledger names per client. You can also enable "Auto-create missing party ledgers", which embeds `<LEDGER ACTION="Create">` master blocks under Sundry Creditors with the supplier’s GSTIN and State Name right inside the XML envelope so TallyPrime imports vouchers cleanly on the first attempt.',
+    ],
+    workflowSteps: [
+      {
+        title: '1. Upload PDF or Photo Purchase Bills',
+        detail: 'Drop single or bulk GST invoices into your client workspace.',
+      },
+      {
+        title: '2. Configure Client Tally Ledger Names',
+        detail:
+          'Set your TallyPrime company name, purchase ledger, CGST/SGST/IGST ledgers, and enable auto-creation of missing party ledgers.',
+      },
+      {
+        title: '3. Run Pre-Export GST & Math Validation',
+        detail:
+          'Review and fix any bills flagged for missing invoice numbers, invalid GSTINs, or tax math mismatches before export.',
+      },
+      {
+        title: '4. Import XML in TallyPrime (Alt + O > Import > Vouchers)',
+        detail:
+          'Download the `.xml` file with properly signed Debit/Credit (`ISDEEMEDPOSITIVE`) ledger entries and import directly into TallyPrime.',
+      },
+    ],
+    keyCapabilities: [
+      {
+        title: 'Standards-Compliant TallyPrime XML Envelope',
+        description:
+          'Generates `ENVELOPE > HEADER > BODY > IMPORTDATA > Vouchers` with YYYYMMDD dates, bill allocations, and XML character escaping.',
+      },
+      {
+        title: 'Auto-Create Missing Supplier Ledgers',
+        description:
+          'Optionally includes `<LEDGER>` master messages under Sundry Creditors with `PARTYGSTIN` and `LEDSTATENAME` so new vendors never fail import.',
+      },
+      {
+        title: 'Pre-Export Validation Gate',
+        description:
+          'Lists any blocked bills (missing date/invoice no, invalid GSTIN, tax mismatch) with one-click "Fix Now" or "Skip & Export Valid Bills".',
+      },
+      {
+        title: 'Also Supports Zoho Books CSV & Busy Excel',
+        description:
+          'Need to import into Zoho Books or Busy Accounting instead of Tally? Export mapped CSV and `.xlsx` files from the same menu.',
+      },
+    ],
+    extractedFields: [
+      'DATE (YYYYMMDD) & VOUCHERNUMBER',
+      'REFERENCE (Original Supplier Invoice No)',
+      'PARTYLEDGERNAME & PARTYGSTIN',
+      'Party Credit Entry (Grand Total)',
+      'Purchase Debit Entry (Net Taxable Value)',
+      'Separate CGST, SGST & IGST Debit Entries',
+      'Automatic Round-Off & Other Charges Entries',
+    ],
+    caUseCases: [
+      'Importing monthly B2B purchase registers into TallyPrime before GSTR-3B filing',
+      'Onboarding backlog client books for annual tax audit (Section 44AB)',
+      'Standardizing ledger names across multiple article assistants and staff members',
+      'Exporting only Reviewer/Owner-Approved bills into Tally books',
+    ],
+    faqs: [
+      {
+        question: 'How do I import the downloaded XML file into TallyPrime?',
+        answer:
+          'Open your client company in TallyPrime, press Alt + O (Import) > Vouchers, select the XML file exported from LedgerSutra, and press Enter.',
+      },
+      {
+        question: 'What if a supplier ledger does not exist in TallyPrime yet?',
+        answer:
+          'Keep "Auto-create missing party ledgers" enabled in Tally Settings. LedgerSutra will include the LEDGER creation nodes under Sundry Creditors with the supplier GSTIN in the same XML file.',
+      },
+      {
+        question: 'Does it handle round-off differences between taxable + tax and grand total?',
+        answer:
+          'Yes. Any rounding difference is automatically posted to your configured Round-Off ledger with the correct Debit or Credit sign (`ISDEEMEDPOSITIVE`) so the voucher always balances.',
+      },
+    ],
+  },
+
+  '/gstr-2b-reconciliation-excel': {
+    slug: 'gstr-2b-reconciliation-excel',
+    path: '/gstr-2b-reconciliation-excel',
+    badge: 'GSTR-2B vs Purchase Books Matching',
+    h1: 'Automated GSTR-2B Reconciliation in Excel & JSON for CA Firms',
+    subtitle:
+      'Match your scanned purchase register against GST portal GSTR-2B JSON or Excel files in seconds. Identify Eligible ITC, ITC at Risk, Amount Mismatches, and Unbooked 2B bills automatically.',
+    metaTitle: 'GSTR-2B Reconciliation Tool & Excel Report for CA Firms — LedgerSutra',
+    metaDescription:
+      'Upload GSTR-2B JSON or Excel from the GST portal and reconcile against your purchase bills. Detect matched, mismatched, and missing ITC invoices with Excel export.',
+    primaryKeywords: [
+      'GSTR-2B reconciliation Excel',
+      'reconcile purchase register with GSTR-2B JSON',
+      'ITC reconciliation tool for CA firms',
+      'GSTR-2B vs books matching software',
+    ],
+    problemStatement:
+      'Under current GST rules, Input Tax Credit (ITC) can only be claimed in GSTR-3B if the supplier invoice appears in GSTR-2B. Reconciling hundreds of purchase bills against portal JSON or Excel downloads using manual VLOOKUPs breaks whenever suppliers add prefixes, slashes, or leading zeros to invoice numbers.',
+    longFormParagraphs: [
+      'Manual VLOOKUP reconciliation in Excel fails on real-world Indian GST data because suppliers frequently format invoice numbers differently when filing GSTR-1—for example, `INV/2026-27/0042` on the printed bill might appear as `INV2627-42` or `042` in GSTR-2B. Additionally, small rounding variances of ₹0.50 or ₹1.00 cause exact-match formulas to reject valid vouchers.',
+      'LedgerSutra includes a dedicated GSTR-2B Reconciliation workspace designed specifically for Indian CA firms and GST practitioners. You can upload the official GSTR-2B JSON file or Excel workbook downloaded directly from the GST portal, and LedgerSutra parses the B2B supplier invoices (Supplier GSTIN, Trade Name, Invoice No, Date, Taxable Value, IGST, CGST, SGST, and ITC Availability).',
+      'Our two-pass matching engine first pairs records by Supplier GSTIN + Normalized Invoice Number (stripping spaces, slashes, hyphens, and leading zeros, case-insensitively). For remaining unmatched bills from the same supplier, it runs a fuzzy fallback on Invoice Amount (with a configurable rupee tolerance, default ₹1) and Date to catch probable invoice number typos.',
+      'Every record is classified into one of 6 clear audit statuses: Matched, Amount Mismatch, Date Mismatch, Invoice Number Mismatch (Probable), In Books but Not in 2B, and In 2B but Not in Books. You can add per-row audit notes, manually override match statuses, filter by tax period, and export a complete multi-sheet Excel reconciliation workbook containing a Summary sheet plus one dedicated worksheet per status.',
+    ],
+    workflowSteps: [
+      {
+        title: '1. Scan or Import Client Purchase Bills',
+        detail: 'Build your purchase register by scanning PDF/image invoices or importing an existing Excel sheet.',
+      },
+      {
+        title: '2. Upload Portal GSTR-2B JSON or Excel',
+        detail: 'Drop the GSTR-2B `.json` or `.xlsx` file downloaded from the GST portal into the GSTR-2B Reconciliation tab.',
+      },
+      {
+        title: '3. Review 6-Status Match & ITC Summary Cards',
+        detail:
+          'Inspect Total ITC as per Books vs. GSTR-2B, ITC at Risk, and side-by-side differences with configurable rupee tolerance.',
+      },
+      {
+        title: '4. Export Multi-Sheet Reconciliation Excel',
+        detail:
+          'Download a structured `.xlsx` workbook with a Summary tab and separate tabs for Matched, Mismatched, Missing in 2B, and Missing in Books.',
+      },
+    ],
+    keyCapabilities: [
+      {
+        title: 'Dual GSTR-2B JSON & Excel Parser',
+        description:
+          'Reads both official GST portal JSON (`docdata.b2b`) and GSTR-2B Excel workbooks with clear error reporting.',
+      },
+      {
+        title: 'Smart Invoice Normalization + Fuzzy Fallback',
+        description:
+          'Strips spaces, slashes, and leading zeros first, then falls back to GSTIN + Amount + Date matching to catch supplier typos.',
+      },
+      {
+        title: 'Configurable Amount Tolerance (Default ₹1)',
+        description:
+          'Adjust the rounding tolerance in rupees so minor paise differences do not trigger false mismatch alerts.',
+      },
+      {
+        title: 'Multi-Sheet Excel Working Paper Export',
+        description:
+          'Generates a client-ready Excel report with one sheet per reconciliation status plus an executive ITC summary.',
+      },
+    ],
+    extractedFields: [
+      'Supplier GSTIN & Trade Name',
+      'Books vs 2B Invoice Number & Date',
+      'Books vs 2B Taxable Value & Variance (₹)',
+      'Books vs 2B IGST, CGST, SGST & Total Tax Diff',
+      '2B ITC Availability Flag (YES / NO)',
+      'Per-Row CA Audit Note & Manual Override Status',
+    ],
+    caUseCases: [
+      'Monthly GSTR-2B vs Purchase Register reconciliation before filing GSTR-3B',
+      'Identifying suppliers who have not filed GSTR-1 ("In Books but Not in 2B") for client follow-up',
+      'Catching unbooked purchase bills ("In 2B but Not in Books") to maximize legitimate ITC claims',
+      'Preparing annual GSTR-9 / 9C ITC reconciliation working papers',
+    ],
+    faqs: [
+      {
+        question: 'Can I upload both GSTR-2B JSON and Excel files?',
+        answer:
+          'Yes. The GSTR-2B Reconciliation tab accepts both the raw `.json` file and `.xlsx` / `.xls` files downloaded from the GST portal.',
+      },
+      {
+        question: 'What if a supplier typed the invoice number slightly differently in GSTR-1?',
+        answer:
+          'LedgerSutra normalizes punctuation and leading zeros automatically, and uses fuzzy matching on Supplier GSTIN + Amount + Date to flag probable Invoice Number Mismatches for one-click manual confirmation.',
+      },
+      {
+        question: 'How is the exported Excel reconciliation report structured?',
+        answer:
+          'It includes a Summary sheet (Total ITC Books vs 2B, ITC at Risk, and status totals) followed by 6 dedicated worksheets—one for each reconciliation status.',
+      },
+    ],
+  },
+
+  '/bulk-invoice-processing-for-ca': {
+    slug: 'bulk-invoice-processing-for-ca',
+    path: '/bulk-invoice-processing-for-ca',
+    badge: 'CA Practice Batch Automation',
+    h1: 'Bulk Invoice Processing & Client Workspace for Indian CA Firms',
+    subtitle:
+      'Process dozens of client PDFs and bill photos in a queued batch pipeline, organize registers client-by-client, enforce team review workflows, and export to TallyPrime or Excel.',
+    metaTitle: 'Bulk Invoice Processing for CA Firms in India — LedgerSutra',
+    metaDescription:
+      'Queue and scan multiple client invoices in bulk with per-file progress bars, duplicate invoice detection, client-wise workspaces, and team approval workflows.',
+    primaryKeywords: [
+      'bulk invoice processing for CA',
+      'batch GST invoice scanner India',
+      'multi-client accounting workspace for CA firms',
+      'automate article assistant bill entry',
+    ],
+    problemStatement:
+      'During peak GST compliance weeks (1st to 20th of every month), a typical CA practice handles dozens of clients—each sending 50 to 500 mixed PDF and image bills. Processing bills one at a time without client separation or maker-checker review leads to bottlenecks and filing errors.',
+    longFormParagraphs: [
+      'High-volume compliance in an Indian Chartered Accountant firm requires more than a single-file OCR widget. When clients share zip archives or WhatsApp folders containing hundreds of purchase bills, your team needs a structured batch pipeline that processes files reliably, tracks per-file progress, and keeps every client’s books strictly segregated.',
+      'LedgerSutra is built around a Client-Wise Workspace architecture (`/users/{uid}/clients/{clientId}`). From the header switcher, your team can create, edit, or archive client profiles—recording the client’s Legal Name, 15-digit GSTIN, PAN, and Financial Year. Every batch scan, Master Sheet view, GSTR-2B reconciliation, and Tally XML export operates exclusively on the active client.',
+      'Inside the workspace, the dedicated Batch Invoice Upload & Processing Queue lets staff drag and drop multiple PDFs and images at once. Each file shows an individual progress bar (0%–100%), stage label, and extracted summary. If any invoice has low OCR confidence, a missing invoice number, an invalid GSTIN, or a tax mismatch, LedgerSutra automatically marks it with a "Needs Review" flag so reviewers can filter the Review Queue immediately.',
+      'Furthermore, LedgerSutra supports role-based Team Access (Owner/CA, Reviewer, and Staff). Staff members can upload bills and submit them for review (`Pending Review`), while only Owners and Reviewers can mark bills as `Approved` or `Rejected` (with a recorded rejection reason and full timestamped audit trail). By default, only Approved bills flow into TallyPrime XML exports and GSTR-2B reconciliations.',
+    ],
+    workflowSteps: [
+      {
+        title: '1. Select or Create the Client Workspace',
+        detail: 'Switch to the target client (with their GSTIN, PAN, and Financial Year) in the header.',
+      },
+      {
+        title: '2. Queue Multiple Invoices in Batch Upload',
+        detail: 'Drop dozens of PDFs and images into the Batch Queue and track per-file progress bars in real time.',
+      },
+      {
+        title: '3. Filter the Review Queue & Approve Bills',
+        detail:
+          'Reviewers inspect bills flagged as "Needs Review" or duplicate collisions and mark verified vouchers as Approved.',
+      },
+      {
+        title: '4. Export Approved Register to Tally, Excel, Zoho, or Busy',
+        detail:
+          'Download TallyPrime XML, multi-sheet Excel, Zoho Books CSV, or Busy Excel for the client.',
+      },
+    ],
+    keyCapabilities: [
+      {
+        title: 'Dedicated Batch Queue with Per-File Progress',
+        description:
+          'Monitor Queued, Scanning, Completed, and Error states with individual progress bars and one-click retry.',
+      },
+      {
+        title: 'Client-Wise Isolation & Overview Dashboard',
+        description:
+          'Manage all firm clients with an overview of Bill Count, Total Taxable, Total GST, and Pending Review counts per client.',
+      },
+      {
+        title: 'Maker-Checker Team Approval & Audit Trail',
+        description:
+          'Assign Owner, Reviewer, and Staff roles. Track who uploaded, edited, and approved every bill with timestamps.',
+      },
+      {
+        title: 'Duplicate Invoice Resolution Modal',
+        description:
+          'Automatically detects duplicate `Invoice Number + Shop Name` entries and lets you Merge Items, Overwrite, or Save as Duplicate.',
+      },
+    ],
+    extractedFields: [
+      'Standard GST Header & Line-Item Fields',
+      'IRN, E-Way Bill No & E-Invoice QR Payload',
+      'Supplier & Buyer Address, State & PAN',
+      'Bank Name, Account No & IFSC Code',
+      'PO Number, Due Date, Payment Terms & Currency',
+      'Discount, Other Charges, Round-Off & Bill of Entry Fields',
+    ],
+    caUseCases: [
+      'Managing 20+ monthly GST retainer clients under one firm account',
+      'Delegating bulk scanning to article assistants (Staff role) while CAs (Owner/Reviewer) approve exceptions',
+      'Preventing duplicate bill entry across weekly client uploads',
+      'Measuring real extraction accuracy on client samples using the built-in Accuracy Test page',
+    ],
+    faqs: [
+      {
+        question: 'Can staff upload bills without being able to approve them for Tally export?',
+        answer:
+          'Yes. Users assigned the Staff role can upload and submit bills (`Pending Review`), while only Owner/CA and Reviewer roles can approve or reject bills—enforced both in the UI and in Firestore security rules.',
+      },
+      {
+        question: 'What happens if the same bill is uploaded twice in a batch?',
+        answer:
+          'LedgerSutra detects matching Invoice Number and Shop Name combinations and presents a resolution modal to Merge Items, Overwrite the existing record, or Save as a duplicate.',
+      },
+    ],
+  },
 };
 
 export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
+  {
+    slug: 'how-to-import-purchase-invoices-into-tallyprime-from-pdf',
+    path: '/blog/how-to-import-purchase-invoices-into-tallyprime-from-pdf',
+    title: 'How to Import Purchase Invoices into TallyPrime from PDF',
+    metaTitle: 'How to Import Purchase Invoices into TallyPrime from PDF — LedgerSutra',
+    metaDescription:
+      'Step-by-step guide for Indian CA firms on converting PDF purchase bills into TallyPrime XML vouchers with GST ledger mapping and party auto-creation.',
+    category: 'TallyPrime Automation',
+    readTime: '7 min read',
+    publishedDate: '2026-11-02',
+    summary:
+      'Learn how to extract structured GST data from PDF purchase invoices, validate GSTINs and tax splits, and import vouchers directly into TallyPrime using XML.',
+    keyTakeaways: [
+      'TallyPrime natively imports vouchers wrapped in the standard ENVELOPE > IMPORTDATA > Vouchers XML schema.',
+      'Always map your exact Purchase, Input CGST, Input SGST, Input IGST, and Round-Off ledger names before generating XML.',
+      'Enable automatic party ledger creation in XML so new suppliers under Sundry Creditors do not block voucher import.',
+    ],
+    sections: [
+      {
+        heading: '1. Why Typing PDF Purchase Bills into TallyPrime Takes Too Long',
+        paragraphs: [
+          'For Indian Chartered Accountants and bookkeeping teams, recording purchase vouchers in TallyPrime is a monthly marathon. Clients send invoices as ERP PDFs, scanned multi-page statements, or mobile camera photos. Entering each bill manually requires checking whether the supplier ledger exists, verifying the 15-character GSTIN, entering the supplier invoice number and date in the Reference field, and splitting taxable values and CGST/SGST/IGST ledgers.',
+          'When a single typo occurs in a ledger name or tax calculation, either Tally rejects the entry or your GSTR-3B working papers go out of sync with GSTR-2B.',
+        ],
+      },
+      {
+        heading: '2. Understanding TallyPrime’s XML Voucher Import Structure',
+        paragraphs: [
+          'TallyPrime includes a built-in XML import engine accessible via Alt + O (Import) > Vouchers. A valid purchase voucher XML file uses `<ENVELOPE>` containing `<HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>` and `<BODY><IMPORTDATA>`. Inside `<REQUESTDESC>`, `<REPORTNAME>Vouchers</REPORTNAME>` and `<SVCURRENTCOMPANY>` tell Tally which company should receive the vouchers.',
+          'Each invoice is represented as a `<VOUCHER VCHTYPE="Purchase" ACTION="Create">` node with `<DATE>` in `YYYYMMDD` format, `<VOUCHERNUMBER>`, `<REFERENCE>`, `<PARTYLEDGERNAME>`, `<PARTYGSTIN>`, and `<ALLLEDGERENTRIES.LIST>`. Crucially, Tally XML requires strict sign and `ISDEEMEDPOSITIVE` conventions: the Supplier Credit entry uses `<ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>` with a positive amount, while the Purchase and Input GST Debit entries use `<ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>` with negative amounts.',
+        ],
+        checklist: [
+          'Ensure dates are formatted strictly as YYYYMMDD (e.g. 20261031).',
+          'Escape special XML characters (&amp;, &lt;, &gt;, &quot;, &apos;) in supplier names like "M/s Shah & Sons".',
+          'Include a Round-Off ledger entry whenever Taxable + GST differs from Grand Total by paise.',
+        ],
+      },
+      {
+        heading: '3. Step-by-Step Workflow in LedgerSutra',
+        paragraphs: [
+          'In LedgerSutra, upload your PDF invoices in the Scanner or Batch Queue tab. Next, open Tally Settings in the Master Sheet export menu to confirm your Tally Company Name and ledger names. Click "Export to Tally (XML)" to run the pre-export validation check, resolve or skip any blocked bills, and download the `.xml` file ready for TallyPrime.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'What happens if a supplier name has an ampersand (&) like "A & B Traders"?',
+        answer:
+          'LedgerSutra automatically escapes all XML special characters (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`) so TallyPrime parses the XML without syntax errors.',
+      },
+    ],
+  },
+  {
+    slug: 'gstr-2b-reconciliation-in-excel-step-by-step',
+    path: '/blog/gstr-2b-reconciliation-in-excel-step-by-step',
+    title: 'GSTR-2B Reconciliation in Excel: Step by Step',
+    metaTitle: 'GSTR-2B Reconciliation in Excel: Step-by-Step Guide for CAs — LedgerSutra',
+    metaDescription:
+      'Complete step-by-step guide to reconciling your purchase register with GST portal GSTR-2B JSON and Excel files to protect Input Tax Credit (ITC).',
+    category: 'GST Reconciliation',
+    readTime: '8 min read',
+    publishedDate: '2026-11-03',
+    summary:
+      'A practical guide for CA firms on matching purchase books against GSTR-2B, handling invoice number formatting differences, and exporting multi-sheet audit reports.',
+    keyTakeaways: [
+      'Normalize invoice numbers by stripping spaces, slashes, hyphens, and leading zeros before comparing Books vs GSTR-2B.',
+      'Use a ₹1 to ₹2 rounding tolerance so paise differences do not hide genuine matches.',
+      'Separate discrepancies into actionable buckets: Missing in 2B (follow up with vendor) vs Missing in Books (record unbooked bill).',
+    ],
+    sections: [
+      {
+        heading: '1. Why GSTR-2B Reconciliation Is Critical Before Filing GSTR-3B',
+        paragraphs: [
+          'Under Section 16(2)(aa) of the CGST Act read with Rule 36(4), Input Tax Credit (ITC) can only be availed when the supplier has furnished the invoice in their GSTR-1/IFF and the details are communicated in the recipient’s GSTR-2B statement.',
+          'Claiming excess ITC not reflected in GSTR-2B triggers automated DRC-01C intimations and potential interest liability. Conversely, failing to spot invoices present in GSTR-2B but missing from your client’s purchase books leaves legitimate ITC unclaimed.',
+        ],
+      },
+      {
+        heading: '2. Why Standard Excel VLOOKUPs Fail on GSTR-2B Data',
+        paragraphs: [
+          'When you run a naive VLOOKUP on `GSTIN + Invoice Number` in Excel, 15% to 30% of valid invoices often show up as unmatched. Why? Because the printed bill might say `Bill No: 00458/26-27`, whereas the supplier’s accountant uploaded `458` or `458-26/27` in GSTR-1.',
+        ],
+        checklist: [
+          'Step 1: Normalize both Books and 2B invoice numbers (uppercase, strip punctuation and leading zeros).',
+          'Step 2: Match on Supplier GSTIN + Normalized Invoice Number and compare Taxable Value and Tax within a ₹1 tolerance.',
+          'Step 3: Run a second pass on remaining unmatched items matching Supplier GSTIN + Invoice Date + Amount to catch probable invoice number typos.',
+          'Step 4: Classify remaining items into "In Books but Not in 2B" and "In 2B but Not in Books".',
+        ],
+      },
+      {
+        heading: '3. Generating the 6-Sheet Excel Working Paper in LedgerSutra',
+        paragraphs: [
+          'Instead of building complex macros every month, open the GSTR-2B Reconciliation tab in LedgerSutra, upload your portal GSTR-2B JSON or Excel file, review the side-by-side differences, add audit notes, and click "Export Reconciliation Excel" to download a workbook with a Summary sheet and one sheet per status.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Should I reconcile against GSTR-2A or GSTR-2B for monthly ITC claims?',
+        answer:
+          'Always reconcile against the static GSTR-2B statement generated on the 14th of the following month for monthly GSTR-3B ITC claims.',
+      },
+    ],
+  },
+  {
+    slug: 'how-to-find-duplicate-purchase-invoices-before-filing-gst',
+    path: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
+    title: 'How to Find Duplicate Purchase Invoices Before Filing GST',
+    metaTitle: 'How to Find Duplicate Purchase Invoices Before Filing GST — LedgerSutra',
+    metaDescription:
+      'Learn how CA firms detect and resolve duplicate purchase bills across WhatsApp photos, PDFs, and Excel sheets before filing GSTR-3B.',
+    category: 'GST Audit Controls',
+    readTime: '6 min read',
+    publishedDate: '2026-11-04',
+    summary:
+      'Duplicate purchase vouchers are a common cause of excess ITC claims during GST audits. Here is how to catch and resolve them before exporting your register.',
+    keyTakeaways: [
+      'Clients frequently send both a WhatsApp photo and an email PDF of the same supplier invoice in a monthly folder.',
+      'Check for collisions on normalized (Invoice Number + Supplier Name / GSTIN) before adding rows to your master register.',
+      'Decide whether to Merge Line Items (for multi-page bills), Overwrite the existing record, or Save as a separate entry.',
+    ],
+    sections: [
+      {
+        heading: '1. How Duplicate Purchase Bills Sneak into Client Books',
+        paragraphs: [
+          'In most small and medium businesses, purchase bills arrive through multiple channels: a store manager snaps a WhatsApp photo when goods arrive, while the vendor emails a PDF tax invoice at the end of the week. At month-end, both files get dumped into the CA’s Google Drive folder.',
+          'If two different staff members process those files—or if a batch is imported without collision checks—the same invoice gets booked twice, inflating Input Tax Credit.',
+        ],
+      },
+      {
+        heading: '2. Deterministic Duplicate Detection & Resolution',
+        paragraphs: [
+          'Whenever you save a bill to the Master Sheet in LedgerSutra, the system checks `savedBills` for any existing record with the same normalized `invoiceNumber` and `shopName` / `sellerGstin`.',
+        ],
+        checklist: [
+          'Option 1 — Merge Items: Ideal when two pages of the same invoice were scanned separately; appends line items and recalculates totals.',
+          'Option 2 — Overwrite Record: Ideal when re-scanning a clearer copy of a previously scanned invoice.',
+          'Option 3 — Save as Duplicate: Keeps both entries separate if two genuinely distinct vendors happen to share a generic bill number like "001".',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: 'Does LedgerSutra also flag duplicates inside the CA Validation panel?',
+        answer:
+          'Yes. Even before clicking Save, the real-time CA Audit Engine checks your active draft against all saved bills in the current client workspace and shows a Duplicate Invoice alert.',
+      },
+    ],
+  },
   {
     slug: 'automate-invoice-data-entry-ca-firms',
     path: '/resources/automate-invoice-data-entry-ca-firms',
@@ -991,51 +1465,87 @@ export const CORE_SAAS_ROUTES_META: Record<
   }
 > = {
   '/': {
-    title: 'LedgerSutra — AI-Powered Invoice & Document Automation for CA Firms in India',
+    title: 'GST Invoice to Tally & Excel for Indian CA Firms | LedgerSutra',
     description:
-      'Turn invoices, bills and financial documents into structured, searchable accounting data — without repetitive manual data entry. Built for Indian Chartered Accountants & CA firms.',
+      'Extract GSTIN, HSN codes, line items and tax splits from PDFs and photos into TallyPrime XML, GSTR-2B reconciliation, and Excel registers for Indian CA firms.',
     breadcrumbName: 'Home',
   },
   '/app': {
-    title: 'Invoice OCR & GST Workspace — LedgerSutra',
+    title: 'CA Invoice OCR, Tally XML & GSTR-2B Workspace | LedgerSutra',
     description:
-      'Upload PDF or image invoices, extract verbatim text and GST fields, validate 15-character GSTINs, and export merged Excel (.xlsx), CSV, JSON, or SQL registers.',
+      'Upload PDF or image invoices, extract GST fields, validate 15-digit GSTINs, reconcile GSTR-2B, and export TallyPrime XML, Excel, Zoho Books CSV, or Busy sheets.',
     breadcrumbName: 'Workspace',
   },
   '/features': {
-    title: 'Features — Smart Invoice OCR, GST Extraction & Excel Automation | LedgerSutra',
+    title: 'Features — Tally XML, GSTR-2B Recon & GST OCR | LedgerSutra',
     description:
-      'Explore LedgerSutra’s CA-focused features: English + Hindi invoice OCR, 15-digit GSTIN validation, duplicate detection, 1-Bill-1-Row Excel merger, and SQL/CSV/JSON exports.',
+      'Explore LedgerSutra features for Indian CA firms: TallyPrime XML export, GSTR-2B reconciliation, client workspaces, team approvals, and GSTIN validation.',
     breadcrumbName: 'Features',
   },
   '/how-it-works': {
-    title: 'How LedgerSutra Works — 4-Step AI Invoice Automation for CA Firms',
+    title: 'How LedgerSutra Works — 3-Step Invoice to Tally Automation',
     description:
-      'See how LedgerSutra transforms scanned PDFs and bill photos into validated Excel purchase registers, supplier summaries, and accounting exports in 4 steps.',
+      'See how LedgerSutra converts scanned PDFs and bill photos into validated TallyPrime XML vouchers, GSTR-2B reconciliations, and Excel purchase registers.',
     breadcrumbName: 'How It Works',
   },
   '/pricing': {
-    title: 'Pricing & Practice Plans for CA Firms & Tax Consultants | LedgerSutra',
+    title: 'Pricing Plans for Indian CA Firms & Practitioners | LedgerSutra',
     description:
-      'Transparent, honest workflow plans for solo practitioners, Chartered Accountant firms, and enterprise finance teams in India. Start using the live workspace immediately.',
+      'Transparent workflow plans (Free, Pro, and CA Firm) with multi-client workspaces, TallyPrime XML export, and GSTR-2B reconciliation. Pilot offers available.',
     breadcrumbName: 'Pricing',
   },
-  '/about': {
-    title: 'About LedgerSutra — Purpose-Built Document Automation for Indian Accounting',
+  '/faq': {
+    title: 'Frequently Asked Questions — GST OCR & Tally XML | LedgerSutra',
     description:
-      'Learn why we built LedgerSutra at casaarthiai.in to eliminate repetitive manual invoice entry for Chartered Accountants, tax consultants, and finance teams across India.',
+      'Answers to 12+ common CA questions on invoice OCR accuracy, TallyPrime XML import, GSTR-2B matching, Firestore security, multi-client workspaces, and API.',
+    breadcrumbName: 'FAQ',
+  },
+  '/security': {
+    title: 'Security & Data Privacy for CA Client Records | LedgerSutra',
+    description:
+      'How LedgerSutra protects client accounting data with Google Sign-In, per-user Firestore isolation, role-based rules enforcement, and encryption in transit.',
+    breadcrumbName: 'Security',
+  },
+  '/privacy': {
+    title: 'Privacy Policy — Client Invoice & Data Handling | LedgerSutra',
+    description:
+      'Read LedgerSutra’s privacy policy detailing how uploaded invoices, extracted GST fields, and client workspaces are stored, isolated, and deleted on request.',
+    breadcrumbName: 'Privacy Policy',
+  },
+  '/terms': {
+    title: 'Terms of Service — Accounting & GST Automation | LedgerSutra',
+    description:
+      'Terms and conditions governing the use of LedgerSutra’s invoice OCR, TallyPrime XML generator, GSTR-2B reconciliation engine, and developer REST API.',
+    breadcrumbName: 'Terms of Service',
+  },
+  '/blog': {
+    title: 'CA Practice Blog — Tally Import & GSTR-2B Guides | LedgerSutra',
+    description:
+      'Step-by-step tutorials for Indian Chartered Accountants on importing PDF purchase invoices into TallyPrime, GSTR-2B Excel reconciliation, and ITC audits.',
+    breadcrumbName: 'Blog',
+  },
+  '/api-docs': {
+    title: 'Developer API Documentation — POST /api/v1/extract | LedgerSutra',
+    description:
+      'Integrate LedgerSutra’s GST invoice extraction API into your ERP or CA practice portal using per-user SHA-256 API keys, multipart uploads, and JSON output.',
+    breadcrumbName: 'API Docs',
+  },
+  '/about': {
+    title: 'About LedgerSutra — Built for Indian Chartered Accountants',
+    description:
+      'Learn why we built LedgerSutra to eliminate repetitive manual invoice entry, Tally voucher typing, and GSTR-2B reconciliation bottlenecks for Indian CA firms.',
     breadcrumbName: 'About',
   },
   '/contact': {
-    title: 'Contact LedgerSutra — CA Firm Onboarding, Support & Custom Workflows',
+    title: 'Contact LedgerSutra — CA Firm Demos, Pilots & Support',
     description:
-      'Get in touch with the LedgerSutra team for CA firm onboarding, custom ERP export schemas, bulk document automation inquiries, and technical support.',
+      'Book a live demo or request a CA firm pilot with the LedgerSutra team for TallyPrime XML workflows, GSTR-2B automation, and custom ERP integrations.',
     breadcrumbName: 'Contact',
   },
   '/resources': {
-    title: 'CA Resource Center — Guides on GST Invoice OCR & Accounting Automation | LedgerSutra',
+    title: 'CA Resource Center — GST Invoice & Tally Guides | LedgerSutra',
     description:
-      'Practical guides, checklists, and technical resources for Indian Chartered Accountants, GST practitioners, and finance teams on automating invoice data entry.',
+      'Practical guides, checklists, and technical articles for Indian Chartered Accountants and GST practitioners on automating purchase register workflows.',
     breadcrumbName: 'Resources',
   },
 };
@@ -1046,15 +1556,24 @@ export function normalizePathname(rawPath: string): string {
   return cleaned || '/';
 }
 
-export function syncDocumentSeoTags(pathname: string): void {
-  if (typeof document === 'undefined') return;
+export function resolvePageSeoMetadata(pathname: string): {
+  cleanPath: string;
+  canonicalUrl: string;
+  title: string;
+  description: string;
+  breadcrumbName: string;
+  pageFaqs: FaqItem[];
+  seoSpec?: SeoLandingPageSpec;
+  articleSpec?: ResourceArticleSpec;
+} {
   const cleanPath = normalizePathname(pathname);
   const canonicalUrl = `${SITE_DOMAIN}${cleanPath === '/' ? '' : cleanPath}`;
 
   let title = CORE_SAAS_ROUTES_META['/'].title;
   let description = CORE_SAAS_ROUTES_META['/'].description;
   let breadcrumbName = 'Home';
-  let pageFaqs: FaqItem[] = cleanPath === '/' ? HOMEPAGE_FAQS : [];
+  let pageFaqs: FaqItem[] = cleanPath === '/' || cleanPath === '/faq' ? HOMEPAGE_FAQS : [];
+  let seoSpec: SeoLandingPageSpec | undefined;
   let articleSpec: ResourceArticleSpec | undefined;
 
   if (CORE_SAAS_ROUTES_META[cleanPath]) {
@@ -1062,13 +1581,15 @@ export function syncDocumentSeoTags(pathname: string): void {
     description = CORE_SAAS_ROUTES_META[cleanPath].description;
     breadcrumbName = CORE_SAAS_ROUTES_META[cleanPath].breadcrumbName;
   } else if (DEDICATED_SEO_PAGES[cleanPath]) {
-    const seoSpec = DEDICATED_SEO_PAGES[cleanPath];
+    seoSpec = DEDICATED_SEO_PAGES[cleanPath];
     title = seoSpec.metaTitle;
     description = seoSpec.metaDescription;
     breadcrumbName = seoSpec.badge;
     pageFaqs = seoSpec.faqs;
   } else {
-    articleSpec = RESOURCE_ARTICLES.find((a) => a.path === cleanPath);
+    articleSpec = RESOURCE_ARTICLES.find(
+      (a) => a.path === cleanPath || `/blog/${a.slug}` === cleanPath || `/resources/${a.slug}` === cleanPath
+    );
     if (articleSpec) {
       title = articleSpec.metaTitle;
       description = articleSpec.metaDescription;
@@ -1077,35 +1598,21 @@ export function syncDocumentSeoTags(pathname: string): void {
     }
   }
 
-  document.title = title;
-
-  const setMetaTag = (selector: string, attrName: 'name' | 'property', attrValue: string, content: string) => {
-    let el = document.head.querySelector<HTMLMetaElement>(selector);
-    if (!el) {
-      el = document.createElement('meta');
-      el.setAttribute(attrName, attrValue);
-      document.head.appendChild(el);
-    }
-    el.setAttribute('content', content);
+  return {
+    cleanPath,
+    canonicalUrl,
+    title,
+    description,
+    breadcrumbName,
+    pageFaqs,
+    seoSpec,
+    articleSpec,
   };
+}
 
-  setMetaTag('meta[name="description"]', 'name', 'description', description);
-  setMetaTag('meta[property="og:title"]', 'property', 'og:title', title);
-  setMetaTag('meta[property="og:description"]', 'property', 'og:description', description);
-  setMetaTag('meta[property="og:url"]', 'property', 'og:url', canonicalUrl);
-  setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', BRAND_NAME);
-  setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', title);
-  setMetaTag('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+export function buildJsonLdGraph(pathname: string): Record<string, any> {
+  const { cleanPath, canonicalUrl, breadcrumbName, pageFaqs, articleSpec } = resolvePageSeoMetadata(pathname);
 
-  let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-  if (!canonicalLink) {
-    canonicalLink = document.createElement('link');
-    canonicalLink.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonicalLink);
-  }
-  canonicalLink.setAttribute('href', canonicalUrl);
-
-  // Build JSON-LD Graph
   const graph: any[] = [
     {
       '@type': 'Organization',
@@ -1115,10 +1622,10 @@ export function syncDocumentSeoTags(pathname: string): void {
       description: BRAND_TAGLINE,
       areaServed: 'IN',
       knowsAbout: [
+        'GST Invoice to Tally XML Conversion',
+        'GSTR-2B Reconciliation in Excel',
         'Invoice OCR for Chartered Accountants',
-        'GST Invoice Data Extraction',
-        'PDF Invoice to Excel Conversion',
-        'Automated Accounting Data Entry',
+        'GSTIN Checksum Validation',
       ],
     },
     {
@@ -1135,16 +1642,16 @@ export function syncDocumentSeoTags(pathname: string): void {
       operatingSystem: 'Web',
       url: SITE_DOMAIN,
       description:
-        'AI-Powered Invoice & Document Automation platform for Indian Chartered Accountants (CAs), tax consultants, and finance teams.',
+        'GST invoice to TallyPrime XML, GSTR-2B reconciliation, and multi-client accounting automation platform built for Indian CA firms.',
       offers: {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'INR',
+        description: 'Free trial tier and CA-firm pilot plans (placeholder pricing)',
       },
     },
   ];
 
-  // BreadcrumbList
   const breadcrumbItems: any[] = [
     {
       '@type': 'ListItem',
@@ -1158,8 +1665,8 @@ export function syncDocumentSeoTags(pathname: string): void {
       breadcrumbItems.push({
         '@type': 'ListItem',
         position: 2,
-        name: 'Resources',
-        item: `${SITE_DOMAIN}/resources`,
+        name: 'Blog',
+        item: `${SITE_DOMAIN}/blog`,
       });
       breadcrumbItems.push({
         '@type': 'ListItem',
@@ -1211,6 +1718,50 @@ export function syncDocumentSeoTags(pathname: string): void {
     });
   }
 
+  return {
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  };
+}
+
+export function syncDocumentSeoTags(pathname: string): void {
+  if (typeof document === 'undefined') return;
+  const { canonicalUrl, title, description } = resolvePageSeoMetadata(pathname);
+
+  document.title = title;
+
+  // Remove meta keywords tag if present (Part 8.2)
+  const keywordsMeta = document.head.querySelector('meta[name="keywords"]');
+  if (keywordsMeta) {
+    keywordsMeta.remove();
+  }
+
+  const setMetaTag = (selector: string, attrName: 'name' | 'property', attrValue: string, content: string) => {
+    let el = document.head.querySelector<HTMLMetaElement>(selector);
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attrName, attrValue);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  };
+
+  setMetaTag('meta[name="description"]', 'name', 'description', description);
+  setMetaTag('meta[property="og:title"]', 'property', 'og:title', title);
+  setMetaTag('meta[property="og:description"]', 'property', 'og:description', description);
+  setMetaTag('meta[property="og:url"]', 'property', 'og:url', canonicalUrl);
+  setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', BRAND_NAME);
+  setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+  setMetaTag('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+
+  let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (!canonicalLink) {
+    canonicalLink = document.createElement('link');
+    canonicalLink.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonicalLink);
+  }
+  canonicalLink.setAttribute('href', canonicalUrl);
+
   let scriptEl = document.head.querySelector<HTMLScriptElement>('script#ledgersutra-jsonld');
   if (!scriptEl) {
     scriptEl = document.createElement('script');
@@ -1218,8 +1769,107 @@ export function syncDocumentSeoTags(pathname: string): void {
     scriptEl.id = 'ledgersutra-jsonld';
     document.head.appendChild(scriptEl);
   }
-  scriptEl.textContent = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@graph': graph,
-  });
+  scriptEl.textContent = JSON.stringify(buildJsonLdGraph(pathname));
 }
+
+function escapeHtmlAttr(raw: string): string {
+  return String(raw || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Generates crawlable SSR HTML body + head metadata for public routes so search engine
+ * crawlers see the complete H1, body copy, FAQs, and JSON-LD in the raw HTML source.
+ */
+export function getPrerenderedSeoHtml(pathname: string): {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  jsonLdString: string;
+  ssrBodyHtml: string;
+} {
+  const { cleanPath, canonicalUrl, title, description, pageFaqs, seoSpec, articleSpec } =
+    resolvePageSeoMetadata(pathname);
+  const jsonLdString = JSON.stringify(buildJsonLdGraph(pathname));
+
+  let ssrBodyHtml = '';
+
+  if (seoSpec) {
+    ssrBodyHtml = `<article class="sr-only" aria-hidden="false">
+      <h1>${escapeHtmlAttr(seoSpec.h1)}</h1>
+      <p>${escapeHtmlAttr(seoSpec.subtitle)}</p>
+      <p>${escapeHtmlAttr(seoSpec.problemStatement)}</p>
+      ${(seoSpec.longFormParagraphs || []).map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
+      <section>
+        <h2>How ${escapeHtmlAttr(BRAND_NAME)} Works</h2>
+        <ul>
+          ${seoSpec.workflowSteps
+            .map((step) => `<li><strong>${escapeHtmlAttr(step.title)}:</strong> ${escapeHtmlAttr(step.detail)}</li>`)
+            .join('')}
+        </ul>
+      </section>
+      <section>
+        <h2>Key Capabilities</h2>
+        <ul>
+          ${seoSpec.keyCapabilities
+            .map((cap) => `<li><strong>${escapeHtmlAttr(cap.title)}:</strong> ${escapeHtmlAttr(cap.description)}</li>`)
+            .join('')}
+        </ul>
+      </section>
+      ${
+        pageFaqs.length > 0
+          ? `<section><h2>Frequently Asked Questions</h2>${pageFaqs
+              .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
+              .join('')}</section>`
+          : ''
+      }
+    </article>`;
+  } else if (articleSpec) {
+    ssrBodyHtml = `<article class="sr-only" aria-hidden="false">
+      <h1>${escapeHtmlAttr(articleSpec.title)}</h1>
+      <p>${escapeHtmlAttr(articleSpec.summary)}</p>
+      ${articleSpec.sections
+        .map(
+          (sec) => `<section>
+        <h2>${escapeHtmlAttr(sec.heading)}</h2>
+        ${sec.paragraphs.map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
+      </section>`
+        )
+        .join('')}
+    </article>`;
+  } else {
+    ssrBodyHtml = `<main class="sr-only" aria-hidden="false">
+      <h1>GST invoice to Tally and Excel, built for Indian CA firms</h1>
+      <p>${escapeHtmlAttr(description)}</p>
+      <section>
+        <h2>Features for Indian Chartered Accountants &amp; GST Practitioners</h2>
+        <ul>
+          <li>TallyPrime XML Voucher Export with Party, Purchase, CGST, SGST, IGST &amp; Round-Off Ledgers</li>
+          <li>GSTR-2B Reconciliation (JSON &amp; Excel) with Fuzzy Tolerance &amp; Multi-Sheet Report</li>
+          <li>Client-Wise Workspace &amp; Multi-Role Team Approval Workflow (Owner/CA, Reviewer, Staff)</li>
+          <li>15-Character GSTIN Mod-36 Checksum Validation &amp; Duplicate Invoice Detection</li>
+          <li>Batch Processing Queue, Zoho Books CSV, Busy Excel &amp; REST API v1</li>
+        </ul>
+      </section>
+      ${
+        cleanPath === '/' || cleanPath === '/faq'
+          ? `<section><h2>Frequently Asked Questions</h2>${HOMEPAGE_FAQS.map(
+              (f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`
+            ).join('')}</section>`
+          : ''
+      }
+    </main>`;
+  }
+
+  return {
+    title,
+    description,
+    canonicalUrl,
+    jsonLdString,
+    ssrBodyHtml,
+  };
+}
+

@@ -1,5 +1,16 @@
 User-agent: *
 Allow: /
+Allow: /pricing
+Allow: /faq
+Allow: /security
+Allow: /privacy
+Allow: /terms
+Allow: /blog
+Allow: /api-docs
+Allow: /gst-invoice-to-tally
+Allow: /gstr-2b-reconciliation-excel
+Allow: /bulk-invoice-processing-for-ca
+Disallow: /app
 Disallow: /api/
 
-Sitemap: https://casaarthiai.in/sitemap.xml
+Sitemap: https://www.ledgersutra.in/sitemap.xml

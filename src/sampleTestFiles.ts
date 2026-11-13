@@ -15,7 +15,7 @@ export interface SampleTestFileSpec {
 export const SAMPLE_TEST_FILES: SampleTestFileSpec[] = [
   {
     id: 'user-demo-bill-1-jpg',
-    fileName: 'Scan2SQL_Demo_Bill_1.jpg',
+    fileName: 'LedgerSutra_Demo_Bill_1.jpg',
     title: '1. Green Mart Grocery Bill (JPG • 4 Products)',
     subtitle: 'Tilted receipt with Basmati Rice, Amul Milk, Sugar & Tea (₹423.00)',
     badge: '4-Item JPG Bill',
@@ -24,11 +24,11 @@ export const SAMPLE_TEST_FILES: SampleTestFileSpec[] = [
     recommendedMode: 'normal_user',
     tiltDegrees: -2.0,
     previewNote: 'Extracts all 4 products (Product 1..Product 4) + Invoice GM-DEMO-1042',
-    assetUrl: '/assets/aistudio/Scan2SQL_Demo_Bill_1_27a47ace.jpg',
+    assetUrl: '/assets/aistudio/LedgerSutra_Demo_Bill_1_27a47ace.jpg',
   },
   {
     id: 'user-demo-bill-2-pdf',
-    fileName: 'Scan2SQL_Demo_Bill_2.pdf',
+    fileName: 'LedgerSutra_Demo_Bill_2.pdf',
     title: '2. City Electronics Scanned Bill (PDF • 3 Products)',
     subtitle: 'Scanned PDF with USB-C Cable, Wireless Mouse & Screen Guard (₹1,082.06)',
     badge: '3-Item Scanned PDF',
@@ -37,7 +37,7 @@ export const SAMPLE_TEST_FILES: SampleTestFileSpec[] = [
     recommendedMode: 'normal_user',
     tiltDegrees: 2.0,
     previewNote: 'Extracts all 3 products (Product 1..Product 3) + GST ₹165.06 + Invoice CE-TEST-2088',
-    assetUrl: '/assets/aistudio/Scan2SQL_Demo_Bill_2_8e170f21.pdf',
+    assetUrl: '/assets/aistudio/LedgerSutra_Demo_Bill_2_8e170f21.pdf',
   },
   {
     id: 'adi-thedi-grocery-img',

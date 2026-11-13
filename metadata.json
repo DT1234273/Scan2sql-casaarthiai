@@ -1,6 +1,6 @@
 {
-  "name": "Scan2SQL — Intelligent Document Scanner & SQL Extraction",
-  "description": "Intelligent Document Scanner and Automated SQL Data Extraction System using Python FastAPI, OpenCV, Tesseract OCR, and PostgreSQL.",
+  "name": "LedgerSutra — GST Invoice to Tally & Excel for Indian CA Firms",
+  "description": "GST invoice OCR, TallyPrime XML export, GSTR-2B reconciliation, client-wise workspaces, and team approval workflows for Indian Chartered Accountants.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

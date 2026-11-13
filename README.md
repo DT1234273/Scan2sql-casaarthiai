@@ -1,133 +1,77 @@
-# Scan2SQL — Intelligent Document Scanner & Automated SQL Data Extraction System
+# LedgerSutra — GST Invoice to TallyPrime XML, GSTR-2B Reconciliation & Excel Automation for Indian CA Firms
 
-**Complete Final-Year Engineering Project (All 5 Phases Integrated)**  
-Built with **Python 3.11+**, **FastAPI**, **SQLAlchemy 2.0**, **PostgreSQL**, **OpenCV**, **Tesseract OCR (English + Hindi)**, **PyMuPDF**, **OpenPyXL**, and **Bootstrap 5**.
-
----
-
-## 1. Project Overview & Core Workflows
-
-**Scan2SQL** converts scanned documents, camera photos, multi-page PDFs, and shop receipts/invoices into clean editable text and normalized PostgreSQL records:
-
-- **Workflow A — Normal Document Processing**:
-  1. Upload a book page, handwritten/printed notes, document scan (`.jpg`, `.jpeg`, `.png`), or `.pdf`.
-  2. Automatically improve image quality using OpenCV (`backend/vision.py`): document boundary detection & 4-point perspective warp, rotation/skew correction, grayscale conversion, shadow reduction via morphological background estimation + CLAHE, Fast Non-Local Means denoising, and adaptive Gaussian thresholding.
-  3. Extract text in **English + Hindi (`eng+hin`)** using PyMuPDF direct text extraction for digital PDF pages and Tesseract OCR for scanned pages (`backend/ocr.py`).
-  4. Review/edit extracted text, copy to clipboard, download as `.txt`, and save to the PostgreSQL `documents` table.
-
-- **Workflow B — Shop Bill / Invoice Processing to SQL**:
-  1. Upload a retail shop receipt or GST invoice image/PDF.
-  2. Automatic Document Classifier (`classify_document_text`) identifies the upload as a `shop_bill` using bilingual lexical and structural signals.
-  3. Hybrid Bill Extractor (`backend/extractor.py`) parses `shop_name`, `invoice_number`, `bill_date`, itemized rows (`item_name`, `quantity`, `unit_price`, `total_price`), `subtotal`, `tax_amount` (CGST/SGST/IGST/VAT), and `grand_total` using Python regex rules (with optional local AI fallback via Ollama on `http://localhost:11434`).
-  4. Mathematical Validator checks `Qty × Unit Price = Line Total`, `Sum(Items) = Subtotal`, and `Subtotal + Tax = Grand Total`.
-  5. Review/correct extracted fields in an editable table, commit approved records into normalized PostgreSQL tables (`bills` and `bill_items`), filter/search history, and export multi-sheet reports to Microsoft Excel (`.xlsx`) via OpenPyXL (`backend/exporter.py`).
+**LedgerSutra** is a full-stack accounting automation platform built for Indian Chartered Accountants (CAs), GST practitioners, tax consultants, and finance teams. It extracts structured invoice headers, 15-character GSTINs, HSN/SAC line items, CGST/SGST/IGST splits, and e-Invoice metadata from PDFs and camera photos, validates GST math and Mod-36 checksums, reconciles purchase registers against GSTR-2B, and exports directly to **TallyPrime XML**, **Zoho Books CSV**, **Busy Accounting Excel**, and multi-sheet `.XLSX`.
 
 ---
 
-## 2. Complete Project Structure
+## Key Capabilities
 
-```text
-Scan2SQL/
-├── backend/
-│   ├── __init__.py          # Package marker
-│   ├── config.py            # Environment settings & Windows local paths
-│   ├── database.py          # SQLAlchemy 2.0 PostgreSQL engine, session & health checks
-│   ├── models.py            # Normalized 3NF models: Document, Bill, BillItem
-│   ├── schemas.py           # Pydantic v2 request/response validation schemas
-│   ├── vision.py            # Phase 2: OpenCV preprocessing & PyMuPDF page rendering
-│   ├── ocr.py               # Phase 3: Tesseract (eng+hin), PyMuPDF & Document Classifier
-│   ├── extractor.py         # Phase 4: Hybrid Bill Extractor (Python rules + optional Ollama)
-│   ├── exporter.py          # Phase 5: OpenPyXL multi-sheet Excel (.xlsx) & TXT exporter
-│   └── main.py              # Complete FastAPI application & REST API routes
-├── templates/
-│   └── index.html           # Responsive Bootstrap 5 single-page application
-├── static/
-│   ├── css/
-│   │   └── styles.css       # Custom CSS3 styles & tabular typography
-│   └── js/
-│       └── app.js           # Complete frontend controller (Phases 1–5)
-├── uploads/                 # Auto-created storage for originals/ and processed/
-├── exports/                 # Auto-created storage for generated .xlsx and .txt files
-├── .env.example             # Sample Windows environment configuration
-├── requirements.txt         # Compatible Python 3.11+ package dependencies
-├── run.py                   # Local Windows startup script
-└── README.md                # Windows setup & viva demonstration guide
+1. **TallyPrime XML, Zoho Books & Busy Exports (Part 1)**
+   - Generates TallyPrime-importable Purchase Voucher XML (`ENVELOPE > HEADER > BODY > IMPORTDATA > REQUESTDESC > REQUESTDATA > TALLYMESSAGE > VOUCHER VCHTYPE="Purchase"`).
+   - Configurable **Tally Settings** per user/client (Company Name, Purchase Ledger, CGST/SGST/IGST Ledgers, Round-Off Ledger, Auto-create missing party ledgers).
+   - Pre-export validation modal blocking invoices with missing invoice numbers, invalid GSTINs, missing dates, or tax mismatches—with one-click **"Fix now"** or **"Skip blocked bills"**.
+   - Built-in **Zoho Books CSV** and **Busy Accounting Excel** exports with documented column mappings.
+
+2. **GSTR-2B Reconciliation Engine (Part 2)**
+   - Upload GSTR-2B JSON or Excel files downloaded from the GST portal.
+   - Two-pass matching: exact normalized Supplier GSTIN + Invoice Number, followed by fuzzy fallback on Supplier GSTIN + Taxable/Total Amount (configurable ₹ tolerance, default ₹1) + Date proximity.
+   - Classifies invoices into 6 audit statuses: `Matched`, `Amount Mismatch`, `Date Mismatch`, `Invoice Number Mismatch (probable)`, `In Books but Not in 2B`, and `In 2B but Not in Books`.
+   - Manual match/unmatch overrides, per-row CA notes, period filter, and multi-sheet Excel report export.
+
+3. **Client-Wise Workspace & Team Approval Workflow (Parts 3 & 4)**
+   - Manage multiple client GSTINs under `/users/{uid}/clients/{clientId}` with a header Client Switcher and Clients Overview dashboard.
+   - Role-based access control (`Owner/CA`, `Reviewer`, `Staff`) and bill approval statuses (`Draft`, `Pending Review`, `Approved`, `Rejected`) with per-bill audit trails enforced in `firestore.rules`.
+
+4. **Extended GST Extraction, Live GSTIN Verification & Accuracy Benchmark (Part 5)**
+   - Extracts 18+ additional fields: `IRN`, `e-Way Bill No`, `e-Invoice QR`, `Supplier/Buyer Address & State`, `PAN`, `Bank Name / Account / IFSC`, `PO Number`, `Due Date`, `Payment Terms`, `Currency`, `Discount`, `Other Charges`, `Round-Off`, and `Bill of Entry (BOE) No`.
+   - Pluggable server-side GSTIN status verification (`GST_VERIFY_API_URL`, `GST_VERIFY_API_KEY`) and an internal **Accuracy Test** page to benchmark extraction against a ground-truth Excel file.
+
+5. **Public REST API (`/api/v1/extract`) & Crawlable Public Website (Parts 6, 7 & 8)**
+   - `POST /api/v1/extract` protected by SHA-256 hashed per-user API keys (`X-API-Key`), rate limiting, and size limits.
+   - Server-side prerendered public marketing pages (`/`, `/pricing`, `/faq`, `/blog`, `/api-docs`, `/privacy`, `/terms`, `/security`, `/gst-invoice-to-tally`, `/gstr-2b-reconciliation-excel`, `/bulk-invoice-processing-for-ca`) with JSON-LD schema, `/sitemap.xml`, and `/robots.txt`.
+
+---
+
+## Environment Variables (`.env.example`)
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Gemini Vision Extraction API Key (server-side only)
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+
+# Canonical Public Site URL (used for canonical redirects, sitemap, and OpenGraph URLs)
+PUBLIC_SITE_URL="https://www.ledgersutra.in"
+
+# Optional Live GSTIN Verification Service (server-side only)
+# If omitted, the UI hides the live button and shows "GSTIN verification available when API is configured"
+GST_VERIFY_API_URL=""
+GST_VERIFY_API_KEY=""
+
+# Firebase Client Configuration
+VITE_FIREBASE_API_KEY=""
+VITE_FIREBASE_AUTH_DOMAIN=""
+VITE_FIREBASE_PROJECT_ID=""
+VITE_FIREBASE_STORAGE_BUCKET=""
+VITE_FIREBASE_MESSAGING_SENDER_ID=""
+VITE_FIREBASE_APP_ID=""
+VITE_FIREBASE_FIRESTORE_DATABASE_ID=""
 ```
 
 ---
 
-## 3. Step-by-Step Windows 10 / 11 Local Installation Guide
+## Development & Build Commands
 
-### Step 1: Install Prerequisites on Windows
+```bash
+# Install dependencies
+npm install
 
-1. **Python 3.11 or 3.12 (64-bit)**
-   - Download from [https://www.python.org/downloads/windows/](https://www.python.org/downloads/windows/)
-   - Check **"Add python.exe to PATH"** during installation.
+# Start full-stack Express + Vite development server on port 3000
+npm run dev
 
-2. **PostgreSQL (Version 15, 16, or 17)**
-   - Download from [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
-   - Keep port `5432` and note the password set for the `postgres` user.
+# Type-check with TypeScript
+npm run lint
 
-3. **Tesseract OCR for Windows (with Hindi Language Data)**
-   - Download the UB-Mannheim installer from [https://github.com/UB-Mannheim/tesseract/wiki](https://github.com/UB-Mannheim/tesseract/wiki)
-   - During setup, expand **"Additional language data"** and select **Hindi (`hin`)** so both `eng.traineddata` and `hin.traineddata` are installed in `C:\Program Files\Tesseract-OCR\tessdata`.
-
-4. **Optional: Ollama for Local AI Fallback (Not Required)**
-   - The application works 100% offline using Python regex rules without Ollama.
-   - If you wish to test the optional local LLM fallback for unstructured bills, install Ollama from [https://ollama.com/download/windows](https://ollama.com/download/windows) and run `ollama pull llama3.2`.
-
----
-
-### Step 2: Create the PostgreSQL Database
-
-Open **pgAdmin 4** or **SQL Shell (psql)** and execute:
-
-```sql
-CREATE DATABASE scan2sql_db ENCODING 'UTF8';
+# Build production bundle
+npm run build
 ```
-
-Or from PowerShell / Command Prompt:
-
-```powershell
-psql -U postgres -c "CREATE DATABASE scan2sql_db ENCODING 'UTF8';"
-```
-
----
-
-### Step 3: Create Virtual Environment & Install Python Dependencies
-
-Open **PowerShell** inside the `Scan2SQL` project folder:
-
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
----
-
-### Step 4: Configure `.env`
-
-Copy `.env.example` to `.env` and update your PostgreSQL password:
-
-```powershell
-copy .env.example .env
-```
-
-```env
-DATABASE_URL="postgresql+psycopg2://postgres:your_postgres_password@localhost:5432/scan2sql_db"
-TESSERACT_CMD="C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-DEFAULT_OCR_LANG="eng+hin"
-USE_OLLAMA="False"
-```
-
----
-
-### Step 5: Run Scan2SQL Locally
-
-```powershell
-python run.py
-```
-
-Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser (or **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** for Swagger UI).

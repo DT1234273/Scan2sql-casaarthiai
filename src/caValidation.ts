@@ -43,12 +43,32 @@ export const INDIAN_GST_STATE_CODES: Record<string, string> = {
 };
 
 const GSTIN_REGEX = /^(\d{2})([A-Z]{5}\d{4}[A-Z]{1})([1-9A-Z]{1})Z([0-9A-Z]{1})$/;
+const GSTIN_CODE_POINTS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+export function computeGstinMod36CheckDigit(gstinFirst14: string): string {
+  const clean = (gstinFirst14 || '').toUpperCase().slice(0, 14);
+  if (clean.length !== 14) return '';
+  let sum = 0;
+  for (let i = 0; i < 14; i++) {
+    const codePoint = GSTIN_CODE_POINTS.indexOf(clean[i]);
+    if (codePoint < 0) return '';
+    const factor = i % 2 === 0 ? 1 : 2;
+    const product = codePoint * factor;
+    const quotient = Math.floor(product / 36);
+    const remainder = product % 36;
+    sum += quotient + remainder;
+  }
+  const checkCodePoint = (36 - (sum % 36)) % 36;
+  return GSTIN_CODE_POINTS[checkCodePoint] || '';
+}
 
 export interface GstinValidationResult {
   raw: string;
   normalized: string;
   isEmpty: boolean;
   isValid: boolean;
+  checksumValid?: boolean;
+  expectedCheckDigit?: string;
   stateCode: string | null;
   stateName: string | null;
   panEmbedded: string | null;
@@ -114,15 +134,23 @@ export function validateIndianGstin(input: string): GstinValidationResult {
     };
   }
 
+  const expectedCheckDigit = computeGstinMod36CheckDigit(normalized.slice(0, 14));
+  const actualCheckDigit = normalized[14];
+  const checksumValid = expectedCheckDigit === actualCheckDigit;
+
   return {
     raw: input,
     normalized,
     isEmpty: false,
     isValid: true,
+    checksumValid,
+    expectedCheckDigit,
     stateCode,
     stateName,
     panEmbedded,
-    message: `Valid GSTIN (${stateCode} - ${stateName} • PAN: ${panEmbedded})`,
+    message: checksumValid
+      ? `Valid GSTIN (${stateCode} - ${stateName} • PAN: ${panEmbedded} • Mod-36 Checksum OK)`
+      : `Valid 15-char GSTIN structure (${stateCode} - ${stateName} • PAN: ${panEmbedded} • Note: 15th char is '${actualCheckDigit}', Mod-36 expected '${expectedCheckDigit}')`,
   };
 }
 
@@ -386,8 +414,7 @@ export function exportMasterRowsToCsv(
 
 export function exportBillsToJsonFile(bills: NoSQLBillRecord[], filename: string): void {
   const payload = {
-    platform: 'LedgerSutra — AI Invoice & Document Automation for CA Firms',
-    domain: 'https://casaarthiai.in',
+    platform: 'LedgerSutra — GST Invoice to Tally & Excel for Indian CA Firms',
     exportedAt: new Date().toISOString(),
     totalInvoices: bills.length,
     summary: {
@@ -416,10 +443,10 @@ export function exportBillsToSqlFile(bills: NoSQLBillRecord[], filename: string)
 
   const lines: string[] = [
     '-- ============================================================================',
-    '-- LedgerSutra (https://casaarthiai.in) — Automated Accounting SQL Dump',
+    '-- LedgerSutra — Automated Accounting SQL Dump',
     `-- Generated At: ${new Date().toISOString()}`,
     `-- Total Invoices: ${bills.length}`,
-    '-- Compatible with PostgreSQL, MySQL, MariaDB, SQLite & SQL Server',
+    '-- Compatible with SQL-compliant accounting systems',
     '-- ============================================================================',
     '',
     'CREATE TABLE IF NOT EXISTS ledgersutra_invoices (',
