@@ -1,22 +1,86 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"],
+[data-accent="teal"] {
+  --brand-50: #f0fdfa;
+  --brand-100: #ccfbf1;
+  --brand-200: #99f6e4;
+  --brand-300: #5eead4;
+  --brand-400: #2dd4bf;
+  --brand-500: #14b8a6;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e;
+  --brand-800: #115e59;
+  --brand-900: #134e4a;
+  --brand-950: #042f2e;
+}
+
+[data-accent="cobalt"] {
+  --brand-50: #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-200: #bfdbfe;
+  --brand-300: #93c5fd;
+  --brand-400: #60a5fa;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+  --brand-800: #1e40af;
+  --brand-900: #1e3a8a;
+  --brand-950: #172554;
+}
+
+[data-accent="copper"] {
+  --brand-50: #fffbeb;
+  --brand-100: #fef3c7;
+  --brand-200: #fde68a;
+  --brand-300: #fcd34d;
+  --brand-400: #fbbf24;
+  --brand-500: #f59e0b;
+  --brand-600: #d97706;
+  --brand-700: #b45309;
+  --brand-800: #92400e;
+  --brand-900: #78350f;
+  --brand-950: #451a03;
+}
+
+@theme {
+  --color-indigo-50: var(--brand-50);
+  --color-indigo-100: var(--brand-100);
+  --color-indigo-200: var(--brand-200);
+  --color-indigo-300: var(--brand-300);
+  --color-indigo-400: var(--brand-400);
+  --color-indigo-500: var(--brand-500);
+  --color-indigo-600: var(--brand-600);
+  --color-indigo-700: var(--brand-700);
+  --color-indigo-800: var(--brand-800);
+  --color-indigo-900: var(--brand-900);
+  --color-indigo-950: var(--brand-950);
+}
 
 :root,
 [data-theme="light"] {
-  --bg-canvas: #f8fafc;
+  --bg-canvas: #f3f6f5;
+  --bg-main: #f3f6f5;
   --bg-surface: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-subtle: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.94);
+  --bg-elevated: #e8efed;
+  --bg-subtle: #edf2f0;
   --bg-input: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --accent-primary: #2563eb;
-  --accent-primary-hover: #1d4ed8;
-  --accent-soft-bg: #eff6ff;
-  --accent-soft-text: #1e40af;
-  --accent-soft-border: #bfdbfe;
+  --text-primary: #091412;
+  --text-main: #091412;
+  --text-secondary: #1e332f;
+  --text-muted: #4b635e;
+  --border-subtle: #d8e3e0;
+  --border-color: #d8e3e0;
+  --border-strong: #b8ccc7;
+  --accent-primary: var(--brand-600);
+  --accent-primary-hover: var(--brand-700);
+  --accent-soft-bg: var(--brand-50);
+  --accent-soft-text: var(--brand-800);
+  --accent-soft-border: var(--brand-200);
   --emerald-soft-bg: #ecfdf5;
   --emerald-soft-text: #065f46;
   --emerald-soft-border: #a7f3d0;
@@ -26,21 +90,26 @@
 }
 
 [data-theme="dark"] {
-  --bg-canvas: #060911;
-  --bg-surface: #0f172a;
-  --bg-elevated: #1e293b;
-  --bg-subtle: #131c31;
-  --bg-input: #090d16;
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-muted: #94a3b8;
-  --border-subtle: #26334d;
-  --border-strong: #3b4f73;
-  --accent-primary: #3b82f6;
-  --accent-primary-hover: #60a5fa;
-  --accent-soft-bg: rgba(59, 130, 246, 0.16);
-  --accent-soft-text: #93c5fd;
-  --accent-soft-border: rgba(96, 165, 250, 0.4);
+  --bg-canvas: #060c0b;
+  --bg-main: #060c0b;
+  --bg-surface: #0b1513;
+  --bg-card: #0b1513;
+  --bg-header: rgba(8, 16, 14, 0.94);
+  --bg-elevated: #132420;
+  --bg-subtle: #0f1d1a;
+  --bg-input: #070e0c;
+  --text-primary: #f0f7f5;
+  --text-main: #f0f7f5;
+  --text-secondary: #d5e6e2;
+  --text-muted: #8aa39d;
+  --border-subtle: #1a2e2a;
+  --border-color: #1a2e2a;
+  --border-strong: #284740;
+  --accent-primary: var(--brand-500);
+  --accent-primary-hover: var(--brand-400);
+  --accent-soft-bg: rgba(20, 184, 166, 0.15);
+  --accent-soft-text: var(--brand-300);
+  --accent-soft-border: rgba(45, 212, 191, 0.38);
   --emerald-soft-bg: rgba(16, 185, 129, 0.16);
   --emerald-soft-text: #6ee7b7;
   --emerald-soft-border: rgba(52, 211, 153, 0.4);
@@ -51,11 +120,17 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background-color: var(--bg-canvas);
-    color: var(--text-primary);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
   code, pre, .font-mono {
@@ -66,6 +141,15 @@
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Laser Scanner Beam & Vertical Scan-Line Glow Sweep Animation */

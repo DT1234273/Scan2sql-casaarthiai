@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ScanLine,
   FileSpreadsheet,
@@ -6,16 +6,8 @@ import {
   CheckCircle2,
   ArrowRight,
   Layers,
-  FileText,
-  Sparkles,
-  BookOpen,
-  Building2,
-  Scale,
   AlertTriangle,
   Database,
-  Download,
-  Clock,
-  ChevronRight,
   HelpCircle,
   Lock,
   Mail,
@@ -23,10 +15,15 @@ import {
   Check,
   Upload,
   FileCode2,
-  Users,
   Code2,
-  Eye,
   LogIn,
+  Search,
+  ChevronDown,
+  SlidersHorizontal,
+  Building2,
+  FileCheck2,
+  Clock,
+  Receipt,
 } from 'lucide-react';
 import {
   BRAND_NAME,
@@ -37,6 +34,46 @@ import {
   RESOURCE_ARTICLES,
   normalizePathname,
 } from '../seoContent';
+import heroStudioImg from '../assets/images/ledgersutra_hero_studio_1794578857550.jpg';
+import invoiceAuditImg from '../assets/images/ledgersutra_invoice_audit_1794578856952.jpg';
+import caWorkspaceImg from '../assets/images/ledgersutra_ca_workspace_1794578858193.jpg';
+
+// ============================================================================
+// RESILIENT EDITORIAL IMAGE COMPONENT (ZERO-BROKEN-IMAGE FALLBACK)
+// ============================================================================
+const EditorialVisual: React.FC<{
+  src: string;
+  alt: string;
+  fallbackTitle: string;
+  fallbackSubtitle: string;
+  className?: string;
+}> = ({ src, alt, fallbackTitle, fallbackSubtitle, className = '' }) => {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (imgFailed) {
+    return (
+      <div
+        className={`relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col justify-end p-6 ${className}`}
+      >
+        <div className="space-y-1.5 text-slate-100">
+          <Receipt className="w-6 h-6 text-indigo-400" />
+          <div className="text-sm font-semibold">{fallbackTitle}</div>
+          <div className="text-xs text-slate-300">{fallbackSubtitle}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      onError={() => setImgFailed(true)}
+      className={className}
+    />
+  );
+};
 
 // ============================================================================
 // BUILT-IN 3 SAMPLE INVOICES FOR INSTANT NO-LOGIN LIVE DEMO (PART 7.2)
@@ -44,7 +81,9 @@ import {
 interface DemoSampleInvoice {
   id: string;
   label: string;
-  badge: string;
+  meta: string;
+  tallyCompany: string;
+  gstr2bStatus: 'Matched' | 'ITC Eligible (2B Verified)' | 'Multi-HSN Split';
   data: {
     invoiceNumber: string;
     billDate: string;
@@ -88,8 +127,10 @@ interface DemoSampleInvoice {
 const BUILTIN_DEMO_SAMPLES: DemoSampleInvoice[] = [
   {
     id: 'sample_b2b_intra',
-    label: 'Sample 1: Intra-State B2B Tax Invoice (CGST + SGST)',
-    badge: 'Maharashtra 27 • 18% GST',
+    label: 'Intra-State B2B Tax Invoice',
+    meta: 'Maharashtra 27 · CGST 9% + SGST 9%',
+    tallyCompany: 'Deshmukh Precision Engineering LLP',
+    gstr2bStatus: 'Matched',
     data: {
       invoiceNumber: 'INV/26-27/0842',
       billDate: '2026-10-18',
@@ -143,8 +184,10 @@ const BUILTIN_DEMO_SAMPLES: DemoSampleInvoice[] = [
   },
   {
     id: 'sample_b2b_inter',
-    label: 'Sample 2: Inter-State IT Services Invoice (IGST 18%)',
-    badge: 'Karnataka 29 → Delhi 07',
+    label: 'Inter-State SaaS & IT Services Bill',
+    meta: 'Karnataka 29 to Delhi 07 · IGST 18%',
+    tallyCompany: 'Verma & Co Chartered Accountants',
+    gstr2bStatus: 'ITC Eligible (2B Verified)',
     data: {
       invoiceNumber: 'BLR/SAAS/2026/319',
       billDate: '2026-10-24',
@@ -198,8 +241,10 @@ const BUILTIN_DEMO_SAMPLES: DemoSampleInvoice[] = [
   },
   {
     id: 'sample_boe_import',
-    label: 'Sample 3: Multi-Rate Wholesale & Round-Off Invoice',
-    badge: 'Gujarat 24 • Multi-HSN + Round-off',
+    label: 'Wholesale Multi-HSN & Round-Off Bill',
+    meta: 'Gujarat 24 · 5% GST + Freight + Round-Off',
+    tallyCompany: 'Mehta Apparel Exports Pvt Ltd',
+    gstr2bStatus: 'Multi-HSN Split',
     data: {
       invoiceNumber: 'SRT/TEX/26/4901',
       billDate: '2026-10-28',
@@ -253,6 +298,57 @@ const BUILTIN_DEMO_SAMPLES: DemoSampleInvoice[] = [
   },
 ];
 
+function buildSampleTallyXmlPreview(inv: DemoSampleInvoice['data']): string {
+  const tallyDate = inv.billDate.replace(/-/g, '');
+  const taxLines =
+    inv.igstAmount > 0
+      ? `        <ALLLEDGERENTRIES.LIST>
+          <LEDGERNAME>Input IGST</LEDGERNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <AMOUNT>-${inv.igstAmount.toFixed(2)}</AMOUNT>
+        </ALLLEDGERENTRIES.LIST>`
+      : `        <ALLLEDGERENTRIES.LIST>
+          <LEDGERNAME>Input CGST</LEDGERNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <AMOUNT>-${inv.cgstAmount.toFixed(2)}</AMOUNT>
+        </ALLLEDGERENTRIES.LIST>
+        <ALLLEDGERENTRIES.LIST>
+          <LEDGERNAME>Input SGST</LEDGERNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <AMOUNT>-${inv.sgstAmount.toFixed(2)}</AMOUNT>
+        </ALLLEDGERENTRIES.LIST>`;
+
+  return `<ENVELOPE>
+  <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
+  <BODY>
+    <IMPORTDATA>
+      <REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME></REQUESTDESC>
+      <REQUESTDATA>
+        <TALLYMESSAGE>
+          <VOUCHER VCHTYPE="Purchase" ACTION="Create">
+            <DATE>${tallyDate}</DATE>
+            <REFERENCE>${inv.invoiceNumber}</REFERENCE>
+            <PARTYLEDGERNAME>${inv.shopName}</PARTYLEDGERNAME>
+            <PARTYGSTIN>${inv.sellerGstin}</PARTYGSTIN>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>${inv.shopName}</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>${inv.grandTotal.toFixed(2)}</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Purchase GST</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-${inv.subtotal.toFixed(2)}</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+${taxLines}
+          </VOUCHER>
+        </TALLYMESSAGE>
+      </REQUESTDATA>
+    </IMPORTDATA>
+  </BODY>
+</ENVELOPE>`;
+}
+
 function getTodayDemoScanKey(): string {
   const d = new Date().toISOString().slice(0, 10);
   return `ledgersutra_demo_scans_${d}`;
@@ -279,7 +375,7 @@ function incrementBrowserDemoScans(): number {
 }
 
 // ============================================================================
-// SECTION 1: HERO BANNER (PART 7.1)
+// SECTION 1: EXECUTIVE HERO BANNER + INTERACTIVE PIPELINE CARD (PART 7.1)
 // ============================================================================
 export const LedgerSutraHeroBanner: React.FC<{
   onOpenWorkspaceTab: (
@@ -289,7 +385,9 @@ export const LedgerSutraHeroBanner: React.FC<{
   onTriggerUpload?: () => void;
   onNavigate?: (path: string) => void;
   savedBillsCount: number;
-}> = ({ onOpenWorkspaceTab, onNavigate, savedBillsCount }) => {
+}> = ({ onOpenWorkspaceTab, onTriggerUpload, onNavigate, savedBillsCount }) => {
+  const [heroStage, setHeroStage] = useState<'extract' | 'tally' | 'gstr2b' | 'compare'>('extract');
+
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -298,116 +396,234 @@ export const LedgerSutraHeroBanner: React.FC<{
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 lg:p-12 shadow-sm">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-        <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 text-xs font-bold uppercase tracking-wider">
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>{BRAND_TAGLINE}</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.12] text-[var(--text-main)]">
-            GST invoice to Tally and Excel,{' '}
-            <span className="text-indigo-500">built for Indian CA firms</span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-[var(--text-muted)] leading-relaxed max-w-2xl">
-            Extract 15-character GSTINs, HSN/SAC codes, line items, IRN, e-Way bills, and CGST/SGST/IGST tax splits
-            from PDFs and bill photos. Export directly to TallyPrime XML, reconcile GSTR-2B in Excel, and manage
-            client-wise workspaces.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <button
-              onClick={() => scrollToSection('live-no-login-demo')}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Try free demo</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => {
-                if (onNavigate) {
-                  onNavigate('/contact');
-                } else {
-                  onOpenWorkspaceTab('scanner', 'ca_mode');
-                }
-              }}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-indigo-500/10 text-[var(--text-main)] border border-[var(--border-color)] text-sm font-bold transition-all cursor-pointer"
-            >
-              <Mail className="w-4 h-4 text-indigo-500" />
-              <span>Book a demo</span>
-            </button>
-
-            <button
-              onClick={() => {
-                onOpenWorkspaceTab('master_sheet', 'ca_mode');
-                scrollToSection('live-ocr-workspace');
-              }}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-indigo-500 hover:underline cursor-pointer"
-            >
-              <span>Open Full Workspace ({savedBillsCount} Bills) →</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-[var(--border-color)] text-xs">
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>TallyPrime XML Import</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>GSTR-2B Reconciliation</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>GSTIN Mod-36 Checksum</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[var(--text-muted)]">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Client-Wise Workspaces</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Preview Card */}
-        <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-5 space-y-4 shadow-inner">
-            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-              <div className="flex items-center gap-2">
-                <FileCode2 className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-bold uppercase tracking-wider">
-                  TallyPrime XML &amp; GSTR-2B Pipeline
+    <section className="space-y-4">
+      <div className="overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+          {/* Left Narrative & Primary CTA */}
+          <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between space-y-8">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--text-muted)]">
+                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                  {BRAND_TAGLINE}
                 </span>
+                <span aria-hidden="true">·</span>
+                <span>TallyPrime XML</span>
+                <span aria-hidden="true">·</span>
+                <span>GSTR-2B Reconciliation</span>
+                <span aria-hidden="true">·</span>
+                <span>Mod-36 GSTIN Audit</span>
               </div>
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">
-                CA Audit Ready
-              </span>
+
+              <h1
+                className="font-display font-extrabold tracking-tight leading-[1.06] text-[var(--text-main)]"
+                style={{ fontSize: 'clamp(2.15rem, 3.7vw, 3.45rem)' }}
+              >
+                GST invoice to Tally and Excel,{' '}
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  built for Indian CA firms
+                </span>
+              </h1>
+
+              <p className="text-base text-[var(--text-muted)] leading-relaxed max-w-2xl">
+                Extract 15-character GSTINs, HSN/SAC codes, line items, IRN, e-Way bills, and
+                CGST/SGST/IGST tax splits from PDFs and bill photos. Validate blocked vouchers
+                before TallyPrime XML import, reconcile GSTR-2B across 6 statuses, and isolate
+                records per client workspace.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  onClick={() => scrollToSection('live-no-login-demo')}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <span>Try free demo</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onNavigate) {
+                      onNavigate('/contact');
+                    } else {
+                      onOpenWorkspaceTab('scanner', 'ca_mode');
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)] text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <Mail className="w-4 h-4 text-indigo-500" />
+                  <span>Book a demo</span>
+                </button>
+
+                {onTriggerUpload && (
+                  <button
+                    onClick={() => {
+                      onOpenWorkspaceTab('scanner', 'ca_mode');
+                      onTriggerUpload();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-indigo-600 dark:text-indigo-400 border border-[var(--border-color)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Invoice ({savedBillsCount} Saved)</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2.5 text-xs font-mono">
-              <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Supplier GSTIN</span>
-                <span className="font-bold text-emerald-500">27AABCK4829M1Z5 (Valid ✓)</span>
+            {/* Clean 4-Column Architectural Proof Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-[var(--border-color)] text-xs">
+              <div>
+                <div className="font-semibold text-[var(--text-main)]">TallyPrime XML</div>
+                <div className="text-[var(--text-muted)] mt-0.5">Pre-export blocker validator</div>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Taxable + CGST + SGST</span>
-                <span className="font-bold">₹45,000 + ₹4,050 + ₹4,050</span>
+              <div>
+                <div className="font-semibold text-[var(--text-main)]">6-Status GSTR-2B</div>
+                <div className="text-[var(--text-muted)] mt-0.5">Books vs portal ITC matcher</div>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">GSTR-2B Status</span>
-                <span className="font-bold text-indigo-500">Matched (ITC Eligible)</span>
+              <div>
+                <div className="font-semibold text-[var(--text-main)]">Mod-36 Checksum</div>
+                <div className="text-[var(--text-muted)] mt-0.5">15-char GSTIN &amp; PAN check</div>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Export Formats</span>
-                <span className="font-bold">Tally XML • XLSX • Zoho • Busy</span>
+              <div>
+                <div className="font-semibold text-[var(--text-main)]">CA Client RBAC</div>
+                <div className="text-[var(--text-muted)] mt-0.5">Owner, Reviewer &amp; Staff roles</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Editorial Studio Photography + 4-Mode Upper Command Inspector */}
+          <div className="lg:col-span-5 relative min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
+            <EditorialVisual
+              src={heroStudioImg}
+              alt="Indian Chartered Accountant advisory desk with GST tax invoices and spreadsheet ledgers"
+              fallbackTitle="CA Practice Audit Desk"
+              fallbackSubtitle="Purchase bills to TallyPrime XML and GSTR-2B Excel"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-slate-950/25" />
+
+            <div className="relative z-10 p-5 sm:p-6 space-y-3 text-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-medium text-slate-300">
+                  Live Practice Output &amp; Benchmark
+                </span>
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-900/95 border border-slate-700/80 overflow-x-auto">
+                  {[
+                    { id: 'extract' as const, label: '01. GST Fields' },
+                    { id: 'tally' as const, label: '02. Tally XML' },
+                    { id: 'gstr2b' as const, label: '03. GSTR-2B' },
+                    { id: 'compare' as const, label: '04. vs Others' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setHeroStage(tab.id)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                        heroStage === tab.id
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-slate-950/95 border border-slate-800 p-4 text-xs font-mono tabular-nums space-y-2 backdrop-blur-xs">
+                {heroStage === 'extract' && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Supplier GSTIN</span>
+                      <span className="text-emerald-400 font-semibold">27AABCK4829M1Z5 (Valid Mod-36)</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Invoice / Date</span>
+                      <span className="text-slate-100">INV/26-27/0842 · 2026-10-18</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Taxable + CGST + SGST</span>
+                      <span className="text-slate-100 font-semibold">₹45,000 + ₹4,050 + ₹4,050</span>
+                    </div>
+                  </>
+                )}
+
+                {heroStage === 'tally' && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Voucher Type</span>
+                      <span className="text-indigo-300 font-semibold">Purchase · Action: Create</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Party Credit (ISDEEMEDPOSITIVE=No)</span>
+                      <span className="text-slate-100">₹53,100.00</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Purchase + Tax Debits</span>
+                      <span className="text-emerald-400">-₹45,000 / -₹4,050 / -₹4,050</span>
+                    </div>
+                  </>
+                )}
+
+                {heroStage === 'gstr2b' && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Normalized Invoice Key</span>
+                      <span className="text-slate-100">27AABCK4829M1Z5 · INV26270842</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Portal vs Books Delta</span>
+                      <span className="text-emerald-400 font-semibold">₹0.00 Variance</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Reconciliation Status</span>
+                      <span className="text-emerald-400 font-semibold">Matched · ITC Eligible</span>
+                    </div>
+                  </>
+                )}
+
+                {heroStage === 'compare' && (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Tally Pre-Export Blocker Check</span>
+                      <span className="text-emerald-400 font-semibold">Built-In (vs None in Basic OCR)</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">GSTR-2B 6-Status Excel Match</span>
+                      <span className="text-emerald-400 font-semibold">Included (JSON + XLSX)</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400">Exports Supported</span>
+                      <span className="text-slate-100">Tally XML · Zoho · Busy · SQL</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Quick Section Wayfinder Strip — Keeps Users Exploring */}
+      <nav
+        aria-label="Homepage workflow sections"
+        className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-medium text-[var(--text-muted)]"
+      >
+        {[
+          { id: 'live-no-login-demo', label: '01. Live Demo (No Login)' },
+          { id: 'live-ocr-workspace', label: '02. Full OCR & GSTR-2B Workspace' },
+          { id: 'practice-roi-estimator', label: '03. Time-Saved & Competitor Matrix' },
+          { id: 'ca-suite-capabilities', label: '04. 9 Core Capabilities' },
+          { id: 'extracted-fields-explorer', label: '05. 30+ Extracted Fields' },
+          { id: 'practice-pricing-plans', label: '06. Plans & FAQ' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => scrollToSection(item.id)}
+            className="px-3 py-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-indigo-500/50 hover:text-[var(--text-main)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
     </section>
   );
 };
@@ -415,6 +631,41 @@ export const LedgerSutraHeroBanner: React.FC<{
 // ============================================================================
 // SECTIONS 2 TO 10: ORDERED PUBLIC LANDING PAGE SECTIONS (PART 7.2 - 7.10)
 // ============================================================================
+const ALL_EXTRACTED_FIELDS: Array<{
+  name: string;
+  category: 'party' | 'einvoice' | 'tax' | 'boe';
+  categoryLabel: string;
+}> = [
+  { name: 'Supplier Name (Party Ledger)', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Supplier 15-Digit GSTIN', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Supplier 10-Digit PAN', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Supplier Address & State Code', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Buyer Name & Buyer GSTIN', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Buyer Address & State Code', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Place of Supply (POS)', category: 'party', categoryLabel: 'Party & GSTIN' },
+  { name: 'Invoice Number & Voucher Type', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: 'Invoice Date & Due Date', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: '64-Character e-Invoice IRN', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: '12-Digit e-Way Bill Number', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: 'e-Invoice QR Code Data', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: 'Purchase Order (PO) Number', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: 'Payment Terms & Mode', category: 'einvoice', categoryLabel: 'E-Invoice & Logistics' },
+  { name: 'Bank Name, Account No & IFSC', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Invoice Currency (INR / Forex)', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Line Item Description', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'HSN / SAC Code per Row', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Quantity, Unit (UOM) & Rate', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Taxable Value (Subtotal)', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'CGST Rate & Amount', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'SGST / UTGST Rate & Amount', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'IGST Rate & Amount', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Trade Discount & Other Charges', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Round-Off Adjustment', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Final Grand Total', category: 'tax', categoryLabel: 'Tax & Bank Math' },
+  { name: 'Bill of Entry (BOE) Number & Date', category: 'boe', categoryLabel: 'Import BOE' },
+  { name: 'Customs Port Code (Import BOE)', category: 'boe', categoryLabel: 'Import BOE' },
+];
+
 export const LedgerSutraHomepageSections: React.FC<{
   onNavigate: (path: string) => void;
   onOpenWorkspaceTab: (
@@ -424,17 +675,69 @@ export const LedgerSutraHomepageSections: React.FC<{
   onTriggerUpload?: () => void;
   savedBillsCount: number;
   onSignInRequest?: () => void;
-}> = ({ onNavigate, onOpenWorkspaceTab, onTriggerUpload, onSignInRequest }) => {
+}> = ({ onNavigate, onOpenWorkspaceTab, onSignInRequest }) => {
+  // Live Demo State
   const [selectedSampleId, setSelectedSampleId] = useState<string>(BUILTIN_DEMO_SAMPLES[0].id);
-  const [demoViewTab, setDemoViewTab] = useState<'table' | 'json'>('table');
+  const [demoViewTab, setDemoViewTab] = useState<'table' | 'tally_xml' | 'gstr2b' | 'json'>('table');
   const [scansUsedToday, setScansUsedToday] = useState<number>(() => getBrowserDemoScansUsed());
   const [customDemoResult, setCustomDemoResult] = useState<DemoSampleInvoice['data'] | null>(null);
   const [customDemoLoading, setCustomDemoLoading] = useState(false);
   const [customDemoError, setCustomDemoError] = useState('');
 
+  // Interactive Time-Saved Calculator State
+  const [monthlyInvoices, setMonthlyInvoices] = useState<number>(600);
+  const [clientCount, setClientCount] = useState<number>(25);
+  const [include2bReconciliation, setInclude2bReconciliation] = useState<boolean>(true);
+
+  // Field Explorer Filter State
+  const [fieldCategory, setFieldCategory] = useState<'all' | 'party' | 'einvoice' | 'tax' | 'boe'>('all');
+  const [fieldSearch, setFieldSearch] = useState('');
+
+  // Interactive Workspace Spotlight State
+  const [previewMode, setPreviewMode] = useState<'tally' | 'gstr2b' | 'queue'>('tally');
+
+  // Interactive FAQ Accordion & Category State
+  const [faqCategory, setFaqCategory] = useState<'All' | 'Tally' | 'GSTR-2B' | 'Security' | 'General'>('All');
+  const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
+
   const activeSample =
     BUILTIN_DEMO_SAMPLES.find((s) => s.id === selectedSampleId) || BUILTIN_DEMO_SAMPLES[0];
   const displayedInvoice = customDemoResult || activeSample.data;
+
+  const estimatedTimeStats = useMemo(() => {
+    const manualMinPerInvoice = 3.5;
+    const automatedMinPerInvoice = 0.6;
+    const reconExtraManualHours = include2bReconciliation ? Math.round(clientCount * 1.4) : 0;
+    const reconAutomatedHours = include2bReconciliation ? Math.round(clientCount * 0.25) : 0;
+
+    const manualHours = Math.round((monthlyInvoices * manualMinPerInvoice) / 60) + reconExtraManualHours;
+    const withLedgerSutraHours =
+      Math.round((monthlyInvoices * automatedMinPerInvoice) / 60) + reconAutomatedHours;
+    const hoursSaved = Math.max(0, manualHours - withLedgerSutraHours);
+    return { manualHours, withLedgerSutraHours, hoursSaved };
+  }, [monthlyInvoices, clientCount, include2bReconciliation]);
+
+  const filteredFields = useMemo(() => {
+    const q = fieldSearch.trim().toLowerCase();
+    return ALL_EXTRACTED_FIELDS.filter((f) => {
+      if (fieldCategory !== 'all' && f.category !== fieldCategory) return false;
+      if (q && !f.name.toLowerCase().includes(q) && !f.categoryLabel.toLowerCase().includes(q)) {
+        return false;
+      }
+      return true;
+    });
+  }, [fieldCategory, fieldSearch]);
+
+  const filteredFaqs = useMemo(() => {
+    return HOMEPAGE_FAQS.filter((faq) => {
+      if (faqCategory === 'All') return true;
+      const text = `${faq.question} ${faq.answer}`.toLowerCase();
+      if (faqCategory === 'Tally') return text.includes('tally') || text.includes('xml') || text.includes('zoho');
+      if (faqCategory === 'GSTR-2B') return text.includes('2b') || text.includes('itc') || text.includes('reconcil');
+      if (faqCategory === 'Security') return text.includes('secur') || text.includes('data') || text.includes('firestore') || text.includes('team');
+      return !text.includes('tally') && !text.includes('2b') && !text.includes('secur');
+    });
+  }, [faqCategory]);
 
   const handleCustomDemoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -443,7 +746,9 @@ export const LedgerSutraHomepageSections: React.FC<{
 
     const used = getBrowserDemoScansUsed();
     if (used >= 3) {
-      setCustomDemoError('You have used all 3 free browser scans for today. Please sign in with Google to scan more invoices.');
+      setCustomDemoError(
+        'You have used all 3 free browser scans for today. Please sign in with Google to scan more invoices.'
+      );
       return;
     }
 
@@ -515,31 +820,30 @@ export const LedgerSutraHomepageSections: React.FC<{
   return (
     <div className="space-y-12">
       {/* =================================================================== */}
-      {/* SECTION 2: LIVE DEMO WITHOUT LOGIN (3 BUILT-IN SAMPLES + 3/DAY CAP) */}
+      {/* SECTION 2: INTERACTIVE SPLIT LIVE DEMO (NO LOGIN REQUIRED)          */}
       {/* =================================================================== */}
       <section
         id="live-no-login-demo"
-        className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-              Section 2 • Instant Live Demo (No Login Required)
-            </span>
-            <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-              Test GST Invoice Extraction — Table &amp; JSON Output
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-color)] pb-5">
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-[var(--text-muted)]">
+              Interactive Extraction Sandbox · No Login Required ·{' '}
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+                {Math.max(0, 3 - scansUsedToday)} of 3 custom demo scans remaining today
+              </span>
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-main)]">
+              Inspect GST Invoice Extraction, TallyPrime XML &amp; JSON Live
             </h2>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
-              Pick one of our 3 built-in Indian GST invoices below or upload a sample invoice (limit: 3 custom browser scans per day without login;{' '}
-              <b>{Math.max(0, 3 - scansUsedToday)} of 3 remaining today</b>).
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {scansUsedToday < 3 ? (
-              <label className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer flex items-center gap-2 shadow">
+              <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors whitespace-nowrap shrink-0">
                 <Upload className="w-4 h-4" />
-                <span>{customDemoLoading ? 'Extracting...' : 'Upload Sample Invoice'}</span>
+                <span>{customDemoLoading ? 'Extracting Invoice...' : 'Upload Sample Invoice'}</span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -550,22 +854,22 @@ export const LedgerSutraHomepageSections: React.FC<{
             ) : (
               <button
                 onClick={onSignInRequest}
-                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold flex items-center gap-2"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-4 h-4" />
-                Daily 3-Scan Limit Reached — Sign in for More
+                <span>Daily 3-Scan Limit Reached — Sign in for More</span>
               </button>
             )}
           </div>
         </div>
 
         {customDemoError && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-3">
             <span>{customDemoError}</span>
             {onSignInRequest && (
               <button
                 onClick={onSignInRequest}
-                className="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold shrink-0"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold shrink-0 cursor-pointer"
               >
                 Sign In with Google
               </button>
@@ -573,9 +877,9 @@ export const LedgerSutraHomepageSections: React.FC<{
           </div>
         )}
 
-        {/* 3 Built-in Sample Selector Buttons */}
+        {/* 3 Built-in Sample Tabs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {BUILTIN_DEMO_SAMPLES.map((samp) => {
+          {BUILTIN_DEMO_SAMPLES.map((samp, index) => {
             const isSelected = !customDemoResult && selectedSampleId === samp.id;
             return (
               <button
@@ -584,237 +888,519 @@ export const LedgerSutraHomepageSections: React.FC<{
                   setCustomDemoResult(null);
                   setSelectedSampleId(samp.id);
                 }}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`p-4 rounded-xl border text-left transition-colors cursor-pointer ${
                   isSelected
-                    ? 'border-indigo-500 bg-indigo-500/10'
+                    ? 'border-indigo-500 bg-indigo-500/5'
                     : 'border-[var(--border-color)] bg-[var(--bg-subtle)] hover:border-indigo-500/40'
                 }`}
               >
-                <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
-                  {samp.badge}
+                <div className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                  Sample 0{index + 1} · {samp.meta}
                 </div>
-                <div className="text-xs font-bold text-[var(--text-main)] mt-1">{samp.label}</div>
+                <div className="text-sm font-semibold text-[var(--text-main)] mt-1">{samp.label}</div>
               </button>
             );
           })}
         </div>
 
-        {/* Table vs JSON Tab Switcher */}
-        <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDemoViewTab('table')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
-                demoViewTab === 'table'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-[var(--bg-subtle)] text-[var(--text-muted)]'
-              }`}
-            >
-              Structured Accounting Table View
-            </button>
-            <button
-              onClick={() => setDemoViewTab('json')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${
-                demoViewTab === 'json'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-[var(--bg-subtle)] text-[var(--text-muted)]'
-              }`}
-            >
-              Raw JSON API Output Tab
-            </button>
-          </div>
-          <span className="text-xs font-mono text-[var(--text-muted)]">
-            Invoice: <b>{displayedInvoice.invoiceNumber}</b>
-          </span>
-        </div>
+        {/* Split Invoice Document Preview (Left) + 4-Way Inspector (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left: Interactive Document Sheet View */}
+          <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-5 flex flex-col justify-between space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+                <div>
+                  <div className="text-[11px] font-medium text-[var(--text-muted)]">
+                    Tax Invoice Preview
+                  </div>
+                  <div className="text-sm font-bold text-[var(--text-main)] mt-0.5">
+                    {displayedInvoice.shopName}
+                  </div>
+                  <div className="text-xs font-mono text-indigo-600 dark:text-indigo-400 mt-0.5">
+                    GSTIN: {displayedInvoice.sellerGstin}
+                  </div>
+                </div>
+                <div className="text-right font-mono text-xs tabular-nums">
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {displayedInvoice.invoiceNumber}
+                  </div>
+                  <div className="text-[var(--text-muted)]">{displayedInvoice.billDate}</div>
+                </div>
+              </div>
 
-        {demoViewTab === 'table' ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">Supplier Name</div>
-                <div className="font-bold mt-0.5 truncate">{displayedInvoice.shopName}</div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Billed To</div>
+                  <div className="font-semibold text-[var(--text-main)] truncate">
+                    {displayedInvoice.buyerName}
+                  </div>
+                  <div className="font-mono text-[11px] text-[var(--text-muted)]">
+                    {displayedInvoice.buyerGstin}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Place of Supply &amp; Logistics</div>
+                  <div className="font-medium text-[var(--text-main)]">{displayedInvoice.placeOfSupply}</div>
+                  <div className="font-mono text-[11px] text-[var(--text-muted)] truncate">
+                    e-Way: {displayedInvoice.ewayBillNo}
+                  </div>
+                </div>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">Supplier GSTIN &amp; PAN</div>
-                <div className="font-mono font-bold text-indigo-500 mt-0.5">{displayedInvoice.sellerGstin}</div>
-                <div className="font-mono text-[10px] text-[var(--text-muted)]">PAN: {displayedInvoice.supplierPan}</div>
+
+              <div className="border-t border-[var(--border-color)] pt-3 space-y-2">
+                {displayedInvoice.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-medium text-[var(--text-main)] truncate">
+                        {item.itemName}
+                      </div>
+                      <div className="text-[11px] font-mono text-[var(--text-muted)]">
+                        HSN {item.hsnSac} · {item.quantity} {item.unit} × ₹{item.unitPrice.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    <div className="font-mono font-semibold text-[var(--text-main)] tabular-nums shrink-0">
+                      ₹{item.taxableValue.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">Buyer GSTIN &amp; POS</div>
-                <div className="font-mono font-bold mt-0.5">{displayedInvoice.buyerGstin}</div>
-                <div className="text-[10px] text-[var(--text-muted)]">POS: {displayedInvoice.placeOfSupply}</div>
+            </div>
+
+            <div className="border-t border-[var(--border-color)] pt-3 space-y-1.5 text-xs font-mono tabular-nums">
+              <div className="flex justify-between text-[var(--text-muted)]">
+                <span>Taxable Value</span>
+                <span>₹{displayedInvoice.subtotal.toLocaleString('en-IN')}</span>
               </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">e-Way Bill &amp; PO No</div>
-                <div className="font-mono font-bold mt-0.5">{displayedInvoice.ewayBillNo}</div>
-                <div className="text-[10px] text-[var(--text-muted)]">PO: {displayedInvoice.poNumber}</div>
-              </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">Bank Details (NEFT)</div>
-                <div className="font-bold mt-0.5 truncate">{displayedInvoice.bankName}</div>
-                <div className="font-mono text-[10px] text-[var(--text-muted)]">{displayedInvoice.bankIfsc}</div>
-              </div>
-              <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                <div className="text-[10px] text-[var(--text-muted)]">Grand Total ({displayedInvoice.currency})</div>
-                <div className="font-mono text-base font-extrabold text-emerald-500 mt-0.5">
+              {displayedInvoice.igstAmount > 0 ? (
+                <div className="flex justify-between text-[var(--text-muted)]">
+                  <span>IGST</span>
+                  <span>₹{displayedInvoice.igstAmount.toLocaleString('en-IN')}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>CGST</span>
+                    <span>₹{displayedInvoice.cgstAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>SGST</span>
+                    <span>₹{displayedInvoice.sgstAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between pt-2 border-t border-[var(--border-color)] text-sm font-bold text-[var(--text-main)]">
+                <span>Grand Total ({displayedInvoice.currency})</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
                   ₹{displayedInvoice.grandTotal.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: 4-Tab Interactive Output Switcher */}
+          <div className="lg:col-span-7 flex flex-col space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+                {[
+                  { id: 'table' as const, label: 'Accounting Table' },
+                  { id: 'tally_xml' as const, label: 'TallyPrime XML' },
+                  { id: 'gstr2b' as const, label: 'GSTR-2B Check' },
+                  { id: 'json' as const, label: 'Raw JSON API' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDemoViewTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      demoViewTab === tab.id
+                        ? 'bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-400 shadow-xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-mono text-[var(--text-muted)] tabular-nums">
+                IRN: {displayedInvoice.irn.slice(0, 14)}…
+              </span>
+            </div>
+
+            {demoViewTab === 'table' && (
+              <div className="space-y-4 flex-1 flex flex-col justify-between">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)]">Supplier PAN</div>
+                    <div className="font-mono font-semibold text-[var(--text-main)] mt-0.5">
+                      {displayedInvoice.supplierPan}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)]">PO / Payment Terms</div>
+                    <div className="font-semibold text-[var(--text-main)] mt-0.5 truncate">
+                      {displayedInvoice.poNumber} · {displayedInvoice.paymentTerms}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)]">Bank &amp; IFSC</div>
+                    <div className="font-mono font-semibold text-[var(--text-main)] mt-0.5 truncate">
+                      {displayedInvoice.bankName} ({displayedInvoice.bankIfsc})
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-[var(--border-color)] rounded-xl overflow-x-auto">
+                  <table className="w-full text-left text-xs tabular-nums">
+                    <thead className="bg-[var(--bg-subtle)] text-[var(--text-muted)]">
+                      <tr>
+                        <th className="py-2.5 px-3 font-semibold">Line Item Description</th>
+                        <th className="py-2.5 px-3 font-semibold">HSN/SAC</th>
+                        <th className="py-2.5 px-3 font-semibold">Qty</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Taxable (₹)</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">GST</th>
+                        <th className="py-2.5 px-3 font-semibold text-right">Line Total (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-color)]">
+                      {displayedInvoice.items.map((it, i) => (
+                        <tr key={i} className="hover:bg-[var(--bg-subtle)]/50">
+                          <td className="py-2.5 px-3 font-medium text-[var(--text-main)]">{it.itemName}</td>
+                          <td className="py-2.5 px-3 font-mono">{it.hsnSac}</td>
+                          <td className="py-2.5 px-3 font-mono">
+                            {it.quantity} {it.unit}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-right">
+                            ₹{it.taxableValue.toLocaleString('en-IN')}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-right">{it.gstRate}%</td>
+                          <td className="py-2.5 px-3 font-mono font-semibold text-right">
+                            ₹{it.lineTotal.toLocaleString('en-IN')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {demoViewTab === 'tally_xml' && (
+              <pre className="p-4 rounded-xl bg-slate-950 text-indigo-300 font-mono text-xs overflow-x-auto max-h-80 leading-relaxed">
+                {buildSampleTallyXmlPreview(displayedInvoice)}
+              </pre>
+            )}
+
+            {demoViewTab === 'gstr2b' && (
+              <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-[var(--text-main)]">
+                      Books vs GSTR-2B Portal Match Simulation
+                    </div>
+                    <div className="text-[11px] text-[var(--text-muted)]">
+                      Normalized match key: GSTIN + stripped invoice number
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    {activeSample.gstr2bStatus}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono tabular-nums">
+                  <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Books Tax Claim</div>
+                    <div className="text-sm font-bold text-[var(--text-main)] mt-1">
+                      ₹{(displayedInvoice.cgstAmount + displayedInvoice.sgstAmount + displayedInvoice.igstAmount).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Portal 2B Eligible ITC</div>
+                    <div className="text-sm font-bold text-[var(--text-main)] mt-1">
+                      ₹{(displayedInvoice.cgstAmount + displayedInvoice.sgstAmount + displayedInvoice.igstAmount).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Tax Variance</div>
+                    <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                      ₹0.00
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {demoViewTab === 'json' && (
+              <pre className="p-4 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs overflow-x-auto max-h-80">
+                {JSON.stringify(displayedInvoice, null, 2)}
+              </pre>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* =================================================================== */}
+      {/* SECTION 3: INTERACTIVE TIME-SAVED ESTIMATOR & WORKFLOW COMPARISON   */}
+      {/* =================================================================== */}
+      <section
+        id="practice-roi-estimator"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-8 scroll-mt-20"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Interactive Slider Calculator */}
+          <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-5 space-y-5">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Interactive Practice Workload Estimator</span>
+              </div>
+              <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
+                Estimate Monthly Voucher &amp; 2B Hours Saved
+              </h2>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <div className="flex justify-between font-semibold">
+                  <label htmlFor="roi-invoices">Monthly Purchase Invoices</label>
+                  <span className="font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
+                    {monthlyInvoices.toLocaleString('en-IN')} bills
+                  </span>
+                </div>
+                <input
+                  id="roi-invoices"
+                  type="range"
+                  min={50}
+                  max={5000}
+                  step={50}
+                  value={monthlyInvoices}
+                  onChange={(e) => setMonthlyInvoices(Number(e.target.value))}
+                  className="w-full accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex justify-between font-semibold">
+                  <label htmlFor="roi-clients">Active GST Clients</label>
+                  <span className="font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
+                    {clientCount} clients
+                  </span>
+                </div>
+                <input
+                  id="roi-clients"
+                  type="range"
+                  min={1}
+                  max={150}
+                  step={1}
+                  value={clientCount}
+                  onChange={(e) => setClientCount(Number(e.target.value))}
+                  className="w-full accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer font-medium text-[var(--text-main)]">
+                <input
+                  type="checkbox"
+                  checked={include2bReconciliation}
+                  onChange={(e) => setInclude2bReconciliation(e.target.checked)}
+                  className="rounded border-[var(--border-color)] accent-indigo-600"
+                />
+                <span>Include monthly GSTR-2B Excel reconciliation time</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--border-color)] font-mono tabular-nums">
+              <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                <div className="text-[10px] font-sans text-[var(--text-muted)]">Manual Entry</div>
+                <div className="text-base font-bold text-[var(--text-main)] mt-0.5">
+                  {estimatedTimeStats.manualHours}h
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                <div className="text-[10px] font-sans text-[var(--text-muted)]">With Review</div>
+                <div className="text-base font-bold text-[var(--text-main)] mt-0.5">
+                  {estimatedTimeStats.withLedgerSutraHours}h
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-indigo-600 text-white">
+                <div className="text-[10px] font-sans text-indigo-100">Hours Saved</div>
+                <div className="text-base font-bold mt-0.5">
+                  ~{estimatedTimeStats.hoursSaved}h/mo
                 </div>
               </div>
             </div>
 
-            <div className="border border-[var(--border-color)] rounded-xl overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[var(--bg-subtle)] text-[var(--text-muted)]">
-                  <tr>
-                    <th className="py-2 px-3">Line Item Description</th>
-                    <th className="py-2 px-3">HSN/SAC</th>
-                    <th className="py-2 px-3">Qty &amp; UOM</th>
-                    <th className="py-2 px-3">Rate (₹)</th>
-                    <th className="py-2 px-3">Taxable (₹)</th>
-                    <th className="py-2 px-3">GST %</th>
-                    <th className="py-2 px-3">Line Total (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border-color)]">
-                  {displayedInvoice.items.map((it, i) => (
-                    <tr key={i}>
-                      <td className="py-2 px-3 font-semibold">{it.itemName}</td>
-                      <td className="py-2 px-3 font-mono">{it.hsnSac}</td>
-                      <td className="py-2 px-3 font-mono">
-                        {it.quantity} {it.unit}
-                      </td>
-                      <td className="py-2 px-3 font-mono">₹{it.unitPrice.toLocaleString('en-IN')}</td>
-                      <td className="py-2 px-3 font-mono">₹{it.taxableValue.toLocaleString('en-IN')}</td>
-                      <td className="py-2 px-3 font-mono">{it.gstRate}%</td>
-                      <td className="py-2 px-3 font-mono font-bold">₹{it.lineTotal.toLocaleString('en-IN')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+              Illustrative workflow calculation assuming ~3.5 min manual voucher &amp; ledger entry per invoice vs ~0.6 min review &amp; export.
+            </p>
+          </div>
+
+          {/* Right: Manual Entry vs LedgerSutra Comparison */}
+          <div className="lg:col-span-7 space-y-5">
+            <div>
+              <div className="text-xs font-medium text-[var(--text-muted)]">
+                Problem vs Solution
+              </div>
+              <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+                Why Indian CA Firms Replace Manual Voucher Entry with {BRAND_NAME}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-3">
+                <div className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Manual Data Entry Bottlenecks</span>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                  <li>Typing 15-character GSTINs, invoice numbers, and HSN rows by hand before GSTR-3B deadlines.</li>
+                  <li>Transposing characters (`8` vs `B`, `0` vs `O`) causing avoidable GSTR-2B mismatches.</li>
+                  <li>Double-booking invoices when clients share both a WhatsApp photo and an email PDF.</li>
+                  <li>Manually creating Sundry Creditor ledgers and tax splits inside TallyPrime.</li>
+                </ul>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-3">
+                <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>Structured {BRAND_NAME} Workflow</span>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                  <li>Batch upload PDFs &amp; photos simultaneously with real-time per-file queue progress bars.</li>
+                  <li>Deterministic 15-character GSTIN Mod-36 checksum and line-item tax math verification.</li>
+                  <li>Automatic duplicate invoice prompt (`Merge Items`, `Overwrite`, or `Save as Duplicate`).</li>
+                  <li>One-click TallyPrime XML vouchers + 6-status GSTR-2B Excel reconciliation report.</li>
+                </ul>
+              </div>
             </div>
           </div>
-        ) : (
-          <pre className="p-4 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs overflow-x-auto max-h-96">
-            {JSON.stringify(displayedInvoice, null, 2)}
-          </pre>
-        )}
-      </section>
-
-      {/* =================================================================== */}
-      {/* SECTION 3: PROBLEM / SOLUTION STRIP (MANUAL ENTRY VS LEDGERSUTRA)   */}
-      {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 3 • Problem vs Solution
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            Why Indian CA Firms Replace Manual Voucher Entry with {BRAND_NAME}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-5 rounded-2xl bg-rose-500/5 border border-rose-500/20 space-y-3">
-            <h3 className="text-sm font-bold text-rose-500 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Traditional Manual Data Entry in CA Offices
-            </h3>
-            <ul className="space-y-2 text-xs text-[var(--text-muted)]">
-              <li>• Typing 15-character GSTINs, invoice numbers, and HSN rows by hand before GSTR-3B deadlines.</li>
-              <li>• Transposing characters (`8` vs `B`, `0` vs `O`) leading to GSTR-2B mismatches.</li>
-              <li>• Recording duplicate invoices when clients send both a WhatsApp image and a PDF copy.</li>
-              <li>• Manually creating Sundry Creditor ledgers and tax split entries in TallyPrime.</li>
-            </ul>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-3">
-            <h3 className="text-sm font-bold text-emerald-500 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Automated Workflow with {BRAND_NAME}
-            </h3>
-            <ul className="space-y-2 text-xs text-[var(--text-muted)]">
-              <li>• Batch upload PDFs &amp; photos with per-file progress bars and automatic field extraction.</li>
-              <li>• Deterministic 15-character GSTIN Mod-36 checksum &amp; tax math verification on every bill.</li>
-              <li>• Instant duplicate invoice detection (`Merge Items`, `Overwrite`, or `Save as Duplicate`).</li>
-              <li>• One-click TallyPrime XML voucher export + 6-status GSTR-2B reconciliation in Excel.</li>
-            </ul>
-          </div>
         </div>
       </section>
 
       {/* =================================================================== */}
-      {/* SECTION 4: 9-FEATURE GRID (PART 7.4)                                */}
+      {/* SECTION 4: ASYMMETRIC BENTO CAPABILITIES GRID (PART 7.4)            */}
       {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 4 • Complete CA Practice Suite
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            Nine Core Capabilities Built for GST Practitioners &amp; Audit Teams
-          </h2>
+      <section
+        id="ca-suite-capabilities"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <div className="text-xs font-medium text-[var(--text-muted)]">
+              Complete CA Practice Suite
+            </div>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[var(--text-main)] mt-1">
+              Nine Capabilities Built for GST Practitioners &amp; Audit Teams
+            </h2>
+          </div>
+          <button
+            onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer whitespace-nowrap shrink-0"
+          >
+            Launch Full Suite Workspace →
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Asymmetric Bento Row 1: Two Marquee Spotlight Cards with Editorial Visual */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-7 p-6 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                01. TallyPrime XML Export &amp; Pre-Export Validator
+              </div>
+              <h3 className="text-lg font-bold text-[var(--text-main)]">
+                Direct Purchase Voucher XML Generation with Ledger Auto-Create
+              </h3>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                Generates TallyPrime-importable Purchase Vouchers (`ENVELOPE &gt; TALLYMESSAGE &gt; VOUCHER`) with Party credit, Purchase debit, CGST/SGST/IGST ledgers, round-off, and blocked-bill validation (`Fix Now` or skip).
+              </p>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
+              <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                Tally XML · Zoho Books CSV · Busy Excel
+              </span>
+              <button
+                onClick={() => onNavigate('/gst-invoice-to-tally')}
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+              >
+                Read Tally Guide →
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-slate-900 overflow-hidden relative min-h-[220px] flex flex-col justify-end">
+            <EditorialVisual
+              src={invoiceAuditImg}
+              alt="Overhead view of GST purchase register and tax invoice reconciliation"
+              fallbackTitle="02. GSTR-2B Reconciliation"
+              fallbackSubtitle="Match Books vs Portal JSON & Excel"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/20" />
+            <div className="relative z-10 p-5 space-y-2 text-slate-100">
+              <div className="text-xs font-semibold text-indigo-300">
+                02. GSTR-2B Reconciliation
+              </div>
+              <h3 className="text-base font-bold">
+                Upload Portal JSON/Excel &amp; Flag ITC at Risk Across 6 Statuses
+              </h3>
+              <button
+                onClick={() => onNavigate('/gstr-2b-reconciliation-excel')}
+                className="text-xs font-semibold text-white hover:underline cursor-pointer"
+              >
+                Explore 2B Matcher →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Remaining 7 Capabilities in Clean Hairline Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             {
-              title: '1. TallyPrime XML Export',
-              desc: 'Generates TallyPrime-importable Purchase Vouchers with Party credit, Purchase debit, CGST/SGST/IGST ledgers, round-off, and optional auto-creation of missing Party ledgers.',
-              link: '/gst-invoice-to-tally',
-            },
-            {
-              title: '2. GSTR-2B Reconciliation',
-              desc: 'Upload GST portal GSTR-2B JSON or Excel files. Match by Supplier GSTIN + normalized invoice number + fuzzy amount/date fallback and export a multi-sheet Excel report.',
-              link: '/gstr-2b-reconciliation-excel',
-            },
-            {
-              title: '3. Duplicate Invoice Detection',
-              desc: 'Checks every bill against existing records by Supplier Name and Invoice Number, prompting you to merge items, overwrite, or keep as a separate entry.',
+              title: '03. Duplicate Invoice Detection',
+              desc: 'Checks every bill against saved records by Supplier Name and Invoice Number, prompting you to Merge Items, Overwrite, or Save as Duplicate.',
               link: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
             },
             {
-              title: '4. GSTIN Validation & Tax Audit',
-              desc: 'Validates 15-character GSTIN format, state code, and official Mod-36 checksum digit while checking line-item taxable sums against printed GST totals.',
+              title: '04. GSTIN Validation & Tax Audit',
+              desc: 'Validates 15-character GSTIN format, state code, and official Mod-36 checksum digit while verifying line-item taxable sums against printed tax splits.',
               link: '/gst-invoice-data-extraction',
             },
             {
-              title: '5. Batch Processing Queue',
+              title: '05. Batch Processing Queue',
               desc: 'Upload dozens of multi-page PDFs and bill photos simultaneously with an interactive file queue and per-file progress bars.',
               link: '/bulk-invoice-processing-for-ca',
             },
             {
-              title: '6. Client-Wise Workspace',
-              desc: 'Organize bills, documents, GSTR-2B reconciliations, and Tally ledger settings under dedicated CA client profiles (/users/{uid}/clients/{clientId}).',
+              title: '06. Client-Wise Workspace',
+              desc: 'Organize bills, documents, GSTR-2B reconciliations, and Tally ledger settings under dedicated CA client profiles in Firestore.',
               link: '/features',
             },
             {
-              title: '7. Team Access & Approval Workflow',
-              desc: 'Assign Owner/CA, Reviewer, and Staff roles. Staff upload Draft/Pending bills; Reviewers approve or reject with an immutable per-bill audit trail.',
+              title: '07. Team Access & Approval Workflow',
+              desc: 'Assign Owner/CA, Reviewer, and Staff roles. Staff upload Draft/Pending bills; Reviewers approve or reject with an audit trail.',
               link: '/security',
             },
             {
-              title: '8. Multi-Format Accounting Export',
-              desc: 'Export validated purchase registers to TallyPrime XML, multi-sheet Excel (.xlsx), Zoho Books CSV, Busy Accounting Excel, JSON, SQL, and verbatim TXT.',
+              title: '08. Multi-Format Accounting Export',
+              desc: 'Export validated purchase registers to TallyPrime XML, multi-sheet Excel (.xlsx), Zoho Books CSV, Busy Excel, JSON, SQL, and verbatim TXT.',
               link: '/pdf-invoice-to-excel',
             },
             {
-              title: '9. Developer REST API (v1)',
-              desc: 'Integrate POST /api/v1/extract into your custom ERP or firm portal using SHA-256 hashed per-user API keys with rate limiting.',
+              title: '09. Developer REST API (v1)',
+              desc: 'Integrate POST /api/v1/extract into your custom ERP or firm portal using SHA-256 hashed API keys with built-in rate limiting.',
               link: '/api-docs',
             },
           ].map((feat) => (
             <div
               key={feat.title}
-              className="p-5 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-3"
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-3"
             >
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <h3 className="text-sm font-bold text-[var(--text-main)]">{feat.title}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed">{feat.desc}</p>
               </div>
               <button
                 onClick={() => onNavigate(feat.link)}
-                className="text-xs font-bold text-indigo-500 hover:underline text-left cursor-pointer"
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer"
               >
                 Learn more →
               </button>
@@ -824,211 +1410,273 @@ export const LedgerSutraHomepageSections: React.FC<{
       </section>
 
       {/* =================================================================== */}
-      {/* SECTION 5: "FIELDS WE EXTRACT" FULL LIST (PART 5 & PART 7.5)        */}
+      {/* SECTION 5: INTERACTIVE "FIELDS WE EXTRACT" EXPLORER (PART 5 & 7.5)  */}
       {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-5">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 5 • Comprehensive Schema Coverage
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            30+ Invoice, E-Invoice &amp; Bill of Entry Fields Extracted Automatically
-          </h2>
-          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
-            All fields below are extracted when present on the document and available as selectable columns in your Master Sheet and exports:
-          </p>
+      <section
+        id="extracted-fields-explorer"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-5 scroll-mt-20"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <div className="text-xs font-medium text-[var(--text-muted)]">
+              Comprehensive Schema Coverage · Filterable Column Directory
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+              30+ Invoice, E-Invoice &amp; Bill of Entry Fields Extracted Automatically
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={fieldSearch}
+                onChange={(e) => setFieldSearch(e.target.value)}
+                placeholder="Filter fields (e.g. IRN, IFSC, HSN)"
+                className="pl-8 pr-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-main)] w-56"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 text-xs">
+        {/* Interactive Category Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5">
           {[
-            'Supplier Name (Party Ledger)',
-            'Supplier 15-Digit GSTIN',
-            'Supplier 10-Digit PAN',
-            'Supplier Address & State Code',
-            'Buyer Name & Buyer GSTIN',
-            'Buyer Address & State Code',
-            'Place of Supply (POS)',
-            'Invoice Number & Voucher Type',
-            'Invoice Date & Due Date',
-            '64-Character e-Invoice IRN',
-            '12-Digit e-Way Bill Number',
-            'e-Invoice QR Code Data',
-            'Purchase Order (PO) Number',
-            'Payment Terms & Mode',
-            'Bank Name, Account No & IFSC',
-            'Invoice Currency (INR / Forex)',
-            'Line Item Description',
-            'HSN / SAC Code per Row',
-            'Quantity, Unit (UOM) & Rate',
-            'Taxable Value (Subtotal)',
-            'CGST Rate & Amount',
-            'SGST / UTGST Rate & Amount',
-            'IGST Rate & Amount',
-            'Trade Discount & Other Charges',
-            'Round-Off Adjustment',
-            'Final Grand Total',
-            'Bill of Entry (BOE) Number & Date',
-            'Customs Port Code (Import BOE)',
-          ].map((field) => (
-            <div
-              key={field}
-              className="px-3 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex items-center gap-2 font-medium"
+            { id: 'all' as const, label: `All Fields (${ALL_EXTRACTED_FIELDS.length})` },
+            { id: 'party' as const, label: 'Party & GSTIN' },
+            { id: 'einvoice' as const, label: 'E-Invoice & Logistics' },
+            { id: 'tax' as const, label: 'Tax & Bank Math' },
+            { id: 'boe' as const, label: 'Import BOE' },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setFieldCategory(cat.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                fieldCategory === cat.id
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)]'
+              }`}
             >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 text-xs">
+          {filteredFields.map((field) => (
+            <div
+              key={field.name}
+              className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex items-center justify-between gap-2"
+            >
+              <span className="font-medium text-[var(--text-main)] truncate">{field.name}</span>
               <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-              <span>{field}</span>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* =================================================================== */}
-      {/* SECTION 6: HOW IT WORKS IN 3 STEPS (PART 7.6)                       */}
-      {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 6 • Simple 3-Step Workflow
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            How {BRAND_NAME} Works in 3 Steps
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              step: 'Step 1',
-              title: 'Select Client & Upload Invoices',
-              desc: 'Pick your client workspace in the header and upload single or batch PDFs, multi-page statements, Bills of Entry, or mobile photos.',
-            },
-            {
-              step: 'Step 2',
-              title: 'Automated GST Audit & Review',
-              desc: 'LedgerSutra extracts all header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
-            },
-            {
-              step: 'Step 3',
-              title: 'Reconcile GSTR-2B & Export to Tally',
-              desc: 'Match approved bills against portal GSTR-2B JSON/Excel files and download TallyPrime XML vouchers, multi-sheet Excel registers, Zoho CSV, or Busy sheets.',
-            },
-          ].map((st) => (
-            <div
-              key={st.step}
-              className="p-5 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2"
-            >
-              <span className="inline-block px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500 text-xs font-bold">
-                {st.step}
-              </span>
-              <h3 className="text-base font-bold text-[var(--text-main)]">{st.title}</h3>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">{st.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* =================================================================== */}
-      {/* SECTION 7: SCREENSHOTS SECTION (HONEST PLACEHOLDERS - PART 7.7)     */}
-      {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 7 • Workspace Previews
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            Inside the {BRAND_NAME} CA Workspace
-          </h2>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
-            Interactive UI wireframes below represent the live tabs available immediately inside the workspace above (placeholder preview slots for production screenshots).
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            {
-              title: '[Screenshot Placeholder 1: TallyPrime XML Pre-Export Validator]',
-              subtitle:
-                'Shows blocked bills (missing invoice number, invalid GSTIN, tax variance) with "Fix Now" and "Skip & Export Valid Bills" actions.',
-              tab: 'master_sheet' as const,
-            },
-            {
-              title: '[Screenshot Placeholder 2: GSTR-2B vs Purchase Register Matcher]',
-              subtitle:
-                'Side-by-side comparison of Books vs GSTR-2B portal values across 6 statuses with ITC at Risk summary cards.',
-              tab: 'master_sheet' as const,
-            },
-            {
-              title: '[Screenshot Placeholder 3: Multi-File Batch Queue & Audit Mode]',
-              subtitle:
-                'Real-time batch processing queue with per-file progress bars, Mod-36 GSTIN verification, and line-item editor.',
-              tab: 'scanner' as const,
-            },
-          ].map((shot) => (
-            <div
-              key={shot.title}
-              className="p-5 rounded-2xl border border-dashed border-indigo-500/40 bg-[var(--bg-subtle)] flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="text-xs font-mono font-bold text-indigo-500">{shot.title}</div>
-                <p className="text-xs text-[var(--text-muted)]">{shot.subtitle}</p>
-              </div>
+          {filteredFields.length === 0 && (
+            <div className="col-span-full py-6 text-center text-xs text-[var(--text-muted)]">
+              No extracted fields match "{fieldSearch}".{' '}
               <button
-                onClick={() => onOpenWorkspaceTab(shot.tab, 'ca_mode')}
-                className="text-xs font-bold text-indigo-500 hover:underline text-left cursor-pointer"
+                onClick={() => {
+                  setFieldSearch('');
+                  setFieldCategory('all');
+                }}
+                className="text-indigo-500 font-semibold hover:underline cursor-pointer"
               >
-                Try this view live in workspace →
+                Reset Filter
               </button>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
       {/* =================================================================== */}
-      {/* SECTION 8: TRUTHFUL SECURITY & PRIVACY SECTION (PART 7.8)           */}
+      {/* SECTION 6 & 7: 3-STEP WORKFLOW + INTERACTIVE PRACTICE PREVIEW       */}
       {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-5">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <div className="lg:col-span-6 space-y-5 flex flex-col justify-between">
+            <div>
+              <div className="text-xs font-medium text-[var(--text-muted)]">
+                Three-Step Practice Workflow
+              </div>
+              <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+                From Client Invoice Folder to Tally &amp; 2B Sign-Off
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  num: '01.',
+                  title: 'Select Client & Upload Invoices',
+                  desc: 'Pick your client workspace in the header and upload single or batch PDFs, multi-page statements, Bills of Entry, or mobile photos.',
+                },
+                {
+                  num: '02.',
+                  title: 'Automated GST Audit & Review Queue',
+                  desc: 'LedgerSutra extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
+                },
+                {
+                  num: '03.',
+                  title: 'Reconcile GSTR-2B & Export to Tally',
+                  desc: 'Match approved bills against portal GSTR-2B JSON/Excel files and download TallyPrime XML vouchers, Excel registers, Zoho CSV, or Busy sheets.',
+                },
+              ].map((st) => (
+                <div
+                  key={st.num}
+                  className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1"
+                >
+                  <div className="text-sm font-bold text-[var(--text-main)]">
+                    <span className="font-mono text-indigo-600 dark:text-indigo-400 mr-2">{st.num}</span>
+                    {st.title}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">{st.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive Workspace Module Switcher + Editorial Practice Photo */}
+          <div className="lg:col-span-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] overflow-hidden flex flex-col justify-between">
+            <div className="relative h-52 bg-slate-900">
+              <EditorialVisual
+                src={caWorkspaceImg}
+                alt="Modern CA advisory studio with dual monitors showing structured accounting tables"
+                fallbackTitle="CA Practice Dual-Monitor Workflow"
+                fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-white">
+                  Inside the {BRAND_NAME} CA Workspace
+                </span>
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-950/85 border border-slate-700/70">
+                  {[
+                    { id: 'tally' as const, label: 'Tally Validator' },
+                    { id: 'gstr2b' as const, label: '2B Matcher' },
+                    { id: 'queue' as const, label: 'Batch Queue' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setPreviewMode(m.id)}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
+                        previewMode === m.id
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {previewMode === 'tally' && (
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <FileCheck2 className="w-4 h-4 text-indigo-500" />
+                    <span>Pre-Export Validator &amp; Ledger Mapping</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Flags blocked bills (missing invoice number, invalid GSTIN checksum, tax math variance) before XML generation, with one-click Fix Now or Skip &amp; Export Valid Bills actions.
+                  </p>
+                </div>
+              )}
+
+              {previewMode === 'gstr2b' && (
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                    <span>Side-by-Side Purchase Register vs Portal 2B</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Categorizes every invoice across 6 actionable statuses (Matched, Amount Mismatch, Date Mismatch, Probable Invoice Mismatch, In Books Only, In 2B Only) with ITC at Risk totals.
+                  </p>
+                </div>
+              )}
+
+              {previewMode === 'queue' && (
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <span>Multi-File Batch Processing Queue</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Upload PDFs and images together, track individual per-file progress bars, retry failed scans, and resolve duplicate bills interactively before saving.
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  Available live above in workspace
+                </span>
+                <button
+                  onClick={() =>
+                    onOpenWorkspaceTab(previewMode === 'queue' ? 'scanner' : 'master_sheet', 'ca_mode')
+                  }
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                >
+                  Open this view live →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =================================================================== */}
+      {/* SECTION 8: TRUTHFUL SECURITY & PRIVACY ARCHITECTURE (PART 7.8)      */}
+      {/* =================================================================== */}
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
-              Section 8 • Truthful Security Architecture
-            </span>
-            <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
+            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Truthful Security Architecture
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
               Security &amp; Data Isolation for Client Records
             </h2>
           </div>
           <button
             onClick={() => onNavigate('/security')}
-            className="text-xs font-bold text-indigo-500 hover:underline cursor-pointer"
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
           >
-            Read Full Security Overview →
+            Read Full Security Architecture →
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
+          <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
-              <Lock className="w-4 h-4 text-emerald-500" />
-              Google Sign-In Authentication
+              <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Google Sign-In Authentication</span>
             </div>
-            <p className="text-[var(--text-muted)]">
+            <p className="text-[var(--text-muted)] leading-relaxed">
               Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by LedgerSutra.
             </p>
           </div>
-          <div className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
+          <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              Per-User &amp; Per-Client Firestore Isolation
+              <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Per-User &amp; Per-Client Firestore Isolation</span>
             </div>
-            <p className="text-[var(--text-muted)]">
-              All saved clients, bills, and audit trails are scoped under <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by Firestore security rules.
+            <p className="text-[var(--text-muted)] leading-relaxed">
+              All saved clients, bills, and audit trails are scoped under{' '}
+              <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by Firestore rules.
             </p>
           </div>
-          <div className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
+          <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
-              <Database className="w-4 h-4 text-emerald-500" />
-              Encryption in Transit &amp; Instant Data Deletion
+              <Database className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Encryption in Transit &amp; Instant Deletion</span>
             </div>
-            <p className="text-[var(--text-muted)]">
-              All API and database traffic uses HTTPS/TLS encryption in transit, and users can permanently delete any client or their entire account data at any time.
+            <p className="text-[var(--text-muted)] leading-relaxed">
+              All traffic uses HTTPS/TLS encryption in transit, and users can delete any client or purge all account data anytime.
             </p>
           </div>
         </div>
@@ -1037,27 +1685,26 @@ export const LedgerSutraHomepageSections: React.FC<{
       {/* =================================================================== */}
       {/* SECTION 9: PRICING SECTION (PLACEHOLDER PLANS + PILOT NOTE)         */}
       {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-              Section 9 • Placeholder Practice Plans
-            </span>
-            <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-              Pricing Built for Solo Practitioners &amp; Multi-Partner CA Firms
-            </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              Note: Pricing tiers below are placeholder plans. <b>Custom CA-firm pilot offers are available</b> — contact us to onboard your firm.
-            </p>
+      <section
+        id="practice-pricing-plans"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
+      >
+        <div>
+          <div className="text-xs font-medium text-[var(--text-muted)]">
+            Placeholder Practice Plans · Custom CA-Firm Pilot Offers Available
           </div>
+          <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+            Plans for Solo Practitioners &amp; Multi-Partner CA Firms
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             {
-              tier: 'Free Starter (Placeholder)',
+              tier: 'For Evaluating Workflows · Free Starter (Placeholder)',
               price: '₹0 / month',
-              subtitle: 'For evaluating OCR, GSTIN checks & Tally XML format',
+              subtitle: 'For testing OCR, GSTIN validation & Tally XML export structure',
+              highlighted: false,
               features: [
                 '3 no-login demo scans/day + free workspace trial',
                 'Single & batch invoice upload queue',
@@ -1066,9 +1713,10 @@ export const LedgerSutraHomepageSections: React.FC<{
               ],
             },
             {
-              tier: 'Pro Practitioner (Placeholder)',
+              tier: 'For Solo CAs & Tax Consultants · Pro Practitioner (Placeholder)',
               price: '₹1,499 / month (Placeholder)',
-              subtitle: 'For independent CAs & GST practitioners',
+              subtitle: 'For independent CAs & GST practitioners filing monthly returns',
+              highlighted: true,
               features: [
                 'Up to 25 Client-Wise Workspaces',
                 'Full GSTR-2B JSON & Excel Reconciliation',
@@ -1077,9 +1725,10 @@ export const LedgerSutraHomepageSections: React.FC<{
               ],
             },
             {
-              tier: 'CA Firm & Audit Team (Placeholder)',
+              tier: 'For Multi-Partner Audit Firms · CA Firm & Team (Placeholder)',
               price: '₹3,999 / month (Placeholder)',
-              subtitle: 'For multi-partner CA firms with articles & review teams',
+              subtitle: 'For multi-partner CA firms with articles & reviewer workflows',
+              highlighted: false,
               features: [
                 'Unlimited Client Workspaces',
                 'Team Access RBAC (Owner/CA, Reviewer, Staff)',
@@ -1090,13 +1739,21 @@ export const LedgerSutraHomepageSections: React.FC<{
           ].map((plan) => (
             <div
               key={plan.tier}
-              className="p-6 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4"
+              className={`p-6 rounded-xl border flex flex-col justify-between space-y-5 ${
+                plan.highlighted
+                  ? 'border-indigo-500 bg-indigo-500/5'
+                  : 'border-[var(--border-color)] bg-[var(--bg-subtle)]'
+              }`}
             >
-              <div className="space-y-2">
-                <div className="text-xs font-bold uppercase text-indigo-500">{plan.tier}</div>
-                <div className="text-2xl font-extrabold text-[var(--text-main)]">{plan.price}</div>
+              <div className="space-y-2.5">
+                <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  {plan.tier}
+                </div>
+                <div className="font-display text-2xl font-bold text-[var(--text-main)] tabular-nums">
+                  {plan.price}
+                </div>
                 <p className="text-xs text-[var(--text-muted)]">{plan.subtitle}</p>
-                <ul className="space-y-2 pt-3 text-xs text-[var(--text-main)]">
+                <ul className="space-y-2 pt-3 border-t border-[var(--border-color)] text-xs text-[var(--text-main)]">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
@@ -1107,7 +1764,11 @@ export const LedgerSutraHomepageSections: React.FC<{
               </div>
               <button
                 onClick={() => onNavigate('/contact')}
-                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
+                className={`w-full py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  plan.highlighted
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    : 'bg-[var(--bg-card)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)]'
+                }`}
               >
                 Request CA-Firm Pilot Offer
               </button>
@@ -1117,31 +1778,67 @@ export const LedgerSutraHomepageSections: React.FC<{
       </section>
 
       {/* =================================================================== */}
-      {/* SECTION 10: 12+ FAQS (ACCURACY MARKED DEPENDS ON INVOICE QUALITY)   */}
+      {/* SECTION 10: INTERACTIVE CATEGORY-FILTERED FAQ ACCORDION (12+ Qs)    */}
       {/* =================================================================== */}
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500">
-            Section 10 • Frequently Asked Questions ({HOMEPAGE_FAQS.length} Questions)
-          </span>
-          <h2 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">
-            Common Questions from Chartered Accountants &amp; Tax Teams
-          </h2>
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="text-xs font-medium text-[var(--text-muted)]">
+              Frequently Asked Questions · {HOMEPAGE_FAQS.length} Practitioner Answers
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+              Questions from Chartered Accountants &amp; Tax Teams
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(['All', 'Tally', 'GSTR-2B', 'Security', 'General'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setFaqCategory(cat);
+                  setOpenFaqIdx(0);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  faqCategory === cat
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {HOMEPAGE_FAQS.map((faq, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2"
-            >
-              <h3 className="text-sm font-bold text-[var(--text-main)] flex items-start gap-2">
-                <HelpCircle className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                <span>{faq.question}</span>
-              </h3>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed pl-6">{faq.answer}</p>
-            </div>
-          ))}
+        <div className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--bg-subtle)]">
+          {filteredFaqs.map((faq, idx) => {
+            const isOpen = openFaqIdx === idx;
+            return (
+              <div key={faq.question} className="bg-[var(--bg-card)]">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenFaqIdx(isOpen ? null : idx)}
+                  className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-[var(--bg-subtle)]/60 transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-semibold text-[var(--text-main)]">
+                    {faq.question}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-[var(--text-muted)] shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180 text-indigo-500' : ''
+                    }`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-4 text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
@@ -1161,23 +1858,30 @@ export const LedgerSutraRouteView: React.FC<{
   savedBillsCount: number;
 }> = ({ currentPath, onNavigate, onOpenWorkspaceTab }) => {
   const cleanPath = normalizePathname(currentPath);
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactFirm, setContactFirm] = useState('');
 
-  // 1. Check Dedicated SEO Landing Pages (/gst-invoice-to-tally, /gstr-2b-reconciliation-excel, /bulk-invoice-processing-for-ca, etc.)
+  // 1. Dedicated SEO Landing Pages
   if (DEDICATED_SEO_PAGES[cleanPath]) {
     const spec = DEDICATED_SEO_PAGES[cleanPath];
     return (
-      <article className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+      <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
         <div className="space-y-3 border-b border-[var(--border-color)] pb-6">
-          <span className="inline-block px-3 py-1 rounded-md bg-indigo-500/10 text-indigo-500 text-xs font-bold uppercase">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
             {spec.badge}
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--text-main)]">{spec.h1}</h1>
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            {spec.h1}
+          </h1>
           <p className="text-base text-[var(--text-muted)]">{spec.subtitle}</p>
-          <p className="text-sm text-[var(--text-main)] leading-relaxed">{spec.problemStatement}</p>
+          <p className="text-sm text-[var(--text-main)] leading-relaxed max-w-3xl">
+            {spec.problemStatement}
+          </p>
           <div className="pt-2 flex flex-wrap gap-3">
             <button
               onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
             >
               Try Free Demo in CA Workspace
             </button>
@@ -1191,8 +1895,8 @@ export const LedgerSutraRouteView: React.FC<{
         </div>
 
         {spec.longFormParagraphs && spec.longFormParagraphs.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-[var(--text-main)]">
+          <div className="space-y-4 max-w-3xl">
+            <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
               Why Indian CA Firms Automate This Workflow with {BRAND_NAME}
             </h2>
             {spec.longFormParagraphs.map((para, i) => (
@@ -1207,22 +1911,23 @@ export const LedgerSutraRouteView: React.FC<{
           {spec.workflowSteps.map((step, i) => (
             <div
               key={i}
-              className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
+              className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
             >
-              <div className="text-xs font-bold text-indigo-500 uppercase">Step {i + 1}</div>
-              <h3 className="text-sm font-bold text-[var(--text-main)]">{step.title}</h3>
+              <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                0{i + 1}. {step.title}
+              </div>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">{step.detail}</p>
             </div>
           ))}
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-[var(--text-main)]">Core Capabilities</h2>
+          <h2 className="font-display text-xl font-bold text-[var(--text-main)]">Core Capabilities</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {spec.keyCapabilities.map((cap, i) => (
               <div
                 key={i}
-                className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
+                className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
               >
                 <h3 className="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -1236,12 +1941,14 @@ export const LedgerSutraRouteView: React.FC<{
 
         {spec.faqs.length > 0 && (
           <div className="space-y-4 pt-6 border-t border-[var(--border-color)]">
-            <h2 className="text-xl font-bold text-[var(--text-main)]">Frequently Asked Questions</h2>
+            <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
+              Frequently Asked Questions
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {spec.faqs.map((f, i) => (
                 <div
                   key={i}
-                  className="p-4 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
+                  className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5"
                 >
                   <h3 className="text-sm font-bold text-[var(--text-main)]">{f.question}</h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">{f.answer}</p>
@@ -1254,24 +1961,29 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 2. Check Blog / Resource Article Detail Page
+  // 2. Blog / Resource Article Detail Page
   const article = RESOURCE_ARTICLES.find(
     (a) => a.path === cleanPath || `/blog/${a.slug}` === cleanPath || `/resources/${a.slug}` === cleanPath
   );
   if (article) {
     return (
-      <article className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+      <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
         <div className="space-y-3 border-b border-[var(--border-color)] pb-6">
-          <div className="flex items-center gap-2 text-xs text-indigo-500 font-bold">
-            <span>{article.category}</span> • <span>{article.readTime}</span> •{' '}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">{article.category}</span>
+            <span aria-hidden="true">·</span>
+            <span>{article.readTime}</span>
+            <span aria-hidden="true">·</span>
             <span>Published {article.publishedDate}</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-[var(--text-main)]">{article.title}</h1>
-          <p className="text-sm text-[var(--text-muted)]">{article.summary}</p>
+          <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">{article.title}</h1>
+          <p className="text-sm text-[var(--text-muted)] max-w-3xl">{article.summary}</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 space-y-2">
-          <div className="text-xs font-bold uppercase text-indigo-500">Key Takeaways for CA Firms</div>
+        <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+          <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+            Key Takeaways for CA Firms
+          </div>
           <ul className="space-y-1.5 text-xs text-[var(--text-main)]">
             {article.keyTakeaways.map((kt, i) => (
               <li key={i}>• {kt}</li>
@@ -1279,10 +1991,10 @@ export const LedgerSutraRouteView: React.FC<{
           </ul>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-3xl">
           {article.sections.map((sec, i) => (
             <section key={i} className="space-y-3">
-              <h2 className="text-xl font-bold text-[var(--text-main)]">{sec.heading}</h2>
+              <h2 className="font-display text-xl font-bold text-[var(--text-main)]">{sec.heading}</h2>
               {sec.paragraphs.map((p, j) => (
                 <p key={j} className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {p}
@@ -1302,13 +2014,13 @@ export const LedgerSutraRouteView: React.FC<{
         <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
           <button
             onClick={() => onNavigate('/blog')}
-            className="text-xs font-bold text-indigo-500 hover:underline cursor-pointer"
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
           >
             ← Back to All Blog Articles
           </button>
           <button
             onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
-            className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
           >
             Try {BRAND_NAME} Live Workspace
           </button>
@@ -1317,13 +2029,15 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 3. Blog / Resources Index (/blog or /resources)
+  // 3. Blog / Resources Index
   if (cleanPath === '/blog' || cleanPath === '/resources') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         <div>
-          <span className="text-xs font-bold uppercase text-indigo-500">CA Practice Blog &amp; Guides</span>
-          <h1 className="text-3xl font-extrabold text-[var(--text-main)] mt-1">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            CA Practice Blog &amp; Guides
+          </div>
+          <h1 className="font-display text-3xl font-bold text-[var(--text-main)] mt-1">
             Tutorials on TallyPrime Import, GSTR-2B Reconciliation &amp; GST Audit
           </h1>
         </div>
@@ -1331,18 +2045,18 @@ export const LedgerSutraRouteView: React.FC<{
           {RESOURCE_ARTICLES.map((art) => (
             <div
               key={art.slug}
-              className="p-5 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4"
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
-                <div className="text-[11px] font-bold text-indigo-500">
-                  {art.category} • {art.readTime}
+                <div className="text-xs text-[var(--text-muted)]">
+                  {art.category} · {art.readTime}
                 </div>
                 <h2 className="text-base font-bold text-[var(--text-main)]">{art.title}</h2>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed">{art.summary}</p>
               </div>
               <button
                 onClick={() => onNavigate(art.path)}
-                className="text-xs font-bold text-indigo-500 hover:underline text-left cursor-pointer"
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer"
               >
                 Read Full Article →
               </button>
@@ -1353,17 +2067,21 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 4. Developer API Docs Page (/api-docs - Part 6.2)
+  // 4. Developer API Docs Page (/api-docs)
   if (cleanPath === '/api-docs') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
-          <span className="text-xs font-bold uppercase text-indigo-500">REST API v1 Documentation</span>
-          <h1 className="text-3xl font-extrabold text-[var(--text-main)]">
-            Programmatic GST Invoice Extraction — <code className="text-indigo-500">POST /api/v1/extract</code>
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            REST API v1 Documentation
+          </div>
+          <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
+            Programmatic GST Invoice Extraction —{' '}
+            <code className="text-indigo-600 dark:text-indigo-400">POST /api/v1/extract</code>
           </h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            Authenticate with a per-user API key generated in the workspace <b>Accuracy &amp; API</b> tab. Keys are hashed with SHA-256 before storage in Firestore. Rate limit: 30 requests/minute; max payload: 15 MB.
+          <p className="text-sm text-[var(--text-muted)] max-w-3xl">
+            Authenticate with the built-in endpoint or generate per-user API keys in the workspace{' '}
+            <b>QA &amp; API</b> tab. Keys are hashed with SHA-256 before storage. Rate limit: 30 requests/minute; max payload: 15 MB.
           </p>
         </div>
 
@@ -1413,14 +2131,14 @@ export const LedgerSutraRouteView: React.FC<{
   // 5. Privacy Policy (/privacy)
   if (cleanPath === '/privacy') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
-        <h1 className="text-3xl font-extrabold text-[var(--text-main)]">Privacy Policy</h1>
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Privacy Policy</h1>
         <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026</p>
-        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed">
+        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
           <p>
             <strong className="text-[var(--text-main)]">1. Data We Process:</strong> When you use {BRAND_NAME}, we
-            process the invoice PDFs/images you upload and store the extracted structured accounting records under your
-            authenticated Google account in Firebase Firestore (<code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code>).
+            process the invoice PDFs/images you upload and store extracted accounting records under your authenticated
+            Google account in Firebase Firestore (<code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code>).
           </p>
           <p>
             <strong className="text-[var(--text-main)]">2. Strict Per-User Isolation:</strong> Your client profiles,
@@ -1430,7 +2148,7 @@ export const LedgerSutraRouteView: React.FC<{
           <p>
             <strong className="text-[var(--text-main)]">3. Self-Service Data Deletion:</strong> You can permanently
             delete any individual bill, purge an entire client workspace, or delete all data associated with your
-            account at any time from the <b>Clients &amp; Team</b> tab in the workspace.
+            account at any time from the <b>Clients</b> tab in the workspace.
           </p>
         </div>
       </section>
@@ -1440,10 +2158,10 @@ export const LedgerSutraRouteView: React.FC<{
   // 6. Terms of Service (/terms)
   if (cleanPath === '/terms') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
-        <h1 className="text-3xl font-extrabold text-[var(--text-main)]">Terms of Service</h1>
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Terms of Service</h1>
         <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026</p>
-        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed">
+        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
           <p>
             <strong className="text-[var(--text-main)]">1. Professional Verification Responsibility:</strong>{' '}
             {BRAND_NAME} is an OCR extraction and accounting preparation tool for Chartered Accountants and tax
@@ -1463,12 +2181,14 @@ export const LedgerSutraRouteView: React.FC<{
   // 7. Security Page (/security)
   if (cleanPath === '/security') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
-        <h1 className="text-3xl font-extrabold text-[var(--text-main)]">Security &amp; Data Isolation Architecture</h1>
-        <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-          We describe only the technical security controls that are implemented and active in {BRAND_NAME}—without unverified certification claims:
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
+          Security &amp; Data Isolation Architecture
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+          We describe only the technical security controls that are implemented and active in {BRAND_NAME}:
         </p>
-        <ul className="space-y-3 text-sm text-[var(--text-main)]">
+        <ul className="space-y-3 text-sm text-[var(--text-main)] max-w-3xl">
           <li>• <b>Google Sign-In (Firebase Auth):</b> All user sessions are authenticated via Google OAuth tokens.</li>
           <li>• <b>Database-Level Ownership Rules:</b> <code className="font-mono">firestore.rules</code> enforces strict <code className="font-mono">request.auth.uid == userId</code> ownership and role-based approval permissions on every read and write.</li>
           <li>• <b>SHA-256 Hashed API Keys:</b> Developer API keys generated for <code className="font-mono">/api/v1/extract</code> are hashed in the browser using SHA-256 before saving to Firestore; plaintext keys are never persisted.</li>
@@ -1481,13 +2201,13 @@ export const LedgerSutraRouteView: React.FC<{
   // 8. FAQ Standalone Page (/faq)
   if (cleanPath === '/faq') {
     return (
-      <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
-        <h1 className="text-3xl font-extrabold text-[var(--text-main)]">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
           Frequently Asked Questions ({HOMEPAGE_FAQS.length} Questions)
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {HOMEPAGE_FAQS.map((f, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <div key={i} className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
               <h2 className="text-sm font-bold text-[var(--text-main)]">{f.question}</h2>
               <p className="text-xs text-[var(--text-muted)] leading-relaxed">{f.answer}</p>
             </div>
@@ -1497,31 +2217,108 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 9. Pricing, Contact, Features, How-It-Works, About fallback
+  // 9. Contact / Demo Booking Interactive Form (/contact) + Pricing Fallback
+  if (cleanPath === '/contact') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6 max-w-3xl">
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            CA Practice Onboarding
+          </div>
+          <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
+            Book a Live Demo or Request CA-Firm Pilot
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+            Schedule a live walkthrough of TallyPrime XML import, GSTR-2B reconciliation, and multi-client firm workspaces with our engineering team at support@ledgersutra.in.
+          </p>
+        </div>
+
+        {contactSubmitted ? (
+          <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+            <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Demo Request Recorded for {contactFirm || 'Your Practice'}</span>
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              We have noted {contactEmail}. You can also test Tally XML export and batch scanning immediately in our workspace below.
+            </p>
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!contactEmail.includes('@')) return;
+              setContactSubmitted(true);
+            }}
+            className="space-y-4 max-w-lg"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-main)] mb-1">
+                CA Firm or Organization Name
+              </label>
+              <input
+                type="text"
+                required
+                value={contactFirm}
+                onChange={(e) => setContactFirm(e.target.value)}
+                placeholder="e.g. Sharma & Associates Chartered Accountants"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text-main)] mb-1">
+                Work Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="partner@cafirm.in"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm"
+              />
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="submit"
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
+              >
+                Request Demo Walkthrough
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('/')}
+                className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+              >
+                Back to Homepage
+              </button>
+            </div>
+          </form>
+        )}
+      </section>
+    );
+  }
+
   return (
-    <section className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
-      <h1 className="text-3xl font-extrabold text-[var(--text-main)]">
+    <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
         {cleanPath === '/pricing'
           ? 'Practice Plans & CA-Firm Pilot Offers'
-          : cleanPath === '/contact'
-          ? 'Book a Live Demo or CA-Firm Pilot'
           : `${BRAND_NAME} — ${BRAND_TAGLINE}`}
       </h1>
       <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-        {cleanPath === '/contact'
-          ? 'Reach out to our CA onboarding engineering team at support@ledgersutra.in to schedule a live walkthrough of TallyPrime XML import, GSTR-2B reconciliation, and multi-client firm workspaces.'
-          : 'Explore our live workspace below or return to the homepage for the complete interactive walkthrough.'}
+        Explore our live workspace below or return to the homepage for the interactive walkthrough.
       </p>
       <div className="flex flex-wrap gap-3">
         <button
           onClick={() => onNavigate('/')}
-          className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold cursor-pointer"
         >
           View Full Landing Page
         </button>
         <button
           onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
-          className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-bold cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
         >
           Jump to Workspace
         </button>
@@ -1531,7 +2328,7 @@ export const LedgerSutraRouteView: React.FC<{
 };
 
 // ============================================================================
-// SECTION 11: FOOTER (PART 7.11)
+// SECTION 11: QUIET ARCHITECTURAL FOOTER (PART 7.11)
 // ============================================================================
 export const LedgerSutraFooter: React.FC<{
   onNavigate: (path: string) => void;
@@ -1547,22 +2344,21 @@ export const LedgerSutraFooter: React.FC<{
           {/* Col 1: Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold shadow-sm">
-                <ScanLine className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
+                <ScanLine className="w-4 h-4" />
               </div>
               <div>
-                <span className="font-extrabold text-base tracking-tight block">{BRAND_NAME}</span>
+                <span className="font-display font-bold text-base tracking-tight block">{BRAND_NAME}</span>
                 <span className="text-[11px] text-[var(--text-muted)] block">{SITE_DOMAIN}</span>
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              GST invoice to Tally and Excel, built for Indian CA firms. Extract GSTIN, HSN, line items, and tax splits
-              with deterministic audit checks.
+              GST invoice to Tally and Excel, built for Indian CA firms. Extract GSTIN, HSN, line items, and tax splits with deterministic audit checks.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               <button
                 onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
               >
                 Open CA Workspace
               </button>
@@ -1577,9 +2373,7 @@ export const LedgerSutraFooter: React.FC<{
 
           {/* Col 2: Public Website & Legal Links */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-main)]">
-              Platform &amp; Legal
-            </h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">Platform &amp; Legal</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <button onClick={() => onNavigate('/')} className="hover:text-indigo-500 cursor-pointer">
@@ -1593,7 +2387,7 @@ export const LedgerSutraFooter: React.FC<{
               </li>
               <li>
                 <button onClick={() => onNavigate('/faq')} className="hover:text-indigo-500 cursor-pointer">
-                  FAQ (12+ Questions)
+                  FAQ ({HOMEPAGE_FAQS.length} Questions)
                 </button>
               </li>
               <li>
@@ -1621,14 +2415,12 @@ export const LedgerSutraFooter: React.FC<{
 
           {/* Col 3: High-Intent CA SEO Solutions */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-main)]">
-              CA &amp; GST Workflows
-            </h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">CA &amp; GST Workflows</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <button
                   onClick={() => onNavigate('/gst-invoice-to-tally')}
-                  className="hover:text-indigo-500 cursor-pointer text-left font-semibold text-indigo-500"
+                  className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   GST Invoice to TallyPrime XML
                 </button>
@@ -1636,7 +2428,7 @@ export const LedgerSutraFooter: React.FC<{
               <li>
                 <button
                   onClick={() => onNavigate('/gstr-2b-reconciliation-excel')}
-                  className="hover:text-indigo-500 cursor-pointer text-left font-semibold text-indigo-500"
+                  className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   GSTR-2B Reconciliation in Excel
                 </button>
@@ -1644,7 +2436,7 @@ export const LedgerSutraFooter: React.FC<{
               <li>
                 <button
                   onClick={() => onNavigate('/bulk-invoice-processing-for-ca')}
-                  className="hover:text-indigo-500 cursor-pointer text-left font-semibold text-indigo-500"
+                  className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   Bulk Invoice Processing for CA
                 </button>
@@ -1678,14 +2470,12 @@ export const LedgerSutraFooter: React.FC<{
 
           {/* Col 4: Blog Articles */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-main)]">
-              CA Blog &amp; Guides
-            </h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">CA Blog &amp; Guides</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <button
                   onClick={() => onNavigate('/blog')}
-                  className="font-semibold text-indigo-500 hover:underline cursor-pointer text-left"
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer text-left"
                 >
                   All Blog Articles &amp; Tutorials →
                 </button>
@@ -1714,7 +2504,7 @@ export const LedgerSutraFooter: React.FC<{
             <span>
               © {new Date().getFullYear()} {BRAND_NAME}. Built for Indian Chartered Accountants &amp; GST Practitioners.
             </span>
-            <span>TallyPrime XML • GSTR-2B Reconciliation • Zoho Books CSV • Busy Excel • REST API v1</span>
+            <span>TallyPrime XML · GSTR-2B Reconciliation · Zoho Books CSV · Busy Excel · REST API v1</span>
           </div>
         </div>
       </div>

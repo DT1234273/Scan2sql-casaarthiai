@@ -859,13 +859,32 @@ export function App() {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.setAttribute('data-theme', 'dark');
+      root.classList.add('dark');
     } else {
       root.removeAttribute('data-theme');
+      root.classList.remove('dark');
     }
     localStorage.setItem('ledgersutra-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+
+  // Live Accent Palette State ('teal' Sovereign Emerald-Teal | 'cobalt' Executive Cobalt | 'copper' Terracotta Copper)
+  const [accentTheme, setAccentTheme] = useState<'teal' | 'cobalt' | 'copper'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedAccent = localStorage.getItem('ledgersutra-accent');
+      if (savedAccent === 'teal' || savedAccent === 'cobalt' || savedAccent === 'copper') {
+        return savedAccent;
+      }
+    }
+    return 'teal';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-accent', accentTheme);
+    localStorage.setItem('ledgersutra-accent', accentTheme);
+  }, [accentTheme]);
 
   // User Mode: 'normal_user' (Simple 1-row per bill + grocery multi-product columns) vs 'ca_mode' (CA GST & Audit)
   const [userMode, setUserMode] = useState<UserProfileMode>(() => {
@@ -3633,34 +3652,26 @@ export function App() {
         </div>
       )}
 
-      {/* Top Navigation Header — LedgerSutra */}
+      {/* Top Navigation Header — Clean 3-Zone Sticky Bar */}
       <header className="sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <div
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
+          {/* Zone 1: Single-Line Brand Wordmark */}
+          <button
+            type="button"
             onClick={() => navigateTo('/')}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group whitespace-nowrap shrink-0 text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
-              <ScanLine className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
+              <ScanLine className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight group-hover:text-indigo-500 transition-colors">
-                  {BRAND_NAME}
-                </span>
-                <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                  <Sparkles className="w-3 h-3" /> CA Invoice &amp; GST Automation
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--text-muted)] hidden sm:block">
-                {BRAND_TAGLINE}
-              </p>
-            </div>
-          </div>
+            <span className="font-display font-extrabold text-base sm:text-lg tracking-tight group-hover:text-indigo-500 transition-colors whitespace-nowrap shrink-0">
+              {BRAND_NAME}
+            </span>
+          </button>
 
-          <div className="flex items-center gap-2">
-            {/* Client Switcher Dropdown (Part 3.2) */}
-            <div className="hidden sm:flex items-center gap-1 bg-[var(--bg-subtle)] px-2 py-1 rounded-xl border border-[var(--border-color)]">
+          {/* Zone 2: Client Switcher + Concise Route Links */}
+          <div className="hidden md:flex items-center gap-6 min-w-0">
+            <div className="flex items-center gap-1.5 bg-[var(--bg-subtle)] px-2.5 py-1 rounded-lg border border-[var(--border-color)] shrink-0">
               <Briefcase className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
               <select
                 aria-label="Select Active Client Workspace"
@@ -3670,7 +3681,7 @@ export function App() {
                   const chosen = clients.find((c) => c.id === e.target.value);
                   if (chosen) showToast(`Switched workspace to "${chosen.name}" (${chosen.financialYear})`);
                 }}
-                className="bg-transparent text-xs font-bold text-[var(--text-main)] focus:outline-none max-w-[140px] truncate cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-[var(--text-main)] focus:outline-none max-w-[160px] truncate cursor-pointer"
               >
                 {clients
                   .filter((c) => !c.archived || c.id === activeClientId)
@@ -3683,203 +3694,64 @@ export function App() {
               <button
                 type="button"
                 onClick={() => handleOpenWorkspaceTab('clients_team')}
-                title="Add / Manage Clients & Team"
-                className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 cursor-pointer"
+                title="Add or Manage Clients"
+                className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 cursor-pointer whitespace-nowrap shrink-0"
               >
                 +Client
               </button>
             </div>
 
-            {/* SaaS Route Links */}
-            <div className="hidden md:flex items-center gap-1 mr-1 text-xs font-semibold">
-              <button
-                onClick={() => navigateTo('/')}
-                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => navigateTo('/app')}
-                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/app'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Workspace
-              </button>
-              <button
-                onClick={() => navigateTo('/pricing')}
-                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/pricing'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Pricing
-              </button>
-              <button
-                onClick={() => navigateTo('/blog')}
-                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath.startsWith('/blog')
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                Blog
-              </button>
-              <button
-                onClick={() => navigateTo('/api-docs')}
-                className={`px-2 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  currentPath === '/api-docs'
-                    ? 'text-indigo-500 bg-indigo-500/10 font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                API
-              </button>
-            </div>
-
-            {/* Application Tool Tabs */}
-            <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)]">
-              <button
-                onClick={() => {
-                  setActiveTab('scanner');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'scanner'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <ScanLine className="w-3.5 h-3.5" />
-                Scan
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('master_sheet');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'master_sheet'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                Sheet ({savedBills.length})
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('gstr2b');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'gstr2b'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                GSTR-2B
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('clients_team');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'clients_team'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Briefcase className="w-3.5 h-3.5" />
-                Clients
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('accuracy_api');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'accuracy_api'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Code2 className="w-3.5 h-3.5" />
-                QA &amp; API
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('dashboard');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'dashboard'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                Analytics
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('history');
-                  const wsEl = document.getElementById('live-ocr-workspace');
-                  if (wsEl) wsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  activeTab === 'history'
-                    ? 'bg-[var(--bg-card)] text-indigo-500 shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Database className="w-3.5 h-3.5" />
-                Text
-              </button>
+            <nav aria-label="Primary site navigation" className="flex items-center gap-5 text-xs font-medium">
+              {[
+                { path: '/', label: 'Home', active: currentPath === '/' },
+                { path: '/app', label: 'Workspace', active: currentPath === '/app' },
+                { path: '/pricing', label: 'Pricing', active: currentPath === '/pricing' },
+                { path: '/blog', label: 'Blog', active: currentPath.startsWith('/blog') },
+                { path: '/api-docs', label: 'API', active: currentPath === '/api-docs' },
+              ].map((navItem) => (
+                <button
+                  key={navItem.path}
+                  onClick={() => navigateTo(navItem.path)}
+                  className={`py-1 border-b-2 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    navItem.active
+                      ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold'
+                      : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  {navItem.label}
+                </button>
+              ))}
             </nav>
+          </div>
 
-            {/* Google Account Login / Profile Controls */}
+          {/* Zone 3: Google Sign-In & Theme Toggle */}
+          <div className="flex items-center gap-2.5 shrink-0">
             {currentUser ? (
-              <div className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+              <div className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 shrink-0">
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
                     alt={currentUser.displayName || 'User'}
                     referrerPolicy="no-referrer"
-                    className="w-6 h-6 rounded-full object-cover border border-emerald-500/40"
+                    className="w-6 h-6 rounded-full object-cover border border-emerald-500/40 shrink-0"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
                     {(currentUser.displayName || currentUser.email || 'U').slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <div className="hidden sm:block max-w-[130px]">
-                  <p className="text-[11px] font-bold leading-tight truncate">
+                <div className="hidden sm:block max-w-[125px]">
+                  <p className="text-[11px] font-semibold leading-tight truncate">
                     {currentUser.displayName || currentUser.email?.split('@')[0]}
                   </p>
-                  <p className="text-[9px] text-emerald-500 font-semibold flex items-center gap-0.5 leading-tight">
-                    <Cloud className="w-2.5 h-2.5" /> {currentFirmRole}
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium leading-tight truncate">
+                    {currentFirmRole}
                   </p>
                 </div>
                 <button
                   onClick={handleGoogleSignOut}
                   title="Sign Out of Google Account"
-                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-md hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition-colors cursor-pointer shrink-0"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -3888,90 +3760,78 @@ export function App() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={isSigningIn}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-sm shadow-indigo-500/20 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 shrink-0" />
                 <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
               </button>
             )}
 
+            {/* Live Accent Color Switcher (Teal / Cobalt / Copper) */}
+            <div
+              role="group"
+              aria-label="Select UI Accent Color"
+              className="hidden sm:flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] shrink-0"
+            >
+              {(
+                [
+                  { id: 'teal', label: 'Teal', swatch: '#0D9488' },
+                  { id: 'cobalt', label: 'Cobalt', swatch: '#2563EB' },
+                  { id: 'copper', label: 'Copper', swatch: '#C2410C' },
+                ] as const
+              ).map((acc) => {
+                const isSelected = accentTheme === acc.id;
+                return (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => setAccentTheme(acc.id)}
+                    title={`Switch UI Accent to ${acc.label}`}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-2xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)]'
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 border border-white/40"
+                      style={{ backgroundColor: acc.swatch }}
+                    />
+                    <span className="hidden lg:inline">{acc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <button
               onClick={toggleTheme}
               aria-label="Toggle Light/Dark Theme"
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] text-xs font-semibold transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
               {theme === 'light' ? (
                 <>
-                  <Moon className="w-4 h-4 text-indigo-600" />
+                  <Moon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                   <span className="hidden sm:inline">Dark</span>
                 </>
               ) : (
                 <>
-                  <Sun className="w-4 h-4 text-amber-400" />
+                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span className="hidden sm:inline">Light</span>
                 </>
               )}
             </button>
           </div>
         </div>
-
-        {/* Mobile Navigation Bar */}
-        <div className="lg:hidden flex items-center justify-around border-t border-[var(--border-color)] bg-[var(--bg-card)] px-2 py-1.5 overflow-x-auto gap-1">
-          <button
-            onClick={() => setActiveTab('scanner')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
-              activeTab === 'scanner' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
-            }`}
-          >
-            <ScanLine className="w-3.5 h-3.5" />
-            Scanner
-          </button>
-          <button
-            onClick={() => setActiveTab('master_sheet')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
-              activeTab === 'master_sheet' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            Sheet ({savedBills.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('gstr2b')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
-              activeTab === 'gstr2b' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            GSTR-2B
-          </button>
-          <button
-            onClick={() => setActiveTab('clients_team')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
-              activeTab === 'clients_team' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            Clients
-          </button>
-          <button
-            onClick={() => setActiveTab('accuracy_api')}
-            className={`flex flex-1 justify-center items-center gap-1 py-1.5 px-2 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
-              activeTab === 'accuracy_api' ? 'bg-indigo-600/10 text-indigo-500' : 'text-[var(--text-muted)]'
-            }`}
-          >
-            <Code2 className="w-3.5 h-3.5" />
-            API/QA
-          </button>
-        </div>
       </header>
 
       {/* Main Content Container */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 space-y-8">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 space-y-10">
         {/* Section 1: Hero Banner at the top of the root Homepage ('/') */}
         {currentPath === '/' && (
           <LedgerSutraHeroBanner
             onOpenWorkspaceTab={handleOpenWorkspaceTab}
             onTriggerUpload={() => fileInputRef.current?.click()}
+            onNavigate={navigateTo}
             savedBillsCount={savedBills.length}
           />
         )}
@@ -3987,42 +3847,155 @@ export function App() {
         )}
 
         {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE */}
-        <div id="live-ocr-workspace" className="space-y-6 scroll-mt-20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <h2 className="text-sm sm:text-base font-extrabold tracking-tight">
-                {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Multi-Format Excel Workspace
-              </h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5 text-xs">
-              {currentUser ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold">
-                  <Cloud className="w-3.5 h-3.5" />
-                  Account History ({currentUser.email}): <strong>{savedBills.length} Bills</strong> •{' '}
-                  <strong>{savedDocuments.length} Docs</strong>
-                </span>
-              ) : (
-                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  <span>Guest Session ({savedBills.length} Bills)</span>
-                  <button
-                    onClick={handleGoogleSignIn}
-                    disabled={isSigningIn}
-                    className="font-bold text-indigo-500 hover:underline cursor-pointer"
-                  >
-                    Sign in with Google to save history in your account →
-                  </button>
-                </div>
-              )}
-              {currentPath !== '/app' && (
+        <div id="live-ocr-workspace" className="space-y-5 scroll-mt-20">
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
+                <h2 className="font-display text-base sm:text-lg font-bold tracking-tight">
+                  {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Tally Command Center
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
+                {currentUser ? (
+                  <span className="font-medium tabular-nums">
+                    Account History ({currentUser.email}) ·{' '}
+                    <strong className="text-[var(--text-main)]">{savedBills.length} Bills</strong> ·{' '}
+                    <strong className="text-[var(--text-main)]">{savedDocuments.length} Docs</strong>
+                  </span>
+                ) : (
+                  <span className="tabular-nums">
+                    Guest Session ({savedBills.length} Bills) ·{' '}
+                    <button
+                      onClick={handleGoogleSignIn}
+                      disabled={isSigningIn}
+                      className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      Sign in with Google to save history →
+                    </button>
+                  </span>
+                )}
                 <button
-                  onClick={() => navigateTo('/app')}
-                  className="text-indigo-500 hover:underline font-bold cursor-pointer"
+                  type="button"
+                  onClick={() => setIsTallyModalOpen(true)}
+                  className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  Focus Mode (/app) →
+                  Export Tally XML ({filteredBills.length})
                 </button>
-              )}
+                {currentPath !== '/app' && (
+                  <button
+                    onClick={() => navigateTo('/app')}
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    Focus Mode (/app) →
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Upper Live Client Financial KPI Strip */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {(() => {
+                const currentClientObj =
+                  clients.find((c) => c.id === activeClientId) || DEFAULT_CLIENT_PROFILE;
+                const totalTaxable = filteredBills.reduce(
+                  (acc, b) => acc + (Number(b.subtotal) || 0),
+                  0
+                );
+                const totalGst = filteredBills.reduce(
+                  (acc, b) => acc + (Number(b.taxAmount) || 0),
+                  0
+                );
+                const pendingReviewCount = filteredBills.filter(
+                  (b) => b.needsReview || b.approvalStatus === 'Pending Review'
+                ).length;
+
+                return (
+                  <>
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
+                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                        Active Client Workspace
+                      </p>
+                      <p className="font-display text-sm font-bold text-[var(--text-main)] truncate mt-0.5">
+                        {currentClientObj.name}
+                      </p>
+                      <p className="text-[11px] font-mono text-[var(--text-muted)] tabular-nums truncate">
+                        {currentClientObj.gstin || 'GSTIN Unassigned'} · {currentClientObj.financialYear}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
+                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                        Client Register Volume
+                      </p>
+                      <p className="font-mono text-base font-bold text-[var(--text-main)] tabular-nums mt-0.5">
+                        {filteredBills.length} Invoices
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)] tabular-nums">
+                        {pendingReviewCount > 0
+                          ? `${pendingReviewCount} flagged for CA review`
+                          : 'All bills audit-verified'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
+                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                        Total Taxable Value
+                      </p>
+                      <p className="font-mono text-base font-bold text-[var(--text-main)] tabular-nums mt-0.5">
+                        ₹{totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)]">
+                        Purchase ledger debit base
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
+                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                        Total GST / Book ITC
+                      </p>
+                      <p className="font-mono text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
+                        ₹{totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)]">
+                        CGST + SGST + IGST input credit
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Unified Single-Line Workspace Navigation Bar */}
+            <nav
+              aria-label="Workspace tool tabs"
+              className="flex items-center gap-1.5 overflow-x-auto pb-1"
+            >
+              {[
+                { id: 'scanner' as const, label: 'Scan & Audit', icon: ScanLine },
+                { id: 'master_sheet' as const, label: `Master Sheet (${savedBills.length})`, icon: FileSpreadsheet },
+                { id: 'gstr2b' as const, label: 'GSTR-2B Match', icon: ShieldCheck },
+                { id: 'clients_team' as const, label: 'Clients & Team', icon: Briefcase },
+                { id: 'accuracy_api' as const, label: 'QA & API Keys', icon: Code2 },
+                { id: 'dashboard' as const, label: 'Analytics', icon: LayoutDashboard },
+                { id: 'history' as const, label: 'Raw Text', icon: Database },
+              ].map((t) => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)]'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         {activeTab === 'scanner' && (
           <div className="space-y-6">
@@ -6213,6 +6186,7 @@ export function App() {
             onOpenWorkspaceTab={handleOpenWorkspaceTab}
             onTriggerUpload={() => fileInputRef.current?.click()}
             savedBillsCount={savedBills.length}
+            onSignInRequest={handleGoogleSignIn}
           />
         )}
       </main>
