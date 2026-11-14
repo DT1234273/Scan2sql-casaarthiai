@@ -1658,7 +1658,7 @@ export function App() {
               byEmail: auth.currentUser?.email || 'Local Workspace User',
               byRole: currentFirmRole,
               timestamp: nowStr,
-              note: `Extracted via LedgerSutra (${initialApproval})`,
+              note: `Extracted via CA Saarthi AI (${initialApproval})`,
             },
           ],
           irn: (result as any).irn || '',
@@ -3084,7 +3084,7 @@ export function App() {
     }));
     wsMaster['!cols'] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, wsMaster, 'LedgerSutra_Bills_Sheet');
+    XLSX.utils.book_append_sheet(wb, wsMaster, 'CASaarthiAI_Bills_Sheet');
 
     const textSheetData = filteredBills.map((b, i) => ({
       'Sr. No': i + 1,
@@ -3099,8 +3099,8 @@ export function App() {
     const wsText = XLSX.utils.json_to_sheet(textSheetData);
     XLSX.utils.book_append_sheet(wb, wsText, 'Exact_Extracted_Text');
 
-    XLSX.writeFile(wb, `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    showToast(`Exported ${masterSheetRows.length} rows to LedgerSutra Excel (.xlsx)!`);
+    XLSX.writeFile(wb, `CASaarthiAI_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    showToast(`Exported ${masterSheetRows.length} rows to CA Saarthi AI Excel (.xlsx)!`);
   };
 
   const handleExportMasterCsv = () => {
@@ -3108,7 +3108,7 @@ export function App() {
       showToast('No bills in the sheet yet. Scan a bill first!');
       return;
     }
-    const filename = `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `CASaarthiAI_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
     exportMasterRowsToCsv(masterSheetRows, activeSelectedColumnDefs, columnTotals, filename);
     showToast(`Exported ${masterSheetRows.length} rows to CSV (${filename})!`);
   };
@@ -3118,7 +3118,7 @@ export function App() {
       showToast('No bills in the sheet yet. Scan a bill first!');
       return;
     }
-    const filename = `LedgerSutra_Invoices_${new Date().toISOString().slice(0, 10)}.json`;
+    const filename = `CASaarthiAI_Invoices_${new Date().toISOString().slice(0, 10)}.json`;
     exportBillsToJsonFile(filteredBills, filename);
     showToast(`Exported ${filteredBills.length} structured invoices to JSON (${filename})!`);
   };
@@ -3128,7 +3128,7 @@ export function App() {
       showToast('No bills in the sheet yet. Scan a bill first!');
       return;
     }
-    const filename = `LedgerSutra_Accounting_${new Date().toISOString().slice(0, 10)}.sql`;
+    const filename = `CASaarthiAI_Accounting_${new Date().toISOString().slice(0, 10)}.sql`;
     exportBillsToSqlFile(filteredBills, filename);
     showToast(`Exported ${filteredBills.length} invoices & line items to SQL (${filename})!`);
   };
@@ -3402,14 +3402,16 @@ export function App() {
     return Array.from(map.values()).sort((a, b) => a.yearMonthKey.localeCompare(b.yearMonthKey));
   }, [savedBills]);
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] pb-16 md:pb-0 transition-colors duration-300">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-indigo-400/30 text-sm font-medium max-w-md">
+        <div className="fixed bottom-20 md:bottom-5 left-3 right-3 sm:left-auto sm:right-5 z-50 flex items-center gap-3 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl border border-indigo-400/30 text-xs sm:text-sm font-medium sm:max-w-md">
           <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-          <span>{toastMessage}</span>
-          <button onClick={() => setToastMessage(null)} className="text-indigo-200 hover:text-white ml-auto">
+          <span className="min-w-0 break-words">{toastMessage}</span>
+          <button onClick={() => setToastMessage(null)} className="text-indigo-200 hover:text-white ml-auto shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -3652,24 +3654,37 @@ export function App() {
         </div>
       )}
 
-      {/* Top Navigation Header — Clean 3-Zone Sticky Bar */}
+      {/* Top Navigation Header — Clean 3-Zone Sticky Bar + Mobile Menu */}
       <header className="sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
-          {/* Zone 1: Single-Line Brand Wordmark */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
+          {/* Zone 1: Brand Logo & Wordmark */}
           <button
             type="button"
-            onClick={() => navigateTo('/')}
-            className="flex items-center gap-2.5 cursor-pointer group whitespace-nowrap shrink-0 text-left"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              navigateTo('/');
+            }}
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group whitespace-nowrap shrink-0 text-left min-w-0"
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
-              <ScanLine className="w-4 h-4" />
-            </div>
-            <span className="font-display font-extrabold text-base sm:text-lg tracking-tight group-hover:text-indigo-500 transition-colors whitespace-nowrap shrink-0">
-              {BRAND_NAME}
+            <img
+              src="/ca-saarthi-icon.svg"
+              alt="CA Saarthi AI - Invoice OCR Tool"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform duration-200 shrink-0"
+            />
+            <span className="font-display font-extrabold text-base sm:text-xl tracking-tight whitespace-nowrap shrink-0 flex items-baseline gap-1">
+              <span className="bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 dark:from-amber-300 dark:via-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                CA
+              </span>
+              <span className="text-[var(--text-main)] group-hover:text-indigo-500 transition-colors">
+                Saarthi
+              </span>
+              <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                AI
+              </span>
             </span>
           </button>
 
-          {/* Zone 2: Client Switcher + Concise Route Links */}
+          {/* Zone 2: Client Switcher + Concise Route Links (Desktop) */}
           <div className="hidden md:flex items-center gap-6 min-w-0">
             <div className="flex items-center gap-1.5 bg-[var(--bg-subtle)] px-2.5 py-1 rounded-lg border border-[var(--border-color)] shrink-0">
               <Briefcase className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
@@ -3724,10 +3739,10 @@ export function App() {
             </nav>
           </div>
 
-          {/* Zone 3: Google Sign-In & Theme Toggle */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Zone 3: Google Sign-In, Theme Toggle & Mobile Menu Trigger */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {currentUser ? (
-              <div className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 pr-1 sm:pr-1.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 shrink-0">
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
@@ -3760,14 +3775,15 @@ export function App() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={isSigningIn}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5 shrink-0" />
-                <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+                <span className="sm:hidden">{isSigningIn ? '...' : 'Sign in'}</span>
+                <span className="hidden sm:inline">{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
               </button>
             )}
 
-            {/* Live Accent Color Switcher (Teal / Cobalt / Copper) */}
+            {/* Live Accent Color Switcher (Desktop/Tablet) */}
             <div
               role="group"
               aria-label="Select UI Accent Color"
@@ -3806,26 +3822,158 @@ export function App() {
             <button
               onClick={toggleTheme}
               aria-label="Toggle Light/Dark Theme"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              className="flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
               {theme === 'light' ? (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <Moon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-indigo-600 shrink-0" />
                   <span className="hidden sm:inline">Dark</span>
                 </>
               ) : (
                 <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <Sun className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
                   <span className="hidden sm:inline">Light</span>
                 </>
               )}
             </button>
+
+            {/* Mobile Drawer Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle Mobile Navigation Menu"
+              aria-expanded={isMobileMenuOpen}
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-main)] hover:bg-[var(--bg-subtle)] cursor-pointer shrink-0"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-4 h-4 text-indigo-500" />
+              ) : (
+                <Layers className="w-4 h-4 text-indigo-500" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Slide-Down Navigation, Client Workspace & Theme Drawer */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-card)] px-4 py-4 space-y-4 shadow-xl">
+            {/* Active Client Workspace Selector */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span>Active Client Workspace</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleOpenWorkspaceTab('clients_team');
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer"
+                >
+                  + Manage Clients
+                </button>
+              </div>
+              <div className="flex items-center gap-2 bg-[var(--bg-subtle)] px-3 py-2.5 rounded-xl border border-[var(--border-color)]">
+                <Briefcase className="w-4 h-4 text-indigo-500 shrink-0" />
+                <select
+                  aria-label="Select Active Client Workspace Mobile"
+                  value={activeClientId}
+                  onChange={(e) => {
+                    setActiveClientId(e.target.value);
+                    const chosen = clients.find((c) => c.id === e.target.value);
+                    if (chosen) showToast(`Switched workspace to "${chosen.name}" (${chosen.financialYear})`);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-transparent text-xs font-semibold text-[var(--text-main)] focus:outline-none truncate"
+                >
+                  {clients
+                    .filter((c) => !c.archived || c.id === activeClientId)
+                    .map((c) => (
+                      <option key={c.id} value={c.id} className="bg-[var(--bg-card)] text-[var(--text-main)]">
+                        {c.name} ({c.financialYear})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Site Navigation Links */}
+            <div className="space-y-1.5">
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Pages &amp; Resources
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { path: '/', label: 'Home' },
+                  { path: '/app', label: 'Workspace' },
+                  { path: '/pricing', label: 'Pricing' },
+                  { path: '/blog', label: 'CA Blog' },
+                  { path: '/api-docs', label: 'REST API' },
+                  { path: '/contact', label: 'Book Demo' },
+                ].map((navItem) => {
+                  const isActive =
+                    navItem.path === '/blog'
+                      ? currentPath.startsWith('/blog')
+                      : currentPath === navItem.path;
+                  return (
+                    <button
+                      key={navItem.path}
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        navigateTo(navItem.path);
+                      }}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-semibold text-center border transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-[var(--bg-subtle)] text-[var(--text-main)] border-[var(--border-color)]'
+                      }`}
+                    >
+                      {navItem.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile Accent Color Switcher */}
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
+              <span className="text-xs font-semibold text-[var(--text-muted)]">UI Accent Theme</span>
+              <div className="flex items-center gap-1.5">
+                {(
+                  [
+                    { id: 'teal', label: 'Teal', swatch: '#0D9488' },
+                    { id: 'cobalt', label: 'Cobalt', swatch: '#2563EB' },
+                    { id: 'copper', label: 'Copper', swatch: '#C2410C' },
+                  ] as const
+                ).map((acc) => {
+                  const isSelected = accentTheme === acc.id;
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => setAccentTheme(acc.id)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-[var(--bg-subtle)] text-[var(--text-main)] border-[var(--border-color)]'
+                      }`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: acc.swatch }}
+                      />
+                      <span>{acc.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Content Container */}
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1 space-y-10">
+      <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 py-4 sm:py-6 flex-1 space-y-8 sm:space-y-10">
         {/* Section 1: Hero Banner at the top of the root Homepage ('/') */}
         {currentPath === '/' && (
           <LedgerSutraHeroBanner
@@ -3847,17 +3995,17 @@ export function App() {
         )}
 
         {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE */}
-        <div id="live-ocr-workspace" className="space-y-5 scroll-mt-20">
-          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 sm:p-5 space-y-4">
+        <div id="live-ocr-workspace" className="space-y-4 sm:space-y-5 scroll-mt-16 sm:scroll-mt-20">
+          <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-3.5 sm:p-5 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3.5">
-              <div className="flex items-center gap-2.5">
-                <ScanLine className="w-4 h-4 text-indigo-500 shrink-0" />
-                <h2 className="font-display text-base sm:text-lg font-bold tracking-tight">
+              <div className="flex items-start sm:items-center gap-2.5">
+                <ScanLine className="w-4 h-4 text-indigo-500 shrink-0 mt-1 sm:mt-0" />
+                <h2 className="font-display text-sm sm:text-lg font-bold tracking-tight leading-snug">
                   {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Tally Command Center
                 </h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[var(--text-muted)]">
                 {currentUser ? (
                   <span className="font-medium tabular-nums">
                     Account History ({currentUser.email}) ·{' '}
@@ -3872,14 +4020,14 @@ export function App() {
                       disabled={isSigningIn}
                       className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
-                      Sign in with Google to save history →
+                      Sign in to save history →
                     </button>
                   </span>
                 )}
                 <button
                   type="button"
                   onClick={() => setIsTallyModalOpen(true)}
-                  className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   Export Tally XML ({filteredBills.length})
                 </button>
@@ -3895,7 +4043,7 @@ export function App() {
             </div>
 
             {/* Upper Live Client Financial KPI Strip */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
               {(() => {
                 const currentClientObj =
                   clients.find((c) => c.id === activeClientId) || DEFAULT_CLIENT_PROFILE;
@@ -3913,49 +4061,49 @@ export function App() {
 
                 return (
                   <>
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
-                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-2.5 sm:px-3.5 sm:py-2.5 min-w-0">
+                      <p className="text-[10px] sm:text-[11px] font-medium text-[var(--text-muted)] truncate">
                         Active Client Workspace
                       </p>
-                      <p className="font-display text-sm font-bold text-[var(--text-main)] truncate mt-0.5">
+                      <p className="font-display text-xs sm:text-sm font-bold text-[var(--text-main)] truncate mt-0.5">
                         {currentClientObj.name}
                       </p>
-                      <p className="text-[11px] font-mono text-[var(--text-muted)] tabular-nums truncate">
+                      <p className="text-[10px] sm:text-[11px] font-mono text-[var(--text-muted)] tabular-nums truncate">
                         {currentClientObj.gstin || 'GSTIN Unassigned'} · {currentClientObj.financialYear}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
-                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-2.5 sm:px-3.5 sm:py-2.5 min-w-0">
+                      <p className="text-[10px] sm:text-[11px] font-medium text-[var(--text-muted)] truncate">
                         Client Register Volume
                       </p>
-                      <p className="font-mono text-base font-bold text-[var(--text-main)] tabular-nums mt-0.5">
+                      <p className="font-mono text-sm sm:text-base font-bold text-[var(--text-main)] tabular-nums truncate mt-0.5">
                         {filteredBills.length} Invoices
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)] tabular-nums">
+                      <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] tabular-nums truncate">
                         {pendingReviewCount > 0
                           ? `${pendingReviewCount} flagged for CA review`
                           : 'All bills audit-verified'}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
-                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-2.5 sm:px-3.5 sm:py-2.5 min-w-0">
+                      <p className="text-[10px] sm:text-[11px] font-medium text-[var(--text-muted)] truncate">
                         Total Taxable Value
                       </p>
-                      <p className="font-mono text-base font-bold text-[var(--text-main)] tabular-nums mt-0.5">
+                      <p className="font-mono text-sm sm:text-base font-bold text-[var(--text-main)] tabular-nums truncate mt-0.5">
                         ₹{totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)]">
+                      <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] truncate">
                         Purchase ledger debit base
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] px-3.5 py-2.5">
-                      <p className="text-[11px] font-medium text-[var(--text-muted)]">
+                    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-2.5 sm:px-3.5 sm:py-2.5 min-w-0">
+                      <p className="text-[10px] sm:text-[11px] font-medium text-[var(--text-muted)] truncate">
                         Total GST / Book ITC
                       </p>
-                      <p className="font-mono text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5">
+                      <p className="font-mono text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 tabular-nums truncate mt-0.5">
                         ₹{totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)]">
+                      <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] truncate">
                         CGST + SGST + IGST input credit
                       </p>
                     </div>
@@ -3967,7 +4115,7 @@ export function App() {
             {/* Unified Single-Line Workspace Navigation Bar */}
             <nav
               aria-label="Workspace tool tabs"
-              className="flex items-center gap-1.5 overflow-x-auto pb-1"
+              className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1"
             >
               {[
                 { id: 'scanner' as const, label: 'Scan & Audit', icon: ScanLine },
@@ -3984,7 +4132,7 @@ export function App() {
                   <button
                     key={t.id}
                     onClick={() => setActiveTab(t.id)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
                       isActive
                         ? 'bg-indigo-600 text-white shadow-xs'
                         : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)]'
@@ -3998,44 +4146,46 @@ export function App() {
             </nav>
           </div>
         {activeTab === 'scanner' && (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Top Action Bar: Mode Switcher (Normal User vs CA) + File Upload */}
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-3.5 sm:p-5 shadow-xs space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2">
                     <span className="text-xs font-bold text-[var(--text-muted)]">Select Mode:</span>
                     <button
                       onClick={() => handleSwitchUserMode('normal_user')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                         userMode === 'normal_user'
                           ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                           : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] border-[var(--border-color)] hover:text-[var(--text-main)]'
                       }`}
                     >
-                      <UserCheck className="w-3.5 h-3.5" />
-                      Normal User Mode (1 Row per Bill + Grocery Product Columns)
+                      <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                      <span className="sm:hidden">Normal User Mode (1 Row / Bill)</span>
+                      <span className="hidden sm:inline">Normal User Mode (1 Row per Bill + Grocery Product Columns)</span>
                     </button>
                     <button
                       onClick={() => handleSwitchUserMode('ca_mode')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                         userMode === 'ca_mode'
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                           : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] border-[var(--border-color)] hover:text-[var(--text-main)]'
                       }`}
                     >
-                      <Briefcase className="w-3.5 h-3.5" />
-                      CA / GST Audit Mode (Specific GST Columns)
+                      <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                      <span className="sm:hidden">CA / GST Audit Mode</span>
+                      <span className="hidden sm:inline">CA / GST Audit Mode (Specific GST Columns)</span>
                     </button>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)] pt-1">
+                  <p className="text-xs text-[var(--text-muted)] pt-0.5 leading-relaxed">
                     {userMode === 'normal_user'
                       ? 'Normal User Mode: Each uploaded bill creates 1 single row (Bill Name, Date, Bill No, Shop Name & Total Cost). If a bill has multiple products (like Grocery Shopping), Product 1, Product 2... columns expand automatically!'
                       : 'CA Mode: Extracts specific accounting columns (Bill Name, Date, Invoice No, Seller GSTIN, Taxable Value, CGST, SGST, IGST & Grand Total) and merges multiple bills into one Excel sheet.'}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -4047,10 +4197,10 @@ export function App() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isProcessing}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-indigo-500/20 transition-all cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-indigo-500/20 transition-all cursor-pointer"
                   >
-                    <Upload className="w-4 h-4" />
-                    {uploadedFileName ? 'Upload Next PDF / Image Bill' : 'Upload PDF / Image Bill'}
+                    <Upload className="w-4 h-4 shrink-0" />
+                    <span>{uploadedFileName ? 'Upload Next PDF / Image Bill' : 'Upload PDF / Image Bill'}</span>
                   </button>
 
                   <input
@@ -4062,11 +4212,11 @@ export function App() {
                   />
                   <button
                     onClick={() => excelImportInputRef.current?.click()}
-                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer"
                     title="Select an existing Excel sheet to append newly scanned bills into it"
                   >
-                    <FilePlus2 className="w-4 h-4" />
-                    Append to Existing Excel (.xlsx)
+                    <FilePlus2 className="w-4 h-4 shrink-0" />
+                    <span>Append to Existing Excel (.xlsx)</span>
                   </button>
                 </div>
               </div>
@@ -5052,23 +5202,23 @@ export function App() {
                   </div>
 
                   {/* Summary Totals & Save Action */}
-                  <div className="bg-[var(--bg-subtle)] rounded-xl p-4 border border-[var(--border-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="grid grid-cols-3 gap-4 text-xs">
-                      <div>
+                  <div className="bg-[var(--bg-subtle)] rounded-xl p-3.5 sm:p-4 border border-[var(--border-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-3 sm:gap-4 text-xs">
+                      <div className="flex xs:block items-center justify-between">
                         <span className="block text-[var(--text-muted)]">Net / Subtotal</span>
                         <span className="font-mono font-bold text-sm">₹{calculatedSubtotal.toFixed(2)}</span>
                       </div>
-                      <div>
+                      <div className="flex xs:block items-center justify-between">
                         <span className="block text-[var(--text-muted)]">Tax / GST</span>
                         <input
                           type="number"
                           step="0.01"
                           value={taxAmount}
                           onChange={(e) => setTaxAmount(parseFloat(e.target.value) || 0)}
-                          className="w-24 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2 py-0.5 font-mono font-bold text-xs"
+                          className="w-28 xs:w-24 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2 py-1 xs:py-0.5 font-mono font-bold text-xs"
                         />
                       </div>
-                      <div>
+                      <div className="flex xs:block items-center justify-between">
                         <span className="block text-[var(--text-muted)]">Total Bill Cost</span>
                         <span className="font-mono font-black text-base text-indigo-500">
                           ₹{calculatedGrandTotal.toFixed(2)}
@@ -5076,20 +5226,20 @@ export function App() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2">
                       <button
                         onClick={handleSaveCurrentToMasterSheet}
-                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 cursor-pointer"
+                        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
-                        Add Bill Row to Sheet
+                        <span>Add Bill Row to Sheet</span>
                       </button>
                       <button
                         onClick={handleExportMasterExcelXlsx}
-                        className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 cursor-pointer"
+                        className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 cursor-pointer"
                       >
                         <FileSpreadsheet className="w-4 h-4" />
-                        Download Excel (.XLSX)
+                        <span>Download Excel (.XLSX)</span>
                       </button>
                     </div>
                   </div>
@@ -5372,13 +5522,13 @@ export function App() {
 
               {/* Row Mode Switcher & Search */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-1.5 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)] w-fit">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-subtle)] p-1 rounded-xl border border-[var(--border-color)] overflow-x-auto no-scrollbar max-w-full">
                   <button
                     onClick={() => {
                       setShowSupplierSummary(false);
                       setMasterSheetMode('bill_wise');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       !showSupplierSummary && masterSheetMode === 'bill_wise'
                         ? 'bg-indigo-600 text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -5391,7 +5541,7 @@ export function App() {
                       setShowSupplierSummary(false);
                       setMasterSheetMode('item_wise');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       !showSupplierSummary && masterSheetMode === 'item_wise'
                         ? 'bg-indigo-600 text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -5401,7 +5551,7 @@ export function App() {
                   </button>
                   <button
                     onClick={() => setShowSupplierSummary(true)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                       showSupplierSummary
                         ? 'bg-emerald-600 text-white'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -5411,22 +5561,22 @@ export function App() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-initial">
                     <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search bill, shop, GSTIN, product..."
-                      className="bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+                      className="w-full sm:w-56 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl pl-8 pr-3 py-2 sm:py-1.5 text-xs focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                   <input
                     type="date"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+                    className="w-full sm:w-auto bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-2.5 py-2 sm:py-1.5 text-xs focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -6299,6 +6449,92 @@ export function App() {
         onNavigate={navigateTo}
         onOpenWorkspaceTab={handleOpenWorkspaceTab}
       />
+
+      {/* Mobile Fixed Thumb-Zone Bottom Navigation Bar */}
+      <nav
+        aria-label="Mobile quick navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-header)] backdrop-blur-md border-t border-[var(--border-color)] grid grid-cols-5 items-center h-14 px-1"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            navigateTo('/');
+          }}
+          className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
+            currentPath === '/' && activeTab === 'scanner' && !isMobileMenuOpen
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-[var(--text-muted)]'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="text-[10px] leading-none">Home</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            handleOpenWorkspaceTab('scanner');
+          }}
+          className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
+            activeTab === 'scanner' && currentPath === '/app'
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-[var(--text-muted)]'
+          }`}
+        >
+          <ScanLine className="w-4 h-4" />
+          <span className="text-[10px] leading-none">Scan Bill</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            handleOpenWorkspaceTab('master_sheet');
+          }}
+          className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
+            activeTab === 'master_sheet'
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-[var(--text-muted)]'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span className="text-[10px] leading-none tabular-nums">Sheet ({savedBills.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            handleOpenWorkspaceTab('gstr2b');
+          }}
+          className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
+            activeTab === 'gstr2b'
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-[var(--text-muted)]'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span className="text-[10px] leading-none">GSTR-2B</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsMobileMenuOpen((prev) => !prev);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
+            isMobileMenuOpen
+              ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+              : 'text-[var(--text-muted)]'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span className="text-[10px] leading-none">Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }
@@ -6321,7 +6557,7 @@ class AppErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[LedgerSutra ErrorBoundary]', error, info);
+    console.error('[CA Saarthi AI ErrorBoundary]', error, info);
   }
 
   render() {
@@ -6331,7 +6567,7 @@ class AppErrorBoundary extends React.Component<
           <div className="max-w-md w-full rounded-2xl border border-rose-500/30 bg-slate-900 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-base">
               <AlertTriangle className="w-5 h-5" />
-              <span>LedgerSutra Workspace Recovery</span>
+              <span>CA Saarthi AI Workspace Recovery</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               The interface encountered an unexpected rendering error. Your saved invoices and client workspaces in Firestore remain safe.
@@ -6347,7 +6583,7 @@ class AppErrorBoundary extends React.Component<
               }}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
             >
-              Reload LedgerSutra Workspace
+              Reload CA Saarthi AI Workspace
             </button>
           </div>
         </div>

@@ -142,7 +142,7 @@ export function validateBillsForTallyExport(
  */
 export function generateTallyPrimeXml(bills: NoSQLBillRecord[], settings: TallySettings): string {
   const vchType = settings.defaultVoucherType?.trim() || 'Purchase';
-  const companyName = settings.companyName?.trim() || 'LedgerSutra Client Books';
+  const companyName = settings.companyName?.trim() || 'CA Saarthi AI Client Books';
   const purchaseLedger = settings.purchaseLedgerName?.trim() || 'Purchase Account';
   const cgstLedger = settings.cgstLedgerName?.trim() || 'Input CGST';
   const sgstLedger = settings.sgstLedgerName?.trim() || 'Input SGST';
@@ -377,7 +377,7 @@ export function generateTallyPrimeXml(bills: NoSQLBillRecord[], settings: TallyS
 export function downloadTallyPrimeXml(
   bills: NoSQLBillRecord[],
   settings: TallySettings,
-  filename = `LedgerSutra_TallyPrime_Vouchers_${new Date().toISOString().slice(0, 10)}.xml`
+  filename = `CASaarthiAI_TallyPrime_Vouchers_${new Date().toISOString().slice(0, 10)}.xml`
 ): void {
   const xml = generateTallyPrimeXml(bills, settings);
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
@@ -416,7 +416,7 @@ export const ZOHO_BOOKS_COLUMN_MAPPING_DOCS = [
 
 export function exportZohoBooksCsv(
   bills: NoSQLBillRecord[],
-  filename = `LedgerSutra_ZohoBooks_Bills_${new Date().toISOString().slice(0, 10)}.csv`
+  filename = `CASaarthiAI_ZohoBooks_Bills_${new Date().toISOString().slice(0, 10)}.csv`
 ): void {
   const headers = [
     'Bill Number',
@@ -516,7 +516,7 @@ export function exportZohoBooksCsv(
         Number(item.igstAmount || 0).toFixed(2),
         Number(item.lineTotal || bill.grandTotal || 0).toFixed(2),
         currency,
-        `Imported from LedgerSutra (${bill.fileName})`,
+        `Imported from CA Saarthi AI (${bill.fileName})`,
       ];
       rows.push(line.map(escapeCsv).join(','));
     }
@@ -553,7 +553,7 @@ export const BUSY_EXCEL_COLUMN_MAPPING_DOCS = [
 
 export function exportBusyCompatibleExcel(
   bills: NoSQLBillRecord[],
-  filename = `LedgerSutra_Busy_Purchase_Import_${new Date().toISOString().slice(0, 10)}.xlsx`
+  filename = `CASaarthiAI_Busy_Purchase_Import_${new Date().toISOString().slice(0, 10)}.xlsx`
 ): void {
   const busyRows: Record<string, string | number>[] = [];
 
@@ -614,7 +614,7 @@ export function exportBusyCompatibleExcel(
         'IGST %': isInterState ? Number(item.gstRate) || effRate : 0,
         'IGST Amt': Number(item.igstAmount || bill.igstAmount || 0),
         'Total Bill Amt': Number(item.lineTotal || bill.grandTotal || 0),
-        Narration: `Imported via LedgerSutra from ${bill.fileName}`,
+        Narration: `Imported via CA Saarthi AI from ${bill.fileName}`,
       });
     });
   }

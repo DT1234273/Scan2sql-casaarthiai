@@ -1,5 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#4f46e5"/>
-  <path d="M18 18h28v6H24v10h18v6H24v8h22v6H18V18z" fill="#ffffff"/>
-  <circle cx="48" cy="37" r="5" fill="#34d399"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="64" height="64" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B132B"/>
+      <stop offset="55%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="rimGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#F59E0B" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="wheelGrad" x1="16" y1="24" x2="72" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="48" y1="22" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="40%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="swooshGrad" x1="26" y1="88" x2="102" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="114" height="114" rx="28" fill="url(#bgGrad)" stroke="url(#rimGrad)" stroke-width="3"/>
+  <g stroke="url(#wheelGrad)" stroke-width="3" stroke-linecap="round" opacity="0.85">
+    <line x1="46" y1="33" x2="46" y2="87"/>
+    <line x1="19" y1="60" x2="65" y2="60"/>
+    <line x1="27" y1="41" x2="61" y2="79"/>
+    <line x1="27" y1="79" x2="61" y2="41"/>
+  </g>
+  <path d="M 62 34.5 A 30 30 0 1 0 62 85.5" stroke="url(#wheelGrad)" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="46" cy="60" r="7" fill="url(#goldGrad)"/>
+  <path d="M 73 25 L 97 90 H 86.5 L 81.5 75.5 H 64.5 L 59.5 90 H 49 L 73 25 Z M 73 43.5 L 67.2 66 H 78.8 L 73 43.5 Z" fill="url(#goldGrad)"/>
+  <path d="M 34 86 C 48 82, 62 72, 76 55 C 84 45, 91 36, 99 28" stroke="#0B132B" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 34 86 C 48 82, 62 72, 76 55 C 84 45, 91 36, 99 28" stroke="url(#swooshGrad)" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 91 27 H 100 V 36" stroke="#FDE68A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

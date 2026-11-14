@@ -396,117 +396,138 @@ export const LedgerSutraHeroBanner: React.FC<{
   };
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       <div className="overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
           {/* Left Narrative & Primary CTA */}
-          <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between space-y-8">
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[var(--text-muted)]">
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                  {BRAND_TAGLINE}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>TallyPrime XML</span>
-                <span aria-hidden="true">·</span>
-                <span>GSTR-2B Reconciliation</span>
-                <span aria-hidden="true">·</span>
-                <span>Mod-36 GSTIN Audit</span>
+          <div className="lg:col-span-7 p-4 sm:p-8 lg:p-12 flex flex-col justify-between space-y-6 sm:space-y-8">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-medium text-[var(--text-muted)]">
+                <img
+                  src="/ca-saarthi-icon.svg"
+                  alt="CA Saarthi AI - Invoice OCR Tool"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs shrink-0"
+                />
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
+                  <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-1 shrink-0">
+                    <span className="bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-300 dark:to-orange-400 bg-clip-text text-transparent">
+                      CA
+                    </span>
+                    <span className="text-[var(--text-main)]">Saarthi</span>
+                    <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                      AI
+                    </span>
+                  </span>
+                  <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)]">·</span>
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 text-[11px] sm:text-xs leading-snug">
+                    {BRAND_TAGLINE}
+                  </span>
+                </div>
               </div>
 
               <h1
-                className="font-display font-extrabold tracking-tight leading-[1.06] text-[var(--text-main)]"
-                style={{ fontSize: 'clamp(2.15rem, 3.7vw, 3.45rem)' }}
+                className="font-display font-extrabold tracking-tight leading-[1.08] text-[var(--text-main)]"
+                style={{ fontSize: 'clamp(1.68rem, 4.8vw, 3.45rem)' }}
               >
-                GST invoice to Tally and Excel,{' '}
-                <span className="text-indigo-600 dark:text-indigo-400">
-                  built for Indian CA firms
-                </span>
+                Automate GST Invoice Data Entry in Seconds.
               </h1>
 
-              <p className="text-base text-[var(--text-muted)] leading-relaxed max-w-2xl">
-                Extract 15-character GSTINs, HSN/SAC codes, line items, IRN, e-Way bills, and
-                CGST/SGST/IGST tax splits from PDFs and bill photos. Validate blocked vouchers
-                before TallyPrime XML import, reconcile GSTR-2B across 6 statuses, and isolate
-                records per client workspace.
-              </p>
+              <h2 className="text-sm sm:text-lg font-normal text-[var(--text-muted)] leading-relaxed max-w-2xl">
+                Bilingual AI OCR built exclusively for Indian CA firms. Scan English &amp; Hindi
+                bills, validate GSTINs automatically, and export directly to SQL or Excel with 100%
+                data privacy.
+              </h2>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <button
-                  onClick={() => scrollToSection('live-no-login-demo')}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <span>Try free demo</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3">
+                  <button
+                    onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+                    className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <span>Start Free Trial</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
 
-                <button
-                  onClick={() => {
-                    if (onNavigate) {
-                      onNavigate('/contact');
-                    } else {
-                      onOpenWorkspaceTab('scanner', 'ca_mode');
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)] text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <Mail className="w-4 h-4 text-indigo-500" />
-                  <span>Book a demo</span>
-                </button>
-
-                {onTriggerUpload && (
                   <button
                     onClick={() => {
-                      onOpenWorkspaceTab('scanner', 'ca_mode');
-                      onTriggerUpload();
+                      if (onNavigate) {
+                        onNavigate('/contact');
+                      } else {
+                        onOpenWorkspaceTab('scanner', 'ca_mode');
+                      }
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-indigo-600 dark:text-indigo-400 border border-[var(--border-color)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)] text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload Invoice ({savedBillsCount} Saved)</span>
+                    <Mail className="w-4 h-4 text-indigo-500" />
+                    <span>Book a Demo</span>
                   </button>
-                )}
+
+                  {onTriggerUpload && (
+                    <button
+                      onClick={() => {
+                        onOpenWorkspaceTab('scanner', 'ca_mode');
+                        onTriggerUpload();
+                      }}
+                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-indigo-600 dark:text-indigo-400 border border-[var(--border-color)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload Invoice ({savedBillsCount} Saved)</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Trust Badge / Micro-copy under CTA */}
+                <p className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <span>🔒 Local Fallback OCR | Zero Server-Side Data Retention</span>
+                </p>
               </div>
             </div>
 
-            {/* Clean 4-Column Architectural Proof Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-[var(--border-color)] text-xs">
-              <div>
-                <div className="font-semibold text-[var(--text-main)]">TallyPrime XML</div>
-                <div className="text-[var(--text-muted)] mt-0.5">Pre-export blocker validator</div>
+            {/* Clean 4-Column Architectural Proof Row + Long-Tail SEO Paragraph */}
+            <div className="space-y-3 pt-5 sm:pt-6 border-t border-[var(--border-color)] text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                  <div className="font-semibold text-[var(--text-main)]">15-Digit GSTIN Audit</div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">Mod-36 checksum &amp; PAN check</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--text-main)]">Bilingual OCR</div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">English &amp; Hindi bill scanner</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--text-main)]">TallyPrime &amp; 2B</div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">XML vouchers &amp; 6-status match</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-[var(--text-main)]">SQL, JSON &amp; XLSX</div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">Developer-ready exports</div>
+                </div>
               </div>
-              <div>
-                <div className="font-semibold text-[var(--text-main)]">6-Status GSTR-2B</div>
-                <div className="text-[var(--text-muted)] mt-0.5">Books vs portal ITC matcher</div>
-              </div>
-              <div>
-                <div className="font-semibold text-[var(--text-main)]">Mod-36 Checksum</div>
-                <div className="text-[var(--text-muted)] mt-0.5">15-char GSTIN &amp; PAN check</div>
-              </div>
-              <div>
-                <div className="font-semibold text-[var(--text-main)]">CA Client RBAC</div>
-                <div className="text-[var(--text-muted)] mt-0.5">Owner, Reviewer &amp; Staff roles</div>
-              </div>
+              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                Engineered as the <strong>Best OCR software for invoices India</strong>, delivering{' '}
+                <strong>Automated GST data extraction for CA firms</strong> with an accurate{' '}
+                <strong>Hindi bilingual bill scanner</strong>.
+              </p>
             </div>
           </div>
 
           {/* Right Column: Editorial Studio Photography + 4-Mode Upper Command Inspector */}
-          <div className="lg:col-span-5 relative min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
+          <div className="lg:col-span-5 relative min-h-[340px] sm:min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
             <EditorialVisual
               src={heroStudioImg}
-              alt="Indian Chartered Accountant advisory desk with GST tax invoices and spreadsheet ledgers"
-              fallbackTitle="CA Practice Audit Desk"
-              fallbackSubtitle="Purchase bills to TallyPrime XML and GSTR-2B Excel"
+              alt="CA Saarthi AI - Invoice OCR Tool dashboard and GST data extraction for Indian CA firms"
+              fallbackTitle="CA Saarthi AI Practice Audit Desk"
+              fallbackSubtitle="Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-slate-950/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/30" />
 
-            <div className="relative z-10 p-5 sm:p-6 space-y-3 text-slate-100">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="relative z-10 p-4 sm:p-6 space-y-3 text-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span className="text-xs font-medium text-slate-300">
                   Live Practice Output &amp; Benchmark
                 </span>
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-900/95 border border-slate-700/80 overflow-x-auto">
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-900/95 border border-slate-700/80 overflow-x-auto no-scrollbar max-w-full">
                   {[
                     { id: 'extract' as const, label: '01. GST Fields' },
                     { id: 'tally' as const, label: '02. Tally XML' },
@@ -516,7 +537,7 @@ export const LedgerSutraHeroBanner: React.FC<{
                     <button
                       key={tab.id}
                       onClick={() => setHeroStage(tab.id)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      className={`px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                         heroStage === tab.id
                           ? 'bg-indigo-600 text-white'
                           : 'text-slate-300 hover:text-white'
@@ -528,18 +549,18 @@ export const LedgerSutraHeroBanner: React.FC<{
                 </div>
               </div>
 
-              <div className="rounded-xl bg-slate-950/95 border border-slate-800 p-4 text-xs font-mono tabular-nums space-y-2 backdrop-blur-xs">
+              <div className="rounded-xl bg-slate-950/95 border border-slate-800 p-3.5 sm:p-4 text-[11px] sm:text-xs font-mono tabular-nums space-y-2.5 backdrop-blur-xs">
                 {heroStage === 'extract' && (
                   <>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Supplier GSTIN</span>
-                      <span className="text-emerald-400 font-semibold">27AABCK4829M1Z5 (Valid Mod-36)</span>
+                      <span className="text-emerald-400 font-semibold break-all sm:break-normal">27AABCK4829M1Z5 (Valid Mod-36)</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Invoice / Date</span>
                       <span className="text-slate-100">INV/26-27/0842 · 2026-10-18</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Taxable + CGST + SGST</span>
                       <span className="text-slate-100 font-semibold">₹45,000 + ₹4,050 + ₹4,050</span>
                     </div>
@@ -548,15 +569,15 @@ export const LedgerSutraHeroBanner: React.FC<{
 
                 {heroStage === 'tally' && (
                   <>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Voucher Type</span>
                       <span className="text-indigo-300 font-semibold">Purchase · Action: Create</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Party Credit (ISDEEMEDPOSITIVE=No)</span>
                       <span className="text-slate-100">₹53,100.00</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Purchase + Tax Debits</span>
                       <span className="text-emerald-400">-₹45,000 / -₹4,050 / -₹4,050</span>
                     </div>
@@ -565,15 +586,15 @@ export const LedgerSutraHeroBanner: React.FC<{
 
                 {heroStage === 'gstr2b' && (
                   <>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Normalized Invoice Key</span>
-                      <span className="text-slate-100">27AABCK4829M1Z5 · INV26270842</span>
+                      <span className="text-slate-100 break-all sm:break-normal">27AABCK4829M1Z5 · INV26270842</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Portal vs Books Delta</span>
                       <span className="text-emerald-400 font-semibold">₹0.00 Variance</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Reconciliation Status</span>
                       <span className="text-emerald-400 font-semibold">Matched · ITC Eligible</span>
                     </div>
@@ -582,15 +603,15 @@ export const LedgerSutraHeroBanner: React.FC<{
 
                 {heroStage === 'compare' && (
                   <>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Tally Pre-Export Blocker Check</span>
                       <span className="text-emerald-400 font-semibold">Built-In (vs None in Basic OCR)</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">GSTR-2B 6-Status Excel Match</span>
                       <span className="text-emerald-400 font-semibold">Included (JSON + XLSX)</span>
                     </div>
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
                       <span className="text-slate-400">Exports Supported</span>
                       <span className="text-slate-100">Tally XML · Zoho · Busy · SQL</span>
                     </div>
@@ -599,6 +620,61 @@ export const LedgerSutraHeroBanner: React.FC<{
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Core Features Section (4 Pillars Beating Enterprise Competition) */}
+      <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 sm:p-7 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+              Core Features · Built for Indian Chartered Accountants
+            </p>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-main)] mt-0.5">
+              Four Pillars Engineered to Outperform Generic Enterprise OCR
+            </h2>
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">
+            Best OCR software for invoices India · Automated GST data extraction for CA firms · Hindi bilingual bill scanner
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              num: '01.',
+              title: '15-Digit GSTIN Validation',
+              copy: 'Built for India. Automatically extracts and cross-verifies 15-digit GSTINs from complex invoice layouts to ensure flawless GSTR filing.',
+            },
+            {
+              num: '02.',
+              title: 'Bilingual Bill Scanner',
+              copy: 'Regional bills are no longer a bottleneck. Flawlessly extract line items and vendor details from both English and Hindi invoices.',
+            },
+            {
+              num: '03.',
+              title: 'Military-Grade Data Privacy',
+              copy: "Your clients' financial data never lingers. With our Local Fallback OCR and instant record deletion, your data is processed and purged immediately.",
+            },
+            {
+              num: '04.',
+              title: 'Developer-Friendly Exports',
+              copy: 'Say goodbye to manual copy-pasting. Push extracted data directly into your existing systems via SQL, JSON, or download formatted XLSX files.',
+            },
+          ].map((pillar) => (
+            <div
+              key={pillar.title}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-2.5"
+            >
+              <div className="space-y-1.5">
+                <div className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {pillar.num}
+                </div>
+                <h3 className="text-sm font-bold text-[var(--text-main)]">{pillar.title}</h3>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{pillar.copy}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -824,9 +900,9 @@ export const LedgerSutraHomepageSections: React.FC<{
       {/* =================================================================== */}
       <section
         id="live-no-login-demo"
-        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 sm:p-8 space-y-5 sm:space-y-6 scroll-mt-20"
       >
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-color)] pb-5">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-color)] pb-4 sm:pb-5">
           <div className="space-y-1">
             <div className="text-xs font-medium text-[var(--text-muted)]">
               Interactive Extraction Sandbox · No Login Required ·{' '}
@@ -834,14 +910,14 @@ export const LedgerSutraHomepageSections: React.FC<{
                 {Math.max(0, 3 - scansUsedToday)} of 3 custom demo scans remaining today
               </span>
             </div>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-main)]">
+            <h2 className="font-display text-xl sm:text-3xl font-bold tracking-tight text-[var(--text-main)]">
               Inspect GST Invoice Extraction, TallyPrime XML &amp; JSON Live
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {scansUsedToday < 3 ? (
-              <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors whitespace-nowrap shrink-0">
+              <label className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors whitespace-nowrap shrink-0">
                 <Upload className="w-4 h-4" />
                 <span>{customDemoLoading ? 'Extracting Invoice...' : 'Upload Sample Invoice'}</span>
                 <input
@@ -854,7 +930,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             ) : (
               <button
                 onClick={onSignInRequest}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Daily 3-Scan Limit Reached — Sign in for More</span>
@@ -864,7 +940,7 @@ export const LedgerSutraHomepageSections: React.FC<{
         </div>
 
         {customDemoError && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span>{customDemoError}</span>
             {onSignInRequest && (
               <button
@@ -878,7 +954,7 @@ export const LedgerSutraHomepageSections: React.FC<{
         )}
 
         {/* 3 Built-in Sample Tabs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
           {BUILTIN_DEMO_SAMPLES.map((samp, index) => {
             const isSelected = !customDemoResult && selectedSampleId === samp.id;
             return (
@@ -888,7 +964,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                   setCustomDemoResult(null);
                   setSelectedSampleId(samp.id);
                 }}
-                className={`p-4 rounded-xl border text-left transition-colors cursor-pointer ${
+                className={`p-3.5 sm:p-4 rounded-xl border text-left transition-colors cursor-pointer ${
                   isSelected
                     ? 'border-indigo-500 bg-indigo-500/5'
                     : 'border-[var(--border-color)] bg-[var(--bg-subtle)] hover:border-indigo-500/40'
@@ -897,30 +973,30 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <div className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                   Sample 0{index + 1} · {samp.meta}
                 </div>
-                <div className="text-sm font-semibold text-[var(--text-main)] mt-1">{samp.label}</div>
+                <div className="text-xs sm:text-sm font-semibold text-[var(--text-main)] mt-1">{samp.label}</div>
               </button>
             );
           })}
         </div>
 
         {/* Split Invoice Document Preview (Left) + 4-Way Inspector (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
           {/* Left: Interactive Document Sheet View */}
-          <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-5 flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-4 sm:p-5 flex flex-col justify-between space-y-4">
             <div className="space-y-4">
-              <div className="flex items-start justify-between gap-2 border-b border-[var(--border-color)] pb-3">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+                <div className="min-w-0">
                   <div className="text-[11px] font-medium text-[var(--text-muted)]">
                     Tax Invoice Preview
                   </div>
-                  <div className="text-sm font-bold text-[var(--text-main)] mt-0.5">
+                  <div className="text-sm font-bold text-[var(--text-main)] mt-0.5 break-words">
                     {displayedInvoice.shopName}
                   </div>
-                  <div className="text-xs font-mono text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  <div className="text-xs font-mono text-indigo-600 dark:text-indigo-400 mt-0.5 break-all">
                     GSTIN: {displayedInvoice.sellerGstin}
                   </div>
                 </div>
-                <div className="text-right font-mono text-xs tabular-nums">
+                <div className="sm:text-right font-mono text-xs tabular-nums shrink-0">
                   <div className="font-semibold text-[var(--text-main)]">
                     {displayedInvoice.invoiceNumber}
                   </div>
@@ -928,17 +1004,17 @@ export const LedgerSutraHomepageSections: React.FC<{
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="min-w-0">
                   <div className="text-[11px] text-[var(--text-muted)]">Billed To</div>
                   <div className="font-semibold text-[var(--text-main)] truncate">
                     {displayedInvoice.buyerName}
                   </div>
-                  <div className="font-mono text-[11px] text-[var(--text-muted)]">
+                  <div className="font-mono text-[11px] text-[var(--text-muted)] break-all">
                     {displayedInvoice.buyerGstin}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-[11px] text-[var(--text-muted)]">Place of Supply &amp; Logistics</div>
                   <div className="font-medium text-[var(--text-main)]">{displayedInvoice.placeOfSupply}</div>
                   <div className="font-mono text-[11px] text-[var(--text-muted)] truncate">
@@ -949,9 +1025,9 @@ export const LedgerSutraHomepageSections: React.FC<{
 
               <div className="border-t border-[var(--border-color)] pt-3 space-y-2">
                 {displayedInvoice.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                  <div key={idx} className="flex items-start sm:items-center justify-between gap-2 text-xs">
                     <div className="min-w-0">
-                      <div className="font-medium text-[var(--text-main)] truncate">
+                      <div className="font-medium text-[var(--text-main)] break-words sm:truncate">
                         {item.itemName}
                       </div>
                       <div className="text-[11px] font-mono text-[var(--text-muted)]">
@@ -998,9 +1074,9 @@ export const LedgerSutraHomepageSections: React.FC<{
           </div>
 
           {/* Right: 4-Tab Interactive Output Switcher */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
+          <div className="lg:col-span-7 flex flex-col space-y-4 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] overflow-x-auto no-scrollbar max-w-full">
                 {[
                   { id: 'table' as const, label: 'Accounting Table' },
                   { id: 'tally_xml' as const, label: 'TallyPrime XML' },
@@ -1020,14 +1096,14 @@ export const LedgerSutraHomepageSections: React.FC<{
                   </button>
                 ))}
               </div>
-              <span className="text-xs font-mono text-[var(--text-muted)] tabular-nums">
+              <span className="text-xs font-mono text-[var(--text-muted)] tabular-nums truncate">
                 IRN: {displayedInvoice.irn.slice(0, 14)}…
               </span>
             </div>
 
             {demoViewTab === 'table' && (
-              <div className="space-y-4 flex-1 flex flex-col justify-between">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="space-y-4 flex-1 flex flex-col justify-between min-w-0">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
                   <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
                     <div className="text-[11px] text-[var(--text-muted)]">Supplier PAN</div>
                     <div className="font-mono font-semibold text-[var(--text-main)] mt-0.5">
@@ -1328,7 +1404,7 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-slate-900 overflow-hidden relative min-h-[220px] flex flex-col justify-end">
             <EditorialVisual
               src={invoiceAuditImg}
-              alt="Overhead view of GST purchase register and tax invoice reconciliation"
+              alt="CA Saarthi AI - Invoice OCR Tool GST purchase register and GSTR-2B reconciliation"
               fallbackTitle="02. GSTR-2B Reconciliation"
               fallbackSubtitle="Match Books vs Portal JSON & Excel"
               className="absolute inset-0 w-full h-full object-cover"
@@ -1414,34 +1490,34 @@ export const LedgerSutraHomepageSections: React.FC<{
       {/* =================================================================== */}
       <section
         id="extracted-fields-explorer"
-        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-5 scroll-mt-20"
+        className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4 sm:p-8 space-y-4 sm:space-y-5 scroll-mt-20"
       >
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4">
           <div>
             <div className="text-xs font-medium text-[var(--text-muted)]">
               Comprehensive Schema Coverage · Filterable Column Directory
             </div>
-            <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-main)] mt-1">
               30+ Invoice, E-Invoice &amp; Bill of Entry Fields Extracted Automatically
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
               <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={fieldSearch}
                 onChange={(e) => setFieldSearch(e.target.value)}
                 placeholder="Filter fields (e.g. IRN, IFSC, HSN)"
-                className="pl-8 pr-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-main)] w-56"
+                className="w-full pl-8 pr-3 py-2 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-main)]"
               />
             </div>
           </div>
         </div>
 
         {/* Interactive Category Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {[
             { id: 'all' as const, label: `All Fields (${ALL_EXTRACTED_FIELDS.length})` },
             { id: 'party' as const, label: 'Party & GSTIN' },
@@ -1512,10 +1588,10 @@ export const LedgerSutraHomepageSections: React.FC<{
                   title: 'Select Client & Upload Invoices',
                   desc: 'Pick your client workspace in the header and upload single or batch PDFs, multi-page statements, Bills of Entry, or mobile photos.',
                 },
-                {
+                 {
                   num: '02.',
                   title: 'Automated GST Audit & Review Queue',
-                  desc: 'LedgerSutra extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
+                  desc: 'CA Saarthi AI extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
                 },
                 {
                   num: '03.',
@@ -1542,7 +1618,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="relative h-52 bg-slate-900">
               <EditorialVisual
                 src={caWorkspaceImg}
-                alt="Modern CA advisory studio with dual monitors showing structured accounting tables"
+                alt="CA Saarthi AI - Invoice OCR Tool dual-monitor CA workspace"
                 fallbackTitle="CA Practice Dual-Monitor Workflow"
                 fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
                 className="w-full h-full object-cover"
@@ -1657,7 +1733,7 @@ export const LedgerSutraHomepageSections: React.FC<{
               <span>Google Sign-In Authentication</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by LedgerSutra.
+              Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by CA Saarthi AI.
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
@@ -2133,22 +2209,22 @@ export const LedgerSutraRouteView: React.FC<{
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Privacy Policy</h1>
-        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026</p>
+        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
           <p>
-            <strong className="text-[var(--text-main)]">1. Data We Process:</strong> When you use {BRAND_NAME}, we
-            process the invoice PDFs/images you upload and store extracted accounting records under your authenticated
-            Google account in Firebase Firestore (<code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code>).
+            <strong className="text-[var(--text-main)]">1. Zero AI Model Training on Client Data:</strong>{' '}
+            {BRAND_NAME} never uses your uploaded invoices, GSTINs, or client financial documents to train, fine-tune, or
+            improve public or third-party AI models.
           </p>
           <p>
-            <strong className="text-[var(--text-main)]">2. Strict Per-User Isolation:</strong> Your client profiles,
-            scanned invoices, GSTR-2B reconciliation working sheets, and Tally settings are isolated to your Firebase
-            UID and authorized firm team members.
+            <strong className="text-[var(--text-main)]">2. Zero Server-Side Retention &amp; Instant Purge:</strong>{' '}
+            Uploaded invoice files are processed in memory for OCR extraction and purged immediately from the processing
+            server. With our Local Fallback OCR, extraction can also run directly inside your browser.
           </p>
           <p>
-            <strong className="text-[var(--text-main)]">3. Self-Service Data Deletion:</strong> You can permanently
-            delete any individual bill, purge an entire client workspace, or delete all data associated with your
-            account at any time from the <b>Clients</b> tab in the workspace.
+            <strong className="text-[var(--text-main)]">3. Strict Per-User Isolation &amp; Deletion:</strong> If you
+            sign in to save history, your client profiles and bills are isolated under your authenticated account and can
+            be permanently deleted at any time with a single click.
           </p>
         </div>
       </section>
@@ -2160,7 +2236,7 @@ export const LedgerSutraRouteView: React.FC<{
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Terms of Service</h1>
-        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026</p>
+        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
           <p>
             <strong className="text-[var(--text-main)]">1. Professional Verification Responsibility:</strong>{' '}
@@ -2172,6 +2248,35 @@ export const LedgerSutraRouteView: React.FC<{
             <strong className="text-[var(--text-main)]">2. Acceptable API &amp; Demo Usage:</strong> Unauthenticated
             demo usage is limited to 3 custom scans per browser per day. Authenticated API usage on{' '}
             <code className="font-mono">POST /api/v1/extract</code> is subject to rate limits (30 requests/min) and payload limits (15 MB).
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // 6b. Data Deletion Policy (/data-deletion)
+  if (cleanPath === '/data-deletion') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Data Deletion Policy</h1>
+        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
+        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+          <p>
+            <strong className="text-[var(--text-main)]">1. Ephemeral In-Memory OCR Processing:</strong> Every invoice PDF
+            or image uploaded to {BRAND_NAME} is processed ephemerally and purged from server memory immediately after the
+            structured response is returned.
+          </p>
+          <p>
+            <strong className="text-[var(--text-main)]">2. Instant One-Click Record &amp; Workspace Purge:</strong>{' '}
+            Within the {BRAND_NAME} workspace, you can delete any single invoice row, clear an entire client workspace, or
+            purge all saved records immediately without waiting for manual support tickets.
+          </p>
+          <p>
+            <strong className="text-[var(--text-main)]">3. Direct Deletion Assistance:</strong> For enterprise compliance
+            confirmations or account-wide deletion requests, email{' '}
+            <a href="mailto:support@casaarthiai.in" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+              support@casaarthiai.in
+            </a>.
           </p>
         </div>
       </section>
@@ -2229,7 +2334,10 @@ export const LedgerSutraRouteView: React.FC<{
             Book a Live Demo or Request CA-Firm Pilot
           </h1>
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            Schedule a live walkthrough of TallyPrime XML import, GSTR-2B reconciliation, and multi-client firm workspaces with our engineering team at support@ledgersutra.in.
+            Schedule a live walkthrough of TallyPrime XML import, GSTR-2B reconciliation, and multi-client firm workspaces with our engineering team at{' '}
+            <a href="mailto:support@casaarthiai.in" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+              support@casaarthiai.in
+            </a>.
           </p>
         </div>
 
@@ -2341,26 +2449,45 @@ export const LedgerSutraFooter: React.FC<{
     <footer className="border-t border-[var(--border-color)] bg-[var(--bg-card)] mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Col 1: Brand */}
+          {/* Col 1: Brand & Logo */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
-                <ScanLine className="w-4 h-4" />
-              </div>
+            <div className="flex items-center gap-3.5">
+              <img
+                src="/ca-saarthi-icon.svg"
+                alt="CA Saarthi AI - Invoice OCR Tool"
+                className="w-12 h-12 rounded-2xl object-contain shadow-sm shrink-0"
+              />
               <div>
-                <span className="font-display font-bold text-base tracking-tight block">{BRAND_NAME}</span>
-                <span className="text-[11px] text-[var(--text-muted)] block">{SITE_DOMAIN}</span>
+                <span className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-1">
+                  <span className="bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 dark:from-amber-300 dark:via-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                    CA
+                  </span>
+                  <span className="text-[var(--text-main)]">Saarthi</span>
+                  <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                    AI
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-[var(--text-muted)] block">{SITE_DOMAIN}</span>
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              GST invoice to Tally and Excel, built for Indian CA firms. Extract GSTIN, HSN, line items, and tax splits with deterministic audit checks.
+              Bilingual AI OCR built exclusively for Indian CA firms. Best OCR software for invoices India with automated GST data extraction for CA firms and a Hindi bilingual bill scanner.
             </p>
+            <div className="text-xs text-[var(--text-main)] font-medium">
+              Support:{' '}
+              <a
+                href="mailto:support@casaarthiai.in"
+                className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+              >
+                support@casaarthiai.in
+              </a>
+            </div>
             <div className="flex flex-wrap gap-2 pt-1">
               <button
                 onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
               >
-                Open CA Workspace
+                Start Free Trial
               </button>
               <button
                 onClick={() => onNavigate('/api-docs')}
@@ -2371,13 +2498,37 @@ export const LedgerSutraFooter: React.FC<{
             </div>
           </div>
 
-          {/* Col 2: Public Website & Legal Links */}
+          {/* Col 2: Public Website & Legal Links (Crucial for B2B Trust) */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-[var(--text-main)]">Platform &amp; Legal</h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">Platform &amp; Legal Trust</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
-                <button onClick={() => onNavigate('/')} className="hover:text-indigo-500 cursor-pointer">
-                  Home &amp; Live Demo
+                <button
+                  onClick={() => onNavigate('/privacy')}
+                  className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/terms')}
+                  className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
+                >
+                  Terms of Service
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('/data-deletion')}
+                  className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
+                >
+                  Data Deletion Policy
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('/security')} className="hover:text-indigo-500 cursor-pointer">
+                  Security &amp; Data Isolation
                 </button>
               </li>
               <li>
@@ -2388,21 +2539,6 @@ export const LedgerSutraFooter: React.FC<{
               <li>
                 <button onClick={() => onNavigate('/faq')} className="hover:text-indigo-500 cursor-pointer">
                   FAQ ({HOMEPAGE_FAQS.length} Questions)
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/security')} className="hover:text-indigo-500 cursor-pointer">
-                  Security &amp; Data Isolation
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/privacy')} className="hover:text-indigo-500 cursor-pointer">
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/terms')} className="hover:text-indigo-500 cursor-pointer">
-                  Terms of Service
                 </button>
               </li>
               <li>
@@ -2502,9 +2638,9 @@ export const LedgerSutraFooter: React.FC<{
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
             <span>
-              © {new Date().getFullYear()} {BRAND_NAME}. Built for Indian Chartered Accountants &amp; GST Practitioners.
+              © {new Date().getFullYear()} {BRAND_NAME} (casaarthiai.in). Contact: support@casaarthiai.in
             </span>
-            <span>TallyPrime XML · GSTR-2B Reconciliation · Zoho Books CSV · Busy Excel · REST API v1</span>
+            <span>🔒 Local Fallback OCR · Zero Server-Side Data Retention · TallyPrime XML · GSTR-2B · SQL &amp; XLSX</span>
           </div>
         </div>
       </div>

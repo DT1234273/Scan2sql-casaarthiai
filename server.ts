@@ -80,7 +80,7 @@ function safeParseJson(rawInput: string): any | null {
 }
 
 function buildInvoiceExtractionPrompt(fileName: string, trimmedEmbedded: string): string {
-  return `You are LedgerSutra's high-precision GST Invoice, Bill of Entry & Accounting Document Extraction engine for Indian Chartered Accountants (CA firms).
+  return `You are CA Saarthi AI's high-precision GST Invoice, Bill of Entry & Accounting Document Extraction engine for Indian Chartered Accountants (CA firms).
 Document File: "${fileName || 'Document'}"
 ${trimmedEmbedded ? `\nDigital PDF Text Layer:\n"""\n${trimmedEmbedded}\n"""\n` : ''}
 Task:
@@ -773,7 +773,7 @@ async function startServer() {
   // 5. Dynamic /sitemap.xml & /robots.txt honoring PUBLIC_SITE_URL (Part 8.6)
   // ---------------------------------------------------------------------------
   app.get('/robots.txt', (_req, res) => {
-    const siteUrl = (process.env.PUBLIC_SITE_URL || 'https://www.ledgersutra.in').replace(/\/$/, '');
+    const siteUrl = (process.env.PUBLIC_SITE_URL || 'https://casaarthiai.in').replace(/\/$/, '');
     res.type('text/plain').send(
       [
         'User-agent: *',
@@ -783,6 +783,7 @@ async function startServer() {
         'Allow: /security',
         'Allow: /privacy',
         'Allow: /terms',
+        'Allow: /data-deletion',
         'Allow: /blog',
         'Allow: /api-docs',
         'Allow: /gst-invoice-to-tally',
@@ -870,7 +871,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`LedgerSutra Server running on http://0.0.0.0:${PORT}`);
+    console.log(`CA Saarthi AI Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

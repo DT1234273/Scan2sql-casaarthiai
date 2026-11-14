@@ -673,7 +673,7 @@ export function exportReconciliationReportToExcel(
   rows: ReconciliationRow[],
   summary: ReconciliationSummary,
   clientName = 'Client',
-  filename = `LedgerSutra_GSTR2B_Reconciliation_${new Date().toISOString().slice(0, 10)}.xlsx`
+  filename = `CASaarthiAI_GSTR2B_Reconciliation_${new Date().toISOString().slice(0, 10)}.xlsx`
 ): void {
   const wb = XLSX.utils.book_new();
 
@@ -908,7 +908,7 @@ export function exportAccuracyReportToExcel(
     grandTotal: number;
     overall: number;
   },
-  filename = `LedgerSutra_Accuracy_Test_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+  filename = `CASaarthiAI_Accuracy_Test_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
 ): void {
   const wb = XLSX.utils.book_new();
   const summarySheet = XLSX.utils.json_to_sheet([

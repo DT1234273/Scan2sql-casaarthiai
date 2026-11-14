@@ -5,6 +5,7 @@ Allow: /faq
 Allow: /security
 Allow: /privacy
 Allow: /terms
+Allow: /data-deletion
 Allow: /blog
 Allow: /api-docs
 Allow: /gst-invoice-to-tally
@@ -13,4 +14,4 @@ Allow: /bulk-invoice-processing-for-ca
 Disallow: /app
 Disallow: /api/
 
-Sitemap: https://www.ledgersutra.in/sitemap.xml
+Sitemap: https://casaarthiai.in/sitemap.xml

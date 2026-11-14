@@ -118,54 +118,54 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
     const targetBills = includeBlocked ? candidateBills : validation.validBills;
     if (targetBills.length === 0) return;
     const safeClientSlug = activeClientName.replace(/[^a-zA-Z0-9_-]/g, '_') || 'Client';
-    downloadTallyPrimeXml(targetBills, localSettings, `LedgerSutra_TallyPrime_${safeClientSlug}.xml`);
+    downloadTallyPrimeXml(targetBills, localSettings, `CASaarthiAI_TallyPrime_${safeClientSlug}.xml`);
     if (showToast) {
       showToast(`Exported ${targetBills.length} voucher(s) to TallyPrime XML.`);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden my-4 sm:my-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-800/80 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+        <div className="flex items-start sm:items-center justify-between gap-2 px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-800/80 border-b border-slate-700">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0">
               <FileCode2 className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-bold text-white leading-snug">
                 TallyPrime XML, Zoho Books &amp; Busy Export Center
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 Client: <span className="text-indigo-300 font-semibold">{activeClientName}</span> • Pre-export GST &amp; voucher validation
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/60"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/60 shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-slate-800 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 border-b border-slate-800 gap-2.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
             <button
               onClick={() => setActiveTab('validate')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition ${
                 activeTab === 'validate'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              1. Pre-Export Validation ({candidateBills.length} Bills)
+              1. Pre-Export Validation ({candidateBills.length})
             </button>
             <button
               onClick={() => setActiveTab('settings')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap shrink-0 transition ${
                 activeTab === 'settings'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -176,13 +176,13 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('mappings')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition ${
                 activeTab === 'mappings'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              3. Zoho Books &amp; Busy Column Mappings
+              3. Zoho &amp; Busy Mappings
             </button>
           </div>
 
@@ -193,39 +193,39 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
               onChange={(e) => setApprovedOnly(e.target.checked)}
               className="rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
             />
-            <span>Include only Approved bills (Part 4 workflow)</span>
+            <span>Include only Approved bills</span>
           </label>
         </div>
 
         {/* Body */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 max-h-[72vh] overflow-y-auto space-y-5 sm:space-y-6">
           {activeTab === 'validate' && (
             <>
               {/* Summary Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-slate-800/70 border border-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-slate-800/70 border border-slate-700">
                   <div className="text-xs text-slate-400">Total Selected Bills</div>
-                  <div className="text-2xl font-bold text-white mt-1">{candidateBills.length}</div>
-                  <div className="text-[11px] text-slate-400 mt-1">
+                  <div className="text-xl sm:text-2xl font-bold text-white mt-1">{candidateBills.length}</div>
+                  <div className="text-[11px] text-slate-400 mt-1 truncate">
                     Company: <span className="text-slate-200">{localSettings.companyName}</span>
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-700/40">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-emerald-950/30 border border-emerald-700/40">
                   <div className="text-xs text-emerald-300 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Ready for Tally Import
                   </div>
-                  <div className="text-2xl font-bold text-emerald-400 mt-1">
+                  <div className="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">
                     {validation.validBills.length}
                   </div>
                   <div className="text-[11px] text-emerald-300/80 mt-1">
                     Passed invoice no, date, GSTIN &amp; tax checks
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-700/40">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-amber-950/30 border border-amber-700/40">
                   <div className="text-xs text-amber-300 flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4" /> Blocked Bills Requiring Attention
                   </div>
-                  <div className="text-2xl font-bold text-amber-400 mt-1">
+                  <div className="text-xl sm:text-2xl font-bold text-amber-400 mt-1">
                     {validation.blockedIssues.length}
                   </div>
                   <div className="text-[11px] text-amber-300/80 mt-1">
@@ -237,12 +237,12 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
               {/* Blocked Bills List */}
               {validation.blockedIssues.length > 0 ? (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-amber-300 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    Bills Blocked by Pre-Export Validation ({validation.blockedIssues.length})
+                  <h3 className="text-xs sm:text-sm font-semibold text-amber-300 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Bills Blocked by Pre-Export Validation ({validation.blockedIssues.length})</span>
                   </h3>
-                  <div className="border border-slate-700 rounded-xl overflow-hidden">
-                    <table className="w-full text-left text-xs">
+                  <div className="border border-slate-700 rounded-xl overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[540px]">
                       <thead className="bg-slate-800 text-slate-300">
                         <tr>
                           <th className="py-2.5 px-3">Supplier / Party</th>
@@ -324,7 +324,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     onClick={() =>
                       exportZohoBooksCsv(
                         validation.validBills.length > 0 ? validation.validBills : candidateBills,
-                        `LedgerSutra_ZohoBooks_${activeClientName.replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`
+                        `CASaarthiAI_ZohoBooks_${activeClientName.replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`
                       )
                     }
                     disabled={candidateBills.length === 0}
@@ -337,7 +337,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     onClick={() =>
                       exportBusyCompatibleExcel(
                         validation.validBills.length > 0 ? validation.validBills : candidateBills,
-                        `LedgerSutra_Busy_${activeClientName.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`
+                        `CASaarthiAI_Busy_${activeClientName.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`
                       )
                     }
                     disabled={candidateBills.length === 0}
@@ -488,7 +488,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     <thead className="bg-slate-800 text-slate-300">
                       <tr>
                         <th className="py-2 px-3">Zoho Books Column</th>
-                        <th className="py-2 px-3">LedgerSutra Field</th>
+                        <th className="py-2 px-3">CA Saarthi AI Field</th>
                         <th className="py-2 px-3">Notes</th>
                       </tr>
                     </thead>
@@ -514,7 +514,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     <thead className="bg-slate-800 text-slate-300">
                       <tr>
                         <th className="py-2 px-3">Busy Excel Column</th>
-                        <th className="py-2 px-3">LedgerSutra Field</th>
+                        <th className="py-2 px-3">CA Saarthi AI Field</th>
                         <th className="py-2 px-3">Notes</th>
                       </tr>
                     </thead>
@@ -731,7 +731,7 @@ export const Gstr2bReconciliationTab: React.FC<Gstr2bReconciliationTabProps> = (
                   reconciliation.rows,
                   reconciliation.summary,
                   clientDisplayName,
-                  `LedgerSutra_GSTR2B_Reconciliation_${clientDisplayName.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`
+                  `CASaarthiAI_GSTR2B_Reconciliation_${clientDisplayName.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`
                 )
               }
               disabled={reconciliation.rows.length === 0}
@@ -1601,7 +1601,7 @@ export const AccuracyAndApiPanel: React.FC<AccuracyAndApiPanelProps> = ({
     const ws = XLSX.utils.json_to_sheet(sampleRows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'GroundTruth');
-    XLSX.writeFile(wb, 'LedgerSutra_GroundTruth_Template.xlsx');
+    XLSX.writeFile(wb, 'CASaarthiAI_GroundTruth_Template.xlsx');
   };
 
   const accuracyReport = useMemo(() => {
