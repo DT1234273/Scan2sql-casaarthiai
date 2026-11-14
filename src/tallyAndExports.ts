@@ -142,7 +142,7 @@ export function validateBillsForTallyExport(
  */
 export function generateTallyPrimeXml(bills: NoSQLBillRecord[], settings: TallySettings): string {
   const vchType = settings.defaultVoucherType?.trim() || 'Purchase';
-  const companyName = settings.companyName?.trim() || 'CA Saarthi AI Client Books';
+  const companyName = settings.companyName?.trim() || 'LedgerSutra Client Books';
   const purchaseLedger = settings.purchaseLedgerName?.trim() || 'Purchase Account';
   const cgstLedger = settings.cgstLedgerName?.trim() || 'Input CGST';
   const sgstLedger = settings.sgstLedgerName?.trim() || 'Input SGST';
@@ -516,7 +516,7 @@ export function exportZohoBooksCsv(
         Number(item.igstAmount || 0).toFixed(2),
         Number(item.lineTotal || bill.grandTotal || 0).toFixed(2),
         currency,
-        `Imported from CA Saarthi AI (${bill.fileName})`,
+        `Imported from LedgerSutra (${bill.fileName})`,
       ];
       rows.push(line.map(escapeCsv).join(','));
     }
@@ -553,7 +553,7 @@ export const BUSY_EXCEL_COLUMN_MAPPING_DOCS = [
 
 export function exportBusyCompatibleExcel(
   bills: NoSQLBillRecord[],
-  filename = `CASaarthiAI_Busy_Purchase_Import_${new Date().toISOString().slice(0, 10)}.xlsx`
+  filename = `LedgerSutra_Busy_Purchase_Import_${new Date().toISOString().slice(0, 10)}.xlsx`
 ): void {
   const busyRows: Record<string, string | number>[] = [];
 
@@ -614,7 +614,7 @@ export function exportBusyCompatibleExcel(
         'IGST %': isInterState ? Number(item.gstRate) || effRate : 0,
         'IGST Amt': Number(item.igstAmount || bill.igstAmount || 0),
         'Total Bill Amt': Number(item.lineTotal || bill.grandTotal || 0),
-        Narration: `Imported via CA Saarthi AI from ${bill.fileName}`,
+        Narration: `Imported via LedgerSutra from ${bill.fileName}`,
       });
     });
   }

@@ -5,7 +5,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
-import { getPrerenderedSeoHtml } from './src/seoContent';
+import { getPrerenderedSeoHtml, getCanonicalSitemapEntries, SITE_DOMAIN } from './src/seoContent';
 
 dotenv.config();
 
@@ -770,43 +770,60 @@ async function startServer() {
   });
 
   // ---------------------------------------------------------------------------
-  // 5. Dynamic /sitemap.xml & /robots.txt honoring PUBLIC_SITE_URL (Part 8.6)
+  // 5. Dynamic /sitemap.xml & /robots.txt honoring SITE_DOMAIN
   // ---------------------------------------------------------------------------
   app.get('/robots.txt', (_req, res) => {
-    const siteUrl = (process.env.PUBLIC_SITE_URL || 'https://casaarthiai.in').replace(/\/$/, '');
+    const siteUrl = (process.env.PUBLIC_SITE_URL || SITE_DOMAIN).replace(/\/$/, '');
     res.type('text/plain').send(
       [
         'User-agent: *',
         'Allow: /',
-        'Allow: /pricing',
-        'Allow: /faq',
-        'Allow: /security',
-        'Allow: /privacy',
-        'Allow: /terms',
-        'Allow: /data-deletion',
-        'Allow: /blog',
-        'Allow: /api-docs',
-        'Allow: /gst-invoice-to-tally',
-        'Allow: /gstr-2b-reconciliation-excel',
-        'Allow: /bulk-invoice-processing-for-ca',
         'Disallow: /app',
         'Disallow: /api/',
+        'Disallow: /resources',
+        'Disallow: /schemes',
+        'Disallow: /paisa-saarthi',
+        'Disallow: /personal-finance',
+        'Disallow: /loans',
+        'Disallow: /mutual-funds',
+        'Disallow: /emi-calculator',
+        'Disallow: /credit-cards',
+        'Disallow: /*?page=*',
+        'Disallow: /*&page=*',
         '',
         `Sitemap: ${siteUrl}/sitemap.xml`,
       ].join('\n')
     );
   });
 
+  app.get('/sitemap.xml', (_req, res) => {
+    const entries = getCanonicalSitemapEntries();
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...entries.map(
+        (e) =>
+          `  <url>\n    <loc>${e.loc}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n    <changefreq>${e.changefreq}</changefreq>\n    <priority>${e.priority}</priority>\n  </url>`
+      ),
+      '</urlset>',
+    ].join('\n');
+    res.type('application/xml').send(xml);
+  });
+
   // ---------------------------------------------------------------------------
-  // 6. SSR / Prerendered HTML Injection + Vite Middleware (Part 8.1)
+  // 6. SSR / Prerendered HTML Injection + 301/410/404 Route Handling
   // ---------------------------------------------------------------------------
-  const injectSeoPrerenderIntoHtml = (rawHtml: string, pathname: string): string => {
-    const seo = getPrerenderedSeoHtml(pathname);
+  const injectSeoPrerenderIntoHtml = (rawHtml: string, rawUrl: string) => {
+    const seo = getPrerenderedSeoHtml(rawUrl);
     let html = rawHtml;
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${seo.title}</title>`);
     html = html.replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
       `<meta name="description" content="${seo.description.replace(/"/g, '&quot;')}" />`
+    );
+    html = html.replace(
+      /<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="robots" content="${seo.robots}" />`
     );
     html = html.replace(
       /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
@@ -829,7 +846,7 @@ async function startServer() {
       `<script type="application/ld+json" id="ledgersutra-jsonld">${seo.jsonLdString}</script>`
     );
     html = html.replace('<!--SSR_OUTLET-->', seo.ssrBodyHtml);
-    return html;
+    return { html, seo };
   };
 
   if (process.env.NODE_ENV !== 'production') {
@@ -841,7 +858,8 @@ async function startServer() {
 
     app.use('*', async (req, res, next) => {
       const url = req.originalUrl || '/';
-      if (url.startsWith('/api/') || url.includes('.')) {
+      const pathnameOnly = url.split('?')[0];
+      if (pathnameOnly.startsWith('/api/') || pathnameOnly.includes('.')) {
         next();
         return;
       }
@@ -849,8 +867,18 @@ async function startServer() {
         const indexPath = path.resolve(process.cwd(), 'index.html');
         let template = fs.readFileSync(indexPath, 'utf-8');
         template = await vite.transformIndexHtml(url, template);
-        const finalHtml = injectSeoPrerenderIntoHtml(template, url.split('?')[0]);
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(finalHtml);
+        const { html: finalHtml, seo } = injectSeoPrerenderIntoHtml(template, url);
+        if (seo.statusCode === 301 && seo.redirectTo) {
+          res.redirect(301, seo.redirectTo);
+          return;
+        }
+        res
+          .status(seo.statusCode)
+          .set({
+            'Content-Type': 'text/html',
+            'X-Robots-Tag': seo.robots,
+          })
+          .end(finalHtml);
       } catch (e) {
         next(e);
       }
@@ -859,11 +887,22 @@ async function startServer() {
     const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
+      const url = req.originalUrl || req.path || '/';
       const indexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
         const rawHtml = fs.readFileSync(indexPath, 'utf-8');
-        const finalHtml = injectSeoPrerenderIntoHtml(rawHtml, req.path);
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(finalHtml);
+        const { html: finalHtml, seo } = injectSeoPrerenderIntoHtml(rawHtml, url);
+        if (seo.statusCode === 301 && seo.redirectTo) {
+          res.redirect(301, seo.redirectTo);
+          return;
+        }
+        res
+          .status(seo.statusCode)
+          .set({
+            'Content-Type': 'text/html',
+            'X-Robots-Tag': seo.robots,
+          })
+          .end(finalHtml);
       } else {
         res.status(404).send('Not Found');
       }
@@ -871,7 +910,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`CA Saarthi AI Server running on http://0.0.0.0:${PORT}`);
+    console.log(`LedgerSutra Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

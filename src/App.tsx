@@ -109,9 +109,9 @@ import {
 } from './caValidation';
 import {
   BRAND_NAME,
-  BRAND_TAGLINE,
   SITE_DOMAIN,
   normalizePathname,
+  resolveRouteAudit,
   syncDocumentSeoTags,
 } from './seoContent';
 import {
@@ -900,29 +900,53 @@ export function App() {
   // Clean URL Route State for Multi-Page SEO Architecture & CA Resource Center
   const [currentPath, setCurrentPath] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return normalizePathname(window.location.pathname);
+      const initialAudit = resolveRouteAudit(window.location.pathname + (window.location.search || ''));
+      if (initialAudit.routeKind === 'redirect' && initialAudit.redirectTo) {
+        window.history.replaceState({}, '', initialAudit.redirectTo);
+        return initialAudit.redirectTo;
+      }
+      return initialAudit.cleanPath;
     }
     return '/';
   });
 
-  useEffect(() => {
-    syncDocumentSeoTags(currentPath);
+  const currentRouteAudit = useMemo(() => {
+    const queryStr = typeof window !== 'undefined' ? window.location.search || '' : '';
+    return resolveRouteAudit(`${currentPath}${queryStr}`);
   }, [currentPath]);
 
   useEffect(() => {
+    if (currentRouteAudit.routeKind === 'redirect' && currentRouteAudit.redirectTo) {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', currentRouteAudit.redirectTo);
+      }
+      setCurrentPath(currentRouteAudit.redirectTo);
+      return;
+    }
+    syncDocumentSeoTags(currentPath);
+  }, [currentPath, currentRouteAudit]);
+
+  useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(normalizePathname(window.location.pathname));
+      const nextAudit = resolveRouteAudit(window.location.pathname + (window.location.search || ''));
+      if (nextAudit.routeKind === 'redirect' && nextAudit.redirectTo) {
+        window.history.replaceState({}, '', nextAudit.redirectTo);
+        setCurrentPath(nextAudit.redirectTo);
+      } else {
+        setCurrentPath(nextAudit.cleanPath);
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const navigateTo = useCallback((path: string) => {
-    const normalized = normalizePathname(path);
-    if (typeof window !== 'undefined' && normalizePathname(window.location.pathname) !== normalized) {
-      window.history.pushState({}, '', normalized);
+    const audit = resolveRouteAudit(path);
+    const targetPath = audit.routeKind === 'redirect' && audit.redirectTo ? audit.redirectTo : audit.cleanPath;
+    if (typeof window !== 'undefined' && normalizePathname(window.location.pathname) !== targetPath) {
+      window.history.pushState({}, '', targetPath);
     }
-    setCurrentPath(normalized);
+    setCurrentPath(targetPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -1658,7 +1682,7 @@ export function App() {
               byEmail: auth.currentUser?.email || 'Local Workspace User',
               byRole: currentFirmRole,
               timestamp: nowStr,
-              note: `Extracted via CA Saarthi AI (${initialApproval})`,
+              note: `Extracted via ${BRAND_NAME} (${initialApproval})`,
             },
           ],
           irn: (result as any).irn || '',
@@ -3099,8 +3123,8 @@ export function App() {
     const wsText = XLSX.utils.json_to_sheet(textSheetData);
     XLSX.utils.book_append_sheet(wb, wsText, 'Exact_Extracted_Text');
 
-    XLSX.writeFile(wb, `CASaarthiAI_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    showToast(`Exported ${masterSheetRows.length} rows to CA Saarthi AI Excel (.xlsx)!`);
+    XLSX.writeFile(wb, `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    showToast(`Exported ${masterSheetRows.length} rows to ${BRAND_NAME} Excel (.xlsx)!`);
   };
 
   const handleExportMasterCsv = () => {
@@ -3108,7 +3132,7 @@ export function App() {
       showToast('No bills in the sheet yet. Scan a bill first!');
       return;
     }
-    const filename = `CASaarthiAI_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
     exportMasterRowsToCsv(masterSheetRows, activeSelectedColumnDefs, columnTotals, filename);
     showToast(`Exported ${masterSheetRows.length} rows to CSV (${filename})!`);
   };
@@ -3668,18 +3692,15 @@ export function App() {
           >
             <img
               src="/ca-saarthi-icon.svg"
-              alt="CA Saarthi AI - Invoice OCR Tool"
+              alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform duration-200 shrink-0"
             />
-            <span className="font-display font-extrabold text-base sm:text-xl tracking-tight whitespace-nowrap shrink-0 flex items-baseline gap-1">
-              <span className="bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 dark:from-amber-300 dark:via-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
-                CA
-              </span>
+            <span className="font-display font-extrabold text-base sm:text-xl tracking-tight whitespace-nowrap shrink-0 flex items-baseline gap-0.5">
               <span className="text-[var(--text-main)] group-hover:text-indigo-500 transition-colors">
-                Saarthi
+                Ledger
               </span>
-              <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                AI
+              <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
+                Sutra
               </span>
             </span>
           </button>
@@ -3994,15 +4015,23 @@ export function App() {
           />
         )}
 
-        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE */}
+        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes) */}
+        {currentRouteAudit.routeKind !== 'obsolete_gone' &&
+          currentRouteAudit.routeKind !== 'not_found' && (
         <div id="live-ocr-workspace" className="space-y-4 sm:space-y-5 scroll-mt-16 sm:scroll-mt-20">
           <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-3.5 sm:p-5 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3.5">
               <div className="flex items-start sm:items-center gap-2.5">
                 <ScanLine className="w-4 h-4 text-indigo-500 shrink-0 mt-1 sm:mt-0" />
-                <h2 className="font-display text-sm sm:text-lg font-bold tracking-tight leading-snug">
-                  {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Tally Command Center
-                </h2>
+                {currentPath === '/app' ? (
+                  <h1 className="font-display text-sm sm:text-lg font-bold tracking-tight leading-snug">
+                    {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Tally Command Center
+                  </h1>
+                ) : (
+                  <h2 className="font-display text-sm sm:text-lg font-bold tracking-tight leading-snug">
+                    {BRAND_NAME} Live Invoice OCR, GST Audit &amp; Tally Command Center
+                  </h2>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[var(--text-muted)]">
@@ -6312,6 +6341,7 @@ export function App() {
           />
         )}
         </div>
+        )}
 
         {/* TallyPrime XML, Zoho Books CSV & Busy Excel Export Modal (Part 1) */}
         <TallyExportModal
@@ -6557,7 +6587,7 @@ class AppErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[CA Saarthi AI ErrorBoundary]', error, info);
+    console.error('[LedgerSutra ErrorBoundary]', error, info);
   }
 
   render() {
@@ -6567,7 +6597,7 @@ class AppErrorBoundary extends React.Component<
           <div className="max-w-md w-full rounded-2xl border border-rose-500/30 bg-slate-900 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-base">
               <AlertTriangle className="w-5 h-5" />
-              <span>CA Saarthi AI Workspace Recovery</span>
+              <span>LedgerSutra Workspace Recovery</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               The interface encountered an unexpected rendering error. Your saved invoices and client workspaces in Firestore remain safe.
@@ -6583,7 +6613,7 @@ class AppErrorBoundary extends React.Component<
               }}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
             >
-              Reload CA Saarthi AI Workspace
+              Reload LedgerSutra Workspace
             </button>
           </div>
         </div>

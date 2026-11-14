@@ -92,7 +92,7 @@ export interface TallySettings {
 }
 
 export const DEFAULT_TALLY_SETTINGS: TallySettings = {
-  companyName: 'CA Saarthi AI Client Books',
+  companyName: 'LedgerSutra Client Books',
   purchaseLedgerName: 'Purchase Account',
   cgstLedgerName: 'Input CGST',
   sgstLedgerName: 'Input SGST',

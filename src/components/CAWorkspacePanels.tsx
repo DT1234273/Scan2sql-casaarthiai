@@ -488,7 +488,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     <thead className="bg-slate-800 text-slate-300">
                       <tr>
                         <th className="py-2 px-3">Zoho Books Column</th>
-                        <th className="py-2 px-3">CA Saarthi AI Field</th>
+                        <th className="py-2 px-3">LedgerSutra Field</th>
                         <th className="py-2 px-3">Notes</th>
                       </tr>
                     </thead>
@@ -514,7 +514,7 @@ export const TallyExportModal: React.FC<TallyExportModalProps> = ({
                     <thead className="bg-slate-800 text-slate-300">
                       <tr>
                         <th className="py-2 px-3">Busy Excel Column</th>
-                        <th className="py-2 px-3">CA Saarthi AI Field</th>
+                        <th className="py-2 px-3">LedgerSutra Field</th>
                         <th className="py-2 px-3">Notes</th>
                       </tr>
                     </thead>

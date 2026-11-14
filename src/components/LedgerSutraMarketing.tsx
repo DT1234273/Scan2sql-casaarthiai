@@ -33,6 +33,7 @@ import {
   DEDICATED_SEO_PAGES,
   RESOURCE_ARTICLES,
   normalizePathname,
+  resolveRouteAudit,
 } from '../seoContent';
 import heroStudioImg from '../assets/images/ledgersutra_hero_studio_1794578857550.jpg';
 import invoiceAuditImg from '../assets/images/ledgersutra_invoice_audit_1794578856952.jpg';
@@ -405,17 +406,14 @@ export const LedgerSutraHeroBanner: React.FC<{
               <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-medium text-[var(--text-muted)]">
                 <img
                   src="/ca-saarthi-icon.svg"
-                  alt="CA Saarthi AI - Invoice OCR Tool"
+                  alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
                   className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs shrink-0"
                 />
                 <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
-                  <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-1 shrink-0">
-                    <span className="bg-gradient-to-br from-amber-500 to-orange-600 dark:from-amber-300 dark:to-orange-400 bg-clip-text text-transparent">
-                      CA
-                    </span>
-                    <span className="text-[var(--text-main)]">Saarthi</span>
-                    <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                      AI
+                  <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-0.5 shrink-0">
+                    <span className="text-[var(--text-main)]">Ledger</span>
+                    <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
+                      Sutra
                     </span>
                   </span>
                   <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)]">·</span>
@@ -515,8 +513,8 @@ export const LedgerSutraHeroBanner: React.FC<{
           <div className="lg:col-span-5 relative min-h-[340px] sm:min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
             <EditorialVisual
               src={heroStudioImg}
-              alt="CA Saarthi AI - Invoice OCR Tool dashboard and GST data extraction for Indian CA firms"
-              fallbackTitle="CA Saarthi AI Practice Audit Desk"
+              alt="LedgerSutra — GST Invoice OCR dashboard and Tally XML extraction for Indian CA firms"
+              fallbackTitle="LedgerSutra Practice Audit Desk"
               fallbackSubtitle="Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel"
               className="absolute inset-0 w-full h-full object-cover"
             />
@@ -1404,7 +1402,7 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-slate-900 overflow-hidden relative min-h-[220px] flex flex-col justify-end">
             <EditorialVisual
               src={invoiceAuditImg}
-              alt="CA Saarthi AI - Invoice OCR Tool GST purchase register and GSTR-2B reconciliation"
+              alt="LedgerSutra — GST purchase register and GSTR-2B reconciliation for CA firms"
               fallbackTitle="02. GSTR-2B Reconciliation"
               fallbackSubtitle="Match Books vs Portal JSON & Excel"
               className="absolute inset-0 w-full h-full object-cover"
@@ -1591,7 +1589,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                  {
                   num: '02.',
                   title: 'Automated GST Audit & Review Queue',
-                  desc: 'CA Saarthi AI extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
+                  desc: 'LedgerSutra extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
                 },
                 {
                   num: '03.',
@@ -1618,7 +1616,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="relative h-52 bg-slate-900">
               <EditorialVisual
                 src={caWorkspaceImg}
-                alt="CA Saarthi AI - Invoice OCR Tool dual-monitor CA workspace"
+                alt="LedgerSutra — Dual-monitor Chartered Accountant GST & TallyPrime workspace"
                 fallbackTitle="CA Practice Dual-Monitor Workflow"
                 fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
                 className="w-full h-full object-cover"
@@ -1733,7 +1731,7 @@ export const LedgerSutraHomepageSections: React.FC<{
               <span>Google Sign-In Authentication</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by CA Saarthi AI.
+              Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by {BRAND_NAME}.
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
@@ -1934,9 +1932,84 @@ export const LedgerSutraRouteView: React.FC<{
   savedBillsCount: number;
 }> = ({ currentPath, onNavigate, onOpenWorkspaceTab }) => {
   const cleanPath = normalizePathname(currentPath);
+  const routeAudit = resolveRouteAudit(currentPath);
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactFirm, setContactFirm] = useState('');
+
+  // 0a. Obsolete Paisa Saarthi / Personal-Finance Routes (HTTP 410 Gone — no indiscriminate redirect)
+  if (routeAudit.routeKind === 'obsolete_gone') {
+    return (
+      <section className="rounded-2xl border border-amber-500/30 bg-[var(--bg-card)] p-6 sm:p-10 space-y-5 max-w-3xl">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>HTTP 410 Gone · Legacy Personal-Finance Route Retired · noindex, nofollow</span>
+        </div>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--text-main)]">
+          410 Gone — Legacy Personal-Finance Page Removed
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+          The URL <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-[var(--bg-subtle)]">{cleanPath}</code>{' '}
+          belonged to an older personal-finance or scheme directory that has been permanently retired and de-indexed.{' '}
+          <strong className="text-[var(--text-main)]">{BRAND_NAME}</strong> is a dedicated B2B GST invoice OCR,
+          TallyPrime XML export, and GSTR-2B reconciliation platform built exclusively for Indian Chartered Accountants
+          and tax practitioners.
+        </p>
+        <div className="flex flex-wrap gap-3 pt-1">
+          <button
+            onClick={() => onNavigate('/')}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
+          >
+            Go to {BRAND_NAME} Homepage
+          </button>
+          <button
+            onClick={() => onNavigate('/app')}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+          >
+            Open CA Invoice OCR Workspace (/app)
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // 0b. Unknown / Non-Existent Routes (HTTP 404 Not Found)
+  if (routeAudit.routeKind === 'not_found') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5 max-w-3xl">
+        <div className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+          HTTP 404 Not Found · noindex, nofollow
+        </div>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--text-main)]">
+          404 — Page Not Found
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+          The requested path <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-[var(--bg-subtle)]">{cleanPath}</code>{' '}
+          could not be found on {BRAND_NAME}. Choose a canonical CA workflow page below:
+        </p>
+        <div className="flex flex-wrap gap-3 pt-1">
+          <button
+            onClick={() => onNavigate('/')}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
+          >
+            Return to Homepage
+          </button>
+          <button
+            onClick={() => onNavigate('/app')}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+          >
+            Open CA Workspace (/app)
+          </button>
+          <button
+            onClick={() => onNavigate('/blog')}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+          >
+            Browse CA Practice Blog
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   // 1. Dedicated SEO Landing Pages
   if (DEDICATED_SEO_PAGES[cleanPath]) {
@@ -2407,15 +2480,45 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
+  const corePageH1Map: Record<string, { badge: string; h1: string; summary: string }> = {
+    '/pricing': {
+      badge: 'Transparent CA Practice Plans',
+      h1: 'Practice Plans & CA-Firm Pilot Offers',
+      summary:
+        'Start with the free browser demo (3 custom scans/day), or request a custom CA-Firm Pilot with multi-client workspaces, TallyPrime XML export, and GSTR-2B reconciliation.',
+    },
+    '/features': {
+      badge: 'CA Practice Capabilities Suite',
+      h1: `${BRAND_NAME} Capabilities for Indian Chartered Accountants`,
+      summary:
+        'Explore our 9 core modules: TallyPrime XML voucher export, 6-status GSTR-2B reconciliation, duplicate invoice detection, 15-digit GSTIN Mod-36 checksum audit, batch queue, client workspaces, team RBAC, and REST API.',
+    },
+    '/how-it-works': {
+      badge: '3-Step Accounting Workflow',
+      h1: `How ${BRAND_NAME} Converts GST Invoices into TallyPrime XML & Excel`,
+      summary:
+        'Select your client workspace, upload single or batch PDF/image bills, verify flagged fields in the CA audit queue, and export directly to TallyPrime XML or multi-sheet GSTR-2B Excel.',
+    },
+    '/about': {
+      badge: 'Built for Indian CA Firms',
+      h1: `About ${BRAND_NAME} — Built for Indian Chartered Accountants`,
+      summary: `${BRAND_NAME} eliminates repetitive purchase voucher typing, GSTIN verification bottlenecks, and manual GSTR-2B VLOOKUP work for Indian Chartered Accountants, tax practitioners, and accounting teams.`,
+    },
+  };
+  const corePageInfo = corePageH1Map[cleanPath] || {
+    badge: BRAND_NAME,
+    h1: `${BRAND_NAME} — ${BRAND_TAGLINE}`,
+    summary: 'Explore our live workspace below or return to the homepage for the interactive walkthrough.',
+  };
+
   return (
     <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{corePageInfo.badge}</div>
       <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-        {cleanPath === '/pricing'
-          ? 'Practice Plans & CA-Firm Pilot Offers'
-          : `${BRAND_NAME} — ${BRAND_TAGLINE}`}
+        {corePageInfo.h1}
       </h1>
-      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-        Explore our live workspace below or return to the homepage for the interactive walkthrough.
+      <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+        {corePageInfo.summary}
       </p>
       <div className="flex flex-wrap gap-3">
         <button
@@ -2454,17 +2557,14 @@ export const LedgerSutraFooter: React.FC<{
             <div className="flex items-center gap-3.5">
               <img
                 src="/ca-saarthi-icon.svg"
-                alt="CA Saarthi AI - Invoice OCR Tool"
+                alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
                 className="w-12 h-12 rounded-2xl object-contain shadow-sm shrink-0"
               />
               <div>
-                <span className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-1">
-                  <span className="bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 dark:from-amber-300 dark:via-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
-                    CA
-                  </span>
-                  <span className="text-[var(--text-main)]">Saarthi</span>
-                  <span className="bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                    AI
+                <span className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-0.5">
+                  <span className="text-[var(--text-main)]">Ledger</span>
+                  <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
+                    Sutra
                   </span>
                 </span>
                 <span className="text-[11px] font-medium text-[var(--text-muted)] block">{SITE_DOMAIN}</span>
