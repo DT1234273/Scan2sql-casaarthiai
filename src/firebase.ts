@@ -43,9 +43,6 @@ const DIRECT_FIREBASE_CONFIG = {
   messagingSenderId: '794445351838',
 };
 
-export const AUTHORIZED_FIREBASE_BRIDGE_URL =
-  'https://ais-pre-q4ipoorh5v7bm6opjmjgnw-563992839263.asia-southeast1.run.app';
-
 const env = (import.meta as any).env || {};
 
 const resolvedFirebaseConfig = {
