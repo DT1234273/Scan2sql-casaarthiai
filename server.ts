@@ -236,11 +236,15 @@ async function startServer() {
   const app = express();
 
   // ---------------------------------------------------------------------------
-  // 0. Canonical Host Redirect (Part 8.3: non-www to www when PUBLIC_SITE_URL set)
+  // 0. Canonical Host Redirect (Task 10: apex casaarthiai.in -> www.casaarthiai.in 301)
   // ---------------------------------------------------------------------------
   app.use((req, res, next) => {
+    const reqHost = (req.headers.host || '').toLowerCase();
+    if (reqHost === 'casaarthiai.in') {
+      res.redirect(301, `https://www.casaarthiai.in${req.originalUrl}`);
+      return;
+    }
     const configuredSiteUrl = process.env.PUBLIC_SITE_URL;
-    const reqHost = req.headers.host || '';
     if (
       configuredSiteUrl &&
       reqHost &&
@@ -251,7 +255,7 @@ async function startServer() {
     ) {
       try {
         const targetUrl = new URL(configuredSiteUrl);
-        if (targetUrl.host && reqHost.toLowerCase() !== targetUrl.host.toLowerCase()) {
+        if (targetUrl.host && reqHost !== targetUrl.host.toLowerCase()) {
           const redirectDestination = `${targetUrl.protocol}//${targetUrl.host}${req.originalUrl}`;
           res.redirect(301, redirectDestination);
           return;
@@ -780,16 +784,8 @@ async function startServer() {
         'Allow: /',
         'Disallow: /app',
         'Disallow: /api/',
-        'Disallow: /resources',
-        'Disallow: /schemes',
-        'Disallow: /paisa-saarthi',
-        'Disallow: /personal-finance',
-        'Disallow: /loans',
-        'Disallow: /mutual-funds',
-        'Disallow: /emi-calculator',
-        'Disallow: /credit-cards',
-        'Disallow: /*?page=*',
-        'Disallow: /*&page=*',
+        'Disallow: /?page=',
+        'Disallow: /&page=',
         '',
         `Sitemap: ${siteUrl}/sitemap.xml`,
       ].join('\n')
@@ -816,6 +812,8 @@ async function startServer() {
   const injectSeoPrerenderIntoHtml = (rawHtml: string, rawUrl: string) => {
     const seo = getPrerenderedSeoHtml(rawUrl);
     let html = rawHtml;
+    const isHindi = rawUrl.split('?')[0] === '/hi' || rawUrl.split('?')[0].startsWith('/hi/');
+    html = html.replace(/<html\s+lang="[^"]*"/i, `<html lang="${isHindi ? 'hi' : 'en'}"`);
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${seo.title}</title>`);
     html = html.replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
@@ -826,8 +824,8 @@ async function startServer() {
       `<meta name="robots" content="${seo.robots}" />`
     );
     html = html.replace(
-      /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
-      `<link rel="canonical" href="${seo.canonicalUrl}" />`
+      /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>(\s*<link\s+rel="alternate"\s+hreflang="[^"]*"\s+href="[^"]*"\s*\/?>)*/i,
+      `<link rel="canonical" href="${seo.canonicalUrl}" />${seo.hreflangHtml ? `\n    ${seo.hreflangHtml}` : ''}`
     );
     html = html.replace(
       /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
@@ -840,6 +838,14 @@ async function startServer() {
     html = html.replace(
       /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i,
       `<meta property="og:url" content="${seo.canonicalUrl}" />`
+    );
+    html = html.replace(
+      /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="twitter:title" content="${seo.title.replace(/"/g, '&quot;')}" />`
+    );
+    html = html.replace(
+      /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="twitter:description" content="${seo.description.replace(/"/g, '&quot;')}" />`
     );
     html = html.replace(
       /<script type="application\/ld\+json" id="ledgersutra-jsonld">[\s\S]*?<\/script>/i,

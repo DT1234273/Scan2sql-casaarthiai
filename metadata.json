@@ -1,6 +1,6 @@
 {
   "name": "LedgerSutra — GST Invoice to Tally & Excel for Indian CA Firms",
-  "description": "GST invoice OCR, TallyPrime XML export, GSTR-2B reconciliation, client-wise workspaces, and team approval workflows for Indian Chartered Accountants.",
+  "description": "Automate GST invoice OCR, 15-digit GSTIN validation, GSTR-2B reconciliation, and TallyPrime XML exports for CA firms. Try the live workspace today.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -2,15 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /app
 Disallow: /api/
-Disallow: /resources
-Disallow: /schemes
-Disallow: /paisa-saarthi
-Disallow: /personal-finance
-Disallow: /loans
-Disallow: /mutual-funds
-Disallow: /emi-calculator
-Disallow: /credit-cards
-Disallow: /*?page=*
-Disallow: /*&page=*
+Disallow: /?page=
+Disallow: /&page=
 
 Sitemap: https://www.casaarthiai.in/sitemap.xml
+

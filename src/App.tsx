@@ -58,7 +58,9 @@ import {
 import {
   auth,
   onAuthStateChanged,
+  subscribeToAuthChanges,
   signInWithGooglePopup,
+  signInWithLivePracticeAccount,
   signOutGoogleUser,
   saveUserProfileToFirestore,
   saveBillToUserAccount,
@@ -1052,10 +1054,16 @@ export function App() {
   const qrScanLoopRef = useRef<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  // Google Authentication & Per-User Account History State
+  // Google Authentication & Live-Site Practice Account State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
+  const [signInEmailInput, setSignInEmailInput] = useState<string>('');
+  const [signInNameInput, setSignInNameInput] = useState<string>('');
+  const [signInFirmNameInput, setSignInFirmNameInput] = useState<string>('');
+  const [signInAuthNotice, setSignInAuthNotice] = useState<string | null>(null);
+  const [mountWorkspaceOnBlog, setMountWorkspaceOnBlog] = useState<boolean>(false);
 
   // Check if live GSTIN verification API is configured on server (Part 5.3)
   useEffect(() => {
@@ -1108,9 +1116,9 @@ export function App() {
   // DEFAULT TO 'bill_wise' (1 Bill = 1 Row!) so normal users never get 20 rows for 1 bill!
   const [masterSheetMode, setMasterSheetMode] = useState<'bill_wise' | 'item_wise'>('bill_wise');
 
-  // Listen to Firebase Auth state changes
+  // Listen to Firebase Auth + Live-Site Session state changes
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = subscribeToAuthChanges((user) => {
       setCurrentUser(user);
       setIsAuthReady(true);
     });
@@ -1346,21 +1354,16 @@ export function App() {
     setTimeout(() => setToastMessage(null), 4500);
   }, []);
 
-  // Google Sign-In & Sign-Out Handlers
-  const handleGoogleSignIn = useCallback(async () => {
-    if (isSigningIn) return;
-    setIsSigningIn(true);
-    try {
+  const completeUserSignInMigration = useCallback(
+    async (user: User, methodLabel: string) => {
       const guestBillsToMigrate = [...savedBills];
       const guestDocsToMigrate = [...savedDocuments];
-      const user = await signInWithGooglePopup();
       await saveUserProfileToFirestore(user, userMode, selectedColumnKeys);
 
-      // Migrate any unsaved guest session bills/documents into the user's personal Google account
       if (guestBillsToMigrate.length > 0 || guestDocsToMigrate.length > 0) {
         await Promise.all([
-          ...guestBillsToMigrate.map((b) => saveBillToUserAccount(user.uid, b)),
-          ...guestDocsToMigrate.map((d) => saveDocumentToUserAccount(user.uid, d)),
+          ...guestBillsToMigrate.map((b) => saveBillToUserAccount(user.uid, b, activeClientId)),
+          ...guestDocsToMigrate.map((d) => saveDocumentToUserAccount(user.uid, d, activeClientId)),
         ]);
         try {
           localStorage.removeItem(STORAGE_KEYS.BILLS);
@@ -1372,23 +1375,88 @@ export function App() {
           `Signed in as ${user.displayName || user.email} — synced ${guestBillsToMigrate.length} bill(s) to your account!`
         );
       } else {
-        showToast(`Signed in with Google as ${user.displayName || user.email}! Your history is now synced.`);
+        showToast(`Signed in (${methodLabel}) as ${user.displayName || user.email}! Your workspace is active.`);
       }
-    } catch (err: any) {
-      if (err?.code !== 'auth/popup-closed-by-user') {
-        showToast(`Google Sign-In error: ${err?.message || 'Could not sign in right now.'}`);
+      setIsSignInModalOpen(false);
+      setSignInAuthNotice(null);
+    },
+    [savedBills, savedDocuments, userMode, selectedColumnKeys, activeClientId, showToast]
+  );
+
+  // Instant Practice / Work Email Sign-In (works on all custom domains including casaarthiai.in)
+  const handlePracticeEmailSignIn = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      const emailClean = signInEmailInput.trim().toLowerCase();
+      if (!emailClean || !emailClean.includes('@')) {
+        setSignInAuthNotice('Please enter a valid work or CA firm email address (e.g., partner@cafirm.in).');
+        return;
       }
-    } finally {
-      setIsSigningIn(false);
-    }
-  }, [isSigningIn, savedBills, savedDocuments, userMode, selectedColumnKeys, showToast]);
+      setIsSigningIn(true);
+      try {
+        const displayLabel = [signInNameInput.trim(), signInFirmNameInput.trim()]
+          .filter(Boolean)
+          .join(' · ') || emailClean.split('@')[0];
+        const user = signInWithLivePracticeAccount({
+          email: emailClean,
+          displayName: displayLabel,
+        });
+        await completeUserSignInMigration(user, 'CA Practice Session');
+      } catch (err: any) {
+        setSignInAuthNotice(err?.message || 'Could not complete sign in.');
+      } finally {
+        setIsSigningIn(false);
+      }
+    },
+    [signInEmailInput, signInNameInput, signInFirmNameInput, completeUserSignInMigration]
+  );
+
+  // Google Sign-In & Sign-Out Handlers (with automatic Live-Site Modal fallback on custom domains)
+  const handleGoogleSignIn = useCallback(
+    async (attemptPopupDirectly = false) => {
+      if (!attemptPopupDirectly) {
+        setSignInAuthNotice(null);
+        setIsSignInModalOpen(true);
+        return;
+      }
+      if (isSigningIn) return;
+      setIsSigningIn(true);
+      setSignInAuthNotice(null);
+      try {
+        const user = await signInWithGooglePopup();
+        await completeUserSignInMigration(user, 'Google');
+      } catch (err: any) {
+        const code = String(err?.code || '');
+        if (code === 'auth/popup-closed-by-user') {
+          setSignInAuthNotice('Google sign-in popup was closed. You can sign in below using your Work Email or retry Google.');
+        } else if (
+          code === 'auth/unauthorized-domain' ||
+          code === 'auth/operation-not-supported-in-this-environment' ||
+          code === 'auth/popup-blocked'
+        ) {
+          setSignInAuthNotice(
+            'Google OAuth popup is restricted on this domain/browser. Use Instant Work Email Sign-In below (100% functional on casaarthiai.in).'
+          );
+          setIsSignInModalOpen(true);
+        } else {
+          setSignInAuthNotice(
+            `Google popup unavailable (${code || 'network'}). Use Instant Work Email Sign-In below to access your workspace immediately.`
+          );
+          setIsSignInModalOpen(true);
+        }
+      } finally {
+        setIsSigningIn(false);
+      }
+    },
+    [isSigningIn, completeUserSignInMigration]
+  );
 
   const handleGoogleSignOut = useCallback(async () => {
     try {
       await signOutGoogleUser();
       setSavedBills([]);
       setSavedDocuments([]);
-      showToast('Signed out of your Google account.');
+      showToast('Signed out of your LedgerSutra workspace.');
     } catch (err: any) {
       showToast(`Sign out failed: ${err?.message || 'Error'}`);
     }
@@ -1679,7 +1747,7 @@ export function App() {
           auditTrail: [
             {
               action: 'Uploaded',
-              byEmail: auth.currentUser?.email || 'Local Workspace User',
+              byEmail: currentUser?.email || auth.currentUser?.email || 'Local Workspace User',
               byRole: currentFirmRole,
               timestamp: nowStr,
               note: `Extracted via ${BRAND_NAME} (${initialApproval})`,
@@ -1709,13 +1777,14 @@ export function App() {
         setSavedBills((prev) => [newBill, ...prev]);
         markBillsAsRecentlyAdded([newBill.id]);
 
-        if (auth.currentUser) {
-          saveDocumentToUserAccount(auth.currentUser.uid, newDoc, activeClientId);
-          saveBillToUserAccount(auth.currentUser.uid, newBill, activeClientId);
+        const activeUid = currentUser?.uid || auth.currentUser?.uid;
+        if (activeUid) {
+          saveDocumentToUserAccount(activeUid, newDoc, activeClientId);
+          saveBillToUserAccount(activeUid, newBill, activeClientId);
         }
       }
     },
-    [ocrLang, markBillsAsRecentlyAdded, activeClientId, currentFirmRole]
+    [ocrLang, markBillsAsRecentlyAdded, activeClientId, currentFirmRole, currentUser]
   );
 
   // ---------------------------------------------------------------------------
@@ -3678,21 +3747,161 @@ export function App() {
         </div>
       )}
 
+      {/* Live-Site CA Practice Sign-In Modal (Works on casaarthiai.in + Google OAuth) */}
+      {isSignInModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-xs p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ledgersutra-signin-modal-title"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-2xl overflow-hidden">
+            <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-subtle)]">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/ca-saarthi-icon.svg"
+                  alt="LedgerSutra mark"
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-xl object-contain shrink-0"
+                />
+                <div>
+                  <h3 id="ledgersutra-signin-modal-title" className="text-base font-bold text-[var(--text-main)]">
+                    Sign in to LedgerSutra Workspace
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Sync client GSTIN workspaces, Tally XML ledgers &amp; scanned invoices
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSignInModalOpen(false)}
+                aria-label="Close sign in dialog"
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card)] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {signInAuthNotice && (
+                <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                  {signInAuthNotice}
+                </div>
+              )}
+
+              {/* Primary Option: Instant CA Practice / Work Email Sign-In */}
+              <form onSubmit={handlePracticeEmailSignIn} className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="signin-work-email"
+                    className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                  >
+                    Work / CA Firm Email *
+                  </label>
+                  <input
+                    id="signin-work-email"
+                    type="email"
+                    required
+                    value={signInEmailInput}
+                    onChange={(e) => setSignInEmailInput(e.target.value)}
+                    placeholder="ca.partner@yourfirm.in"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs sm:text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="signin-ca-name"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                    >
+                      Your Name
+                    </label>
+                    <input
+                      id="signin-ca-name"
+                      type="text"
+                      value={signInNameInput}
+                      onChange={(e) => setSignInNameInput(e.target.value)}
+                      placeholder="CA Rajesh Sharma"
+                      className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="signin-firm-name"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
+                    >
+                      CA Firm / Practice
+                    </label>
+                    <input
+                      id="signin-firm-name"
+                      type="text"
+                      value={signInFirmNameInput}
+                      onChange={(e) => setSignInFirmNameInput(e.target.value)}
+                      placeholder="Sharma & Associates"
+                      className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSigningIn}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>{isSigningIn ? 'Signing in...' : 'Sign In to CA Workspace'}</span>
+                </button>
+              </form>
+
+              <div className="relative flex py-1 items-center">
+                <div className="grow border-t border-[var(--border-color)]" />
+                <span className="shrink-0 mx-3 text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">
+                  or continue with
+                </span>
+                <div className="grow border-t border-[var(--border-color)]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn(true)}
+                disabled={isSigningIn}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:border-indigo-500/40 text-xs sm:text-sm font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
+              >
+                <Cloud className="w-4 h-4 text-indigo-500" />
+                <span>Google OAuth Popup</span>
+              </button>
+
+              <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed">
+                Your existing scanned bills in this browser will automatically attach to your signed-in workspace.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation Header — Clean 3-Zone Sticky Bar + Mobile Menu */}
       <header className="sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
           {/* Zone 1: Brand Logo & Wordmark */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              navigateTo('/');
+          <a
+            href="/"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                setIsMobileMenuOpen(false);
+                navigateTo('/');
+              }
             }}
             className="flex items-center gap-2 sm:gap-3 cursor-pointer group whitespace-nowrap shrink-0 text-left min-w-0"
           >
             <img
               src="/ca-saarthi-icon.svg"
-              alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
+              alt="LedgerSutra logo"
+              width={40}
+              height={40}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform duration-200 shrink-0"
             />
             <span className="font-display font-extrabold text-base sm:text-xl tracking-tight whitespace-nowrap shrink-0 flex items-baseline gap-0.5">
@@ -3703,7 +3912,7 @@ export function App() {
                 Sutra
               </span>
             </span>
-          </button>
+          </a>
 
           {/* Zone 2: Client Switcher + Concise Route Links (Desktop) */}
           <div className="hidden md:flex items-center gap-6 min-w-0">
@@ -3745,9 +3954,15 @@ export function App() {
                 { path: '/blog', label: 'Blog', active: currentPath.startsWith('/blog') },
                 { path: '/api-docs', label: 'API', active: currentPath === '/api-docs' },
               ].map((navItem) => (
-                <button
+                <a
                   key={navItem.path}
-                  onClick={() => navigateTo(navItem.path)}
+                  href={navItem.path}
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      navigateTo(navItem.path);
+                    }
+                  }}
                   className={`py-1 border-b-2 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     navItem.active
                       ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold'
@@ -3755,19 +3970,21 @@ export function App() {
                   }`}
                 >
                   {navItem.label}
-                </button>
+                </a>
               ))}
             </nav>
           </div>
 
-          {/* Zone 3: Google Sign-In, Theme Toggle & Mobile Menu Trigger */}
+          {/* Zone 3: Sign-In, Theme Toggle & Mobile Menu Trigger */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 pr-1 sm:pr-1.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/5 shrink-0">
                 {currentUser.photoURL ? (
                   <img
                     src={currentUser.photoURL}
-                    alt={currentUser.displayName || 'User'}
+                    alt={currentUser.displayName || 'Signed in CA user avatar'}
+                    width={24}
+                    height={24}
                     referrerPolicy="no-referrer"
                     className="w-6 h-6 rounded-full object-cover border border-emerald-500/40 shrink-0"
                   />
@@ -3785,8 +4002,9 @@ export function App() {
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleGoogleSignOut}
-                  title="Sign Out of Google Account"
+                  title="Sign Out of Workspace"
                   className="p-1.5 rounded-md hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition-colors cursor-pointer shrink-0"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -3794,13 +4012,14 @@ export function App() {
               </div>
             ) : (
               <button
-                onClick={handleGoogleSignIn}
+                type="button"
+                onClick={() => handleGoogleSignIn(false)}
                 disabled={isSigningIn}
                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5 shrink-0" />
                 <span className="sm:hidden">{isSigningIn ? '...' : 'Sign in'}</span>
-                <span className="hidden sm:inline">{isSigningIn ? 'Signing in...' : 'Sign in with Google'}</span>
+                <span className="hidden sm:inline">{isSigningIn ? 'Signing in...' : 'Sign in'}</span>
               </button>
             )}
 
@@ -3841,6 +4060,7 @@ export function App() {
             </div>
 
             <button
+              type="button"
               onClick={toggleTheme}
               aria-label="Toggle Light/Dark Theme"
               className="flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-main)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
@@ -3936,12 +4156,15 @@ export function App() {
                       ? currentPath.startsWith('/blog')
                       : currentPath === navItem.path;
                   return (
-                    <button
+                    <a
                       key={navItem.path}
-                      type="button"
-                      onClick={() => {
-                        setIsMobileMenuOpen(false);
-                        navigateTo(navItem.path);
+                      href={navItem.path}
+                      onClick={(e) => {
+                        if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                          e.preventDefault();
+                          setIsMobileMenuOpen(false);
+                          navigateTo(navItem.path);
+                        }
                       }}
                       className={`px-3 py-2.5 rounded-xl text-xs font-semibold text-center border transition-colors cursor-pointer ${
                         isActive
@@ -3950,7 +4173,7 @@ export function App() {
                       }`}
                     >
                       {navItem.label}
-                    </button>
+                    </a>
                   );
                 })}
               </div>
@@ -3995,18 +4218,19 @@ export function App() {
 
       {/* Main Content Container */}
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-6 py-4 sm:py-6 flex-1 space-y-8 sm:space-y-10">
-        {/* Section 1: Hero Banner at the top of the root Homepage ('/') */}
-        {currentPath === '/' && (
+        {/* Section 1: Hero Banner at the top of the root Homepage ('/' and '/hi') */}
+        {(currentPath === '/' || currentPath === '/hi') && (
           <LedgerSutraHeroBanner
             onOpenWorkspaceTab={handleOpenWorkspaceTab}
             onTriggerUpload={() => fileInputRef.current?.click()}
             onNavigate={navigateTo}
             savedBillsCount={savedBills.length}
+            currentPath={currentPath}
           />
         )}
 
         {/* Render Dedicated Marketing/SEO/Resource Page View when visiting non-root / non-app routes */}
-        {currentPath !== '/' && currentPath !== '/app' && (
+        {currentPath !== '/' && currentPath !== '/hi' && currentPath !== '/app' && (
           <LedgerSutraRouteView
             currentPath={currentPath}
             onNavigate={navigateTo}
@@ -4015,9 +4239,50 @@ export function App() {
           />
         )}
 
-        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes) */}
+        {/* Task 11.3: On /blog/* routes, do not mount the heavy live workspace by default; show lightweight CTA */}
+        {(currentPath.startsWith('/blog') || currentPath.startsWith('/resources')) &&
+          !mountWorkspaceOnBlog && (
+            <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1.5 max-w-2xl">
+                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  Interactive CA Invoice OCR &amp; TallyPrime Sandbox
+                </div>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-[var(--text-main)]">
+                  Ready to test GSTIN validation, Tally XML export, or GSTR-2B matching?
+                </h2>
+                <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+                  Upload a purchase PDF or image bill in our live workspace to verify 15-digit GSTIN Mod-36 checksums and export TallyPrime XML vouchers.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMountWorkspaceOnBlog(true)}
+                  className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs cursor-pointer"
+                >
+                  Try the live workspace
+                </button>
+                <a
+                  href="/app"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      handleOpenWorkspaceTab('scanner', 'ca_mode');
+                    }
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-main)] cursor-pointer"
+                >
+                  Open Full Workspace (/app) →
+                </a>
+              </div>
+            </section>
+          )}
+
+        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes, and deferred on /blog/* until requested) */}
         {currentRouteAudit.routeKind !== 'obsolete_gone' &&
-          currentRouteAudit.routeKind !== 'not_found' && (
+          currentRouteAudit.routeKind !== 'not_found' &&
+          (!(currentPath.startsWith('/blog') || currentPath.startsWith('/resources')) ||
+            mountWorkspaceOnBlog) && (
         <div id="live-ocr-workspace" className="space-y-4 sm:space-y-5 scroll-mt-16 sm:scroll-mt-20">
           <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-3.5 sm:p-5 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3.5">
@@ -4045,7 +4310,7 @@ export function App() {
                   <span className="tabular-nums">
                     Guest Session ({savedBills.length} Bills) ·{' '}
                     <button
-                      onClick={handleGoogleSignIn}
+                      onClick={() => setIsSignInModalOpen(true)}
                       disabled={isSigningIn}
                       className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
@@ -4061,12 +4326,18 @@ export function App() {
                   Export Tally XML ({filteredBills.length})
                 </button>
                 {currentPath !== '/app' && (
-                  <button
-                    onClick={() => navigateTo('/app')}
+                  <a
+                    href="/app"
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        navigateTo('/app');
+                      }
+                    }}
                     className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer whitespace-nowrap shrink-0"
                   >
                     Focus Mode (/app) →
-                  </button>
+                  </a>
                 )}
               </div>
             </div>
@@ -6129,12 +6400,12 @@ export function App() {
               </div>
               {!currentUser && (
                 <button
-                  onClick={handleGoogleSignIn}
+                  onClick={() => setIsSignInModalOpen(true)}
                   disabled={isSigningIn}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>{isSigningIn ? 'Signing in...' : 'Sign in with Google to Save History'}</span>
+                  <span>{isSigningIn ? 'Signing in...' : 'Sign in to Save History'}</span>
                 </button>
               )}
             </div>
@@ -6359,14 +6630,14 @@ export function App() {
           showToast={showToast}
         />
 
-        {/* 11-Section Conversion-Focused CA Homepage (shown on root '/') */}
-        {currentPath === '/' && (
+        {/* 11-Section Conversion-Focused CA Homepage (shown on root '/' and '/hi') */}
+        {(currentPath === '/' || currentPath === '/hi') && (
           <LedgerSutraHomepageSections
             onNavigate={navigateTo}
             onOpenWorkspaceTab={handleOpenWorkspaceTab}
             onTriggerUpload={() => fileInputRef.current?.click()}
             savedBillsCount={savedBills.length}
-            onSignInRequest={handleGoogleSignIn}
+            onSignInRequest={() => setIsSignInModalOpen(true)}
           />
         )}
       </main>
@@ -6485,11 +6756,14 @@ export function App() {
         aria-label="Mobile quick navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-header)] backdrop-blur-md border-t border-[var(--border-color)] grid grid-cols-5 items-center h-14 px-1"
       >
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            navigateTo('/');
+        <a
+          href="/"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              navigateTo('/');
+            }
           }}
           className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
             currentPath === '/' && activeTab === 'scanner' && !isMobileMenuOpen
@@ -6499,13 +6773,16 @@ export function App() {
         >
           <Sparkles className="w-4 h-4" />
           <span className="text-[10px] leading-none">Home</span>
-        </button>
+        </a>
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            handleOpenWorkspaceTab('scanner');
+        <a
+          href="/app"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              handleOpenWorkspaceTab('scanner');
+            }
           }}
           className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
             activeTab === 'scanner' && currentPath === '/app'
@@ -6515,13 +6792,16 @@ export function App() {
         >
           <ScanLine className="w-4 h-4" />
           <span className="text-[10px] leading-none">Scan Bill</span>
-        </button>
+        </a>
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            handleOpenWorkspaceTab('master_sheet');
+        <a
+          href="/app"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              handleOpenWorkspaceTab('master_sheet');
+            }
           }}
           className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
             activeTab === 'master_sheet'
@@ -6531,13 +6811,16 @@ export function App() {
         >
           <FileSpreadsheet className="w-4 h-4" />
           <span className="text-[10px] leading-none tabular-nums">Sheet ({savedBills.length})</span>
-        </button>
+        </a>
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            handleOpenWorkspaceTab('gstr2b');
+        <a
+          href="/gstr-2b-reconciliation-excel"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              handleOpenWorkspaceTab('gstr2b');
+            }
           }}
           className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
             activeTab === 'gstr2b'
@@ -6547,7 +6830,7 @@ export function App() {
         >
           <ShieldCheck className="w-4 h-4" />
           <span className="text-[10px] leading-none">GSTR-2B</span>
-        </button>
+        </a>
 
         <button
           type="button"

@@ -3,14 +3,39 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "casaarthiai.in"
+        }
+      ],
+      "destination": "https://www.casaarthiai.in/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/resources",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/resources/:slug",
+      "destination": "/blog/:slug",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index"
     },
     {
-      "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml).*)",
+      "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml|og-default\\.png|favicon\\.ico|favicon\\.svg).*)",
       "destination": "/index.html"
     }
   ]
 }
+

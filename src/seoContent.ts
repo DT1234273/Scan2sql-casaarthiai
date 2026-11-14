@@ -78,7 +78,7 @@ export const HOMEPAGE_FAQS: FaqItem[] = [
   {
     question: 'What are the pricing plans and is there a CA-firm pilot?',
     answer:
-      'We offer placeholder tiers (Free Demo, Pro Practice, and CA Firm Multi-Client) while onboarding early practices. Custom CA-firm pilot offers are available—use the "Try free demo" or "Book a demo" buttons to test with your own invoices first.',
+      'We offer three structured practice tiers: Starter / Trial (₹0 / month), CA Practice Pro (₹1,499 / month), and Firm / Enterprise (₹3,999 / month). Early-access pricing — locked for pilot firms.',
   },
   {
     question: 'How many invoices can I upload in a single batch?',
@@ -112,12 +112,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'invoice-ocr-for-ca',
     path: '/invoice-ocr-for-ca',
     badge: 'Chartered Accountant OCR Workflow',
-    h1: 'AI Invoice OCR Software for Chartered Accountants in India',
+    h1: 'Invoice OCR Built for Indian CA Firms',
     subtitle:
       'Eliminate manual voucher typing during GST filing and tax audits. Extract supplier GSTIN, invoice numbers, HSN codes, and tax splits from scanned PDFs and mobile bill photos with audit-grade precision.',
-    metaTitle: 'Invoice OCR for CA Firms in India | AI Bill Extraction — LedgerSutra',
+    metaTitle: 'Invoice OCR Software for CA Firms in India | LedgerSutra',
     metaDescription:
-      'Purpose-built Invoice OCR for Chartered Accountants and CA firms in India. Convert scanned purchase bills, PDFs, and GST invoices into structured Excel, CSV, and SQL registers.',
+      'Automate client purchase register creation with GST invoice OCR built for Indian CA firms. Extract GSTINs, HSN codes, and tax splits. Try OCR today.',
     primaryKeywords: [
       'invoice OCR for CA',
       'CA firm invoice automation India',
@@ -204,12 +204,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'gst-invoice-data-extraction',
     path: '/gst-invoice-data-extraction',
     badge: 'GST Compliance & Reconciliation',
-    h1: 'Automated GST Invoice Data Extraction & GSTIN Validation',
+    h1: 'Automated GST Invoice Data Extraction',
     subtitle:
       'Extract Seller GSTIN, Buyer GSTIN, HSN/SAC codes, Taxable Value, and CGST/SGST/IGST breakups from B2B and B2C invoices. Built for accurate GSTR-1, GSTR-2B, and GSTR-3B working papers.',
-    metaTitle: 'GST Invoice Data Extraction Software India | GSTIN & Tax Split — LedgerSutra',
+    metaTitle: 'Automated GST Invoice Data Extraction | LedgerSutra',
     metaDescription:
-      'Extract GSTIN, invoice number, HSN/SAC, taxable value, CGST, SGST, and IGST from Indian GST invoices automatically. Validate GSTIN format and export to Excel.',
+      'Extract Seller GSTIN, Buyer GSTIN, invoice number, HSN codes, and CGST/SGST/IGST splits from PDF and image bills automatically. Start scanning now.',
     primaryKeywords: [
       'GST invoice data extraction',
       'extract GSTIN from PDF invoice',
@@ -293,12 +293,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'pdf-invoice-to-excel',
     path: '/pdf-invoice-to-excel',
     badge: 'PDF to Excel Converter for Accounting',
-    h1: 'Convert PDF Invoices & Purchase Bills to Structured Excel (.XLSX)',
+    h1: 'Convert PDF Invoices to Excel Automatically',
     subtitle:
       'Stop copy-pasting broken tables from PDFs. Turn single or multi-page PDF invoices into clean, formula-ready Excel workbooks with customizable columns and automatic totals.',
-    metaTitle: 'PDF Invoice to Excel Converter for Accountants & CA Firms — LedgerSutra',
+    metaTitle: 'Convert PDF Invoices to Excel (.XLSX) | LedgerSutra',
     metaDescription:
-      'Convert PDF invoices and scanned bills into structured Excel (.xlsx) and CSV sheets. Supports 1 Bill = 1 Row summary mode and detailed line-item tables.',
+      'Convert digital and scanned PDF purchase invoices into structured Excel (.xlsx) sheets with 1 Bill = 1 Row or line-item detail. Convert PDFs today.',
     primaryKeywords: [
       'PDF invoice to Excel converter',
       'convert GST PDF bill to Excel',
@@ -383,12 +383,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'bulk-invoice-processing',
     path: '/bulk-invoice-processing',
     badge: 'High-Volume Batch Automation',
-    h1: 'Bulk Invoice Processing & Multi-Bill Merger for CA Practices',
+    h1: 'Batch Invoice Upload & Processing Queue',
     subtitle:
       'Upload multiple client invoices back-to-back in a single session. Automatically extract, validate, and merge dozens of PDFs and images into one unified accounting register.',
-    metaTitle: 'Bulk Invoice Processing Software for CA Firms & Finance Teams — LedgerSutra',
+    metaTitle: 'Bulk Invoice Processing & Batch OCR | LedgerSutra',
     metaDescription:
-      'Process multiple PDF and image invoices in bulk. Merge client purchase bills into a single validated Excel, CSV, or SQL register with zero page reloads.',
+      'Upload and process dozens of PDF and image GST invoices in bulk with per-file progress tracking and unified Excel or XML export. Try batch upload.',
     primaryKeywords: [
       'bulk invoice processing India',
       'batch bill scanner for CA',
@@ -472,12 +472,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'invoice-automation-for-accountants',
     path: '/invoice-automation-for-accountants',
     badge: 'Accounting & Bookkeeping Automation',
-    h1: 'End-to-End Invoice Automation for Accountants & Tax Consultants',
+    h1: 'Invoice Automation for Accountants',
     subtitle:
       'Replace repetitive voucher entry with intelligent document capture, human-in-the-loop verification, and instant spreadsheet & SQL generation.',
-    metaTitle: 'Invoice Automation for Accountants & Tax Consultants in India — LedgerSutra',
+    metaTitle: 'Invoice Automation for Accountants | LedgerSutra',
     metaDescription:
-      'Automate purchase bill and invoice data entry for Indian accountants, bookkeepers, and tax consultants. Extract headers, line items, GST, and export to Excel.',
+      'Eliminate manual voucher entry for accountants and tax consultants with side-by-side OCR review, GST validation, and Excel export. Automate today.',
     primaryKeywords: [
       'invoice automation for accountants',
       'automated bookkeeping India',
@@ -561,12 +561,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'document-scanning-software',
     path: '/document-scanning-software',
     badge: 'Verbatim OCR & Document Digitization',
-    h1: 'Intelligent Document Scanning & Verbatim Text Extraction Software',
+    h1: 'Document Scanning Software for CA Firms',
     subtitle:
       'Extract 100% verbatim readable text and structured tables from scanned PDFs, tilted photos, and bilingual English + Hindi financial documents.',
-    metaTitle: 'Document Scanning Software & PDF/Image to Text OCR India — LedgerSutra',
+    metaTitle: 'Document Scanning Software for CA Firms | LedgerSutra',
     metaDescription:
-      'High-DPI document scanning software with English and Hindi OCR. Extract verbatim text (.txt) and structured accounting tables (.xlsx, .sql) from PDFs and images.',
+      'High-DPI document scanning software with English and Hindi OCR for CA firms. Extract verbatim text (.txt) and structured Excel tables. Scan a file.',
     primaryKeywords: [
       'document scanning software India',
       'PDF and image to text converter',
@@ -652,9 +652,9 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     h1: 'Convert GST Invoices to TallyPrime XML Vouchers Automatically',
     subtitle:
       'Extract supplier GSTIN, invoice number, date, taxable value, and CGST/SGST/IGST splits from PDF or photo bills and generate TallyPrime-ready XML purchase vouchers in one click.',
-    metaTitle: 'GST Invoice to TallyPrime XML Converter for CA Firms — LedgerSutra',
+    metaTitle: 'Convert GST Invoice to TallyPrime XML | LedgerSutra',
     metaDescription:
-      'Convert PDF and image GST purchase invoices directly into TallyPrime-importable XML vouchers with automatic party ledger creation and pre-export GST audit.',
+      'Convert PDF and photo GST purchase bills directly into TallyPrime XML vouchers with party ledger auto-creation and GST audit checks. Export XML now.',
     primaryKeywords: [
       'GST invoice to Tally XML',
       'import PDF invoice into TallyPrime',
@@ -750,12 +750,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'gstr-2b-reconciliation-excel',
     path: '/gstr-2b-reconciliation-excel',
     badge: 'GSTR-2B vs Purchase Books Matching',
-    h1: 'Automated GSTR-2B Reconciliation in Excel & JSON for CA Firms',
+    h1: 'GSTR-2B Reconciliation in Excel',
     subtitle:
       'Match your scanned purchase register against GST portal GSTR-2B JSON or Excel files in seconds. Identify Eligible ITC, ITC at Risk, Amount Mismatches, and Unbooked 2B bills automatically.',
-    metaTitle: 'GSTR-2B Reconciliation Tool & Excel Report for CA Firms — LedgerSutra',
+    metaTitle: 'GSTR-2B Reconciliation in Excel — 6-Status Match | LedgerSutra',
     metaDescription:
-      'Upload GSTR-2B JSON or Excel from the GST portal and reconcile against your purchase bills. Detect matched, mismatched, and missing ITC invoices with Excel export.',
+      'Match your purchase register against GST portal GSTR-2B JSON or Excel files with 6-status classification and multi-sheet Excel export. Reconcile now.',
     primaryKeywords: [
       'GSTR-2B reconciliation Excel',
       'reconcile purchase register with GSTR-2B JSON',
@@ -849,12 +849,12 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     slug: 'bulk-invoice-processing-for-ca',
     path: '/bulk-invoice-processing-for-ca',
     badge: 'CA Practice Batch Automation',
-    h1: 'Bulk Invoice Processing & Client Workspace for Indian CA Firms',
+    h1: 'Bulk Invoice Processing for CA Firms',
     subtitle:
       'Process dozens of client PDFs and bill photos in a queued batch pipeline, organize registers client-by-client, enforce team review workflows, and export to TallyPrime or Excel.',
-    metaTitle: 'Bulk Invoice Processing for CA Firms in India — LedgerSutra',
+    metaTitle: 'Bulk Invoice Processing for CA Firms | LedgerSutra',
     metaDescription:
-      'Queue and scan multiple client invoices in bulk with per-file progress bars, duplicate invoice detection, client-wise workspaces, and team approval workflows.',
+      'Manage bulk invoice scanning across multiple client GSTIN workspaces with maker-checker review queues and duplicate bill detection. Start a pilot.',
     primaryKeywords: [
       'bulk invoice processing for CA',
       'batch GST invoice scanner India',
@@ -997,9 +997,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'gstr-2b-reconciliation-in-excel-step-by-step',
     path: '/blog/gstr-2b-reconciliation-in-excel-step-by-step',
     title: 'GSTR-2B Reconciliation in Excel: Step by Step',
-    metaTitle: 'GSTR-2B Reconciliation in Excel: Step-by-Step Guide for CAs — LedgerSutra',
+    metaTitle: 'GSTR-2B Reconciliation in Excel: Step by Step — LedgerSutra',
     metaDescription:
-      'Complete step-by-step guide to reconciling your purchase register with GST portal GSTR-2B JSON and Excel files to protect Input Tax Credit (ITC).',
+      'Complete step-by-step guide to reconciling your purchase register with GST portal GSTR-2B JSON and Excel files to protect Input Tax Credit. Read guide.',
     category: 'GST Reconciliation',
     readTime: '8 min read',
     publishedDate: '2026-11-03',
@@ -1094,9 +1094,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'automate-invoice-data-entry-ca-firms',
     path: '/blog/automate-invoice-data-entry-ca-firms',
     title: 'How to Automate Invoice Data Entry in a CA Firm: A Practical Step-by-Step Guide',
-    metaTitle: 'How to Automate Invoice Data Entry in a CA Firm | LedgerSutra Guide',
+    metaTitle: 'How to Automate Invoice Data Entry in a CA Firm: A Practical Step-by-Step Guide — LedgerSutra',
     metaDescription:
-      'Learn how Indian Chartered Accountant firms can automate purchase bill and invoice data entry using AI OCR, GSTIN validation, and structured Excel workflows.',
+      'Learn how Indian Chartered Accountant firms automate purchase bill data entry using AI OCR, GSTIN validation, and Excel exports. Read the guide now.',
     category: 'CA Practice Management',
     readTime: '7 min read',
     publishedDate: '2026-10-15',
@@ -1147,9 +1147,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'ocr-for-gst-invoices-complete-guide',
     path: '/blog/ocr-for-gst-invoices-complete-guide',
     title: 'OCR for GST Invoices: Complete Technical & Compliance Guide for Indian Accountants',
-    metaTitle: 'OCR for GST Invoices in India: Complete Guide for CAs — LedgerSutra',
+    metaTitle: 'OCR for GST Invoices: Complete Technical & Compliance Guide for Indian Accountants — LedgerSutra',
     metaDescription:
-      'Understand how Optical Character Recognition (OCR) and AI Vision extract GSTIN, HSN codes, and CGST/SGST/IGST splits from Indian tax invoices.',
+      'Understand how Optical Character Recognition and AI Vision extract GSTIN, HSN codes, and CGST/SGST/IGST splits from GST invoices. Read the full guide.',
     category: 'GST Technology',
     readTime: '8 min read',
     publishedDate: '2026-10-18',
@@ -1193,9 +1193,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'convert-purchase-bills-to-excel-accounting',
     path: '/blog/convert-purchase-bills-to-excel-accounting',
     title: 'How to Convert Client Purchase Bills into Clean Excel Sheets for Accounting',
-    metaTitle: 'Convert Purchase Bills to Excel for Accounting & GST — LedgerSutra',
+    metaTitle: 'How to Convert Client Purchase Bills into Clean Excel Sheets for Accounting — LedgerSutra',
     metaDescription:
-      'Step-by-step guide to converting PDF and image purchase bills into structured, formula-ready Excel (.xlsx) registers without broken columns.',
+      'Step-by-step guide to converting PDF and image purchase bills into structured, formula-ready Excel (.xlsx) registers without broken columns. Read more.',
     category: 'Excel & Bookkeeping',
     readTime: '6 min read',
     publishedDate: '2026-10-20',
@@ -1238,9 +1238,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'common-errors-manual-invoice-entry',
     path: '/blog/common-errors-manual-invoice-entry',
     title: '7 Costly Errors in Manual Invoice Data Entry (And How CA Firms Prevent Them)',
-    metaTitle: '7 Common Errors in Manual Invoice Entry & How to Prevent Them — LedgerSutra',
+    metaTitle: '7 Costly Errors in Manual Invoice Data Entry (And How CA Firms Prevent Them) — LedgerSutra',
     metaDescription:
-      'Discover the 7 most common manual invoice data entry mistakes in Indian accounting practices—from GSTIN typos to duplicate ITC claims—and how to prevent them.',
+      'Discover the 7 most common manual invoice data entry mistakes in Indian accounting practices—from GSTIN typos to duplicate ITC claims. Read the guide.',
     category: 'Audit & Risk Control',
     readTime: '6 min read',
     publishedDate: '2026-10-22',
@@ -1287,9 +1287,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'digital-document-workflow-chartered-accountants',
     path: '/blog/digital-document-workflow-chartered-accountants',
     title: 'Designing a Modern Digital Document Workflow for Chartered Accountants',
-    metaTitle: 'Digital Document Workflow for Chartered Accountants in India — LedgerSutra',
+    metaTitle: 'Designing a Modern Digital Document Workflow for Chartered Accountants — LedgerSutra',
     metaDescription:
-      'Build a paperless, audit-ready digital document workflow for your CA firm. Standardize document collection, OCR extraction, validation, and archival.',
+      'Build a paperless, audit-ready digital document workflow for your CA firm. Standardize document collection, OCR extraction, and archival. Read guide.',
     category: 'Digital Practice',
     readTime: '7 min read',
     publishedDate: '2026-10-25',
@@ -1327,9 +1327,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'gst-invoice-fields-checklist-verification',
     path: '/blog/gst-invoice-fields-checklist-verification',
     title: 'Mandatory GST Invoice Fields Checklist: What Every CA Must Verify Under Rule 46',
-    metaTitle: 'Mandatory GST Invoice Fields Checklist (CGST Rule 46) for CAs — LedgerSutra',
+    metaTitle: 'Mandatory GST Invoice Fields Checklist: What Every CA Must Verify Under Rule 46 — LedgerSutra',
     metaDescription:
-      'Complete checklist of mandatory fields required on a valid Indian GST Tax Invoice under Rule 46 for claiming Input Tax Credit (ITC).',
+      'Complete checklist of mandatory fields required on a valid Indian GST Tax Invoice under CGST Rule 46 for claiming Input Tax Credit. View checklist now.',
     category: 'GST Compliance',
     readTime: '8 min read',
     publishedDate: '2026-10-27',
@@ -1378,9 +1378,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'ai-document-processing-for-tax-consultants',
     path: '/blog/ai-document-processing-for-tax-consultants',
     title: 'AI Document Processing for Tax Consultants: Practical Use Cases & Safeguards',
-    metaTitle: 'AI Document Processing for Tax Consultants in India — LedgerSutra',
+    metaTitle: 'AI Document Processing for Tax Consultants: Practical Use Cases & Safeguards — LedgerSutra',
     metaDescription:
-      'How Indian tax consultants and GST practitioners use AI document processing with deterministic validation rules to speed up return preparation.',
+      'How Indian tax consultants and GST practitioners use AI document processing with deterministic validation rules to speed up return filing. Read guide.',
     category: 'AI in Accounting',
     readTime: '6 min read',
     publishedDate: '2026-10-29',
@@ -1419,9 +1419,9 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'organize-client-bills-monthly-gst-compliance',
     path: '/blog/organize-client-bills-monthly-gst-compliance',
     title: 'How to Organize Client Bills for Stress-Free Monthly GST Compliance',
-    metaTitle: 'Organize Client Bills for Monthly GST Compliance — LedgerSutra Guide',
+    metaTitle: 'How to Organize Client Bills for Stress-Free Monthly GST Compliance — LedgerSutra',
     metaDescription:
-      'A practical system for CA firms and accountants to organize, scan, and reconcile client purchase and sales bills every month before GST filing deadlines.',
+      'A practical system for CA firms and accountants to organize, scan, and reconcile client purchase and sales bills before GST deadlines. Read the guide.',
     category: 'GST Workflow',
     readTime: '7 min read',
     publishedDate: '2026-11-01',
@@ -1456,96 +1456,216 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
   },
 ];
 
+export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-default.png`;
+export const DEFAULT_OG_IMAGE_ALT =
+  'LedgerSutra — GST Invoice OCR, TallyPrime XML Export & GSTR-2B Reconciliation for Indian CA Firms';
+
+export const DEFAULT_CA_AUTHOR = {
+  name: 'LedgerSutra Editorial Team',
+  credentials: 'GST & Accounting Workflow Documentation Team',
+  bio: 'Maintained by the LedgerSutra product and tax-automation engineering team for Indian CA practices.',
+  url: `${SITE_DOMAIN}/about`,
+};
+
+export const HINDI_LOCALIZED_ROUTES: Record<
+  string,
+  {
+    enPath: string;
+    hiPath: string;
+    title: string;
+    h1: string;
+    subtitle: string;
+    description: string;
+    breadcrumbName: string;
+  }
+> = {
+  '/hi': {
+    enPath: '/',
+    hiPath: '/hi',
+    title: 'भारतीय CA फर्मों के लिए GST इनवॉइस OCR सॉफ्टवेयर | LedgerSutra',
+    h1: 'भारतीय CA फर्मों के लिए GST इनवॉइस OCR और डेटा एंट्री ऑटोमेशन',
+    subtitle:
+      'अंग्रेज़ी और हिंदी (देवनागरी) बिलों को स्कैन करें, 15-अंकीय GSTIN और टैक्स गणित की स्वचालित जांच करें, और एक क्लिक में TallyPrime XML या Excel (.xlsx) में एक्सपोर्ट करें।',
+    description:
+      'भारतीय चार्टर्ड अकाउंटेंट्स (CA) के लिए द्विभाषी GST इनवॉइस OCR। 15-अंकीय GSTIN सत्यापित करें, TallyPrime XML वाउचर बनाएं और GSTR-2B मिलान करें। अभी आज़माएं।',
+    breadcrumbName: 'होम (Hindi)',
+  },
+  '/hi/features': {
+    enPath: '/features',
+    hiPath: '/hi/features',
+    title: 'GST इनवॉइस OCR फीचर्स — GSTIN सत्यापन और द्विभाषी OCR | LedgerSutra',
+    h1: 'भारतीय GST प्रैक्टिस वर्कफ़्लो के लिए निर्मित फीचर्स',
+    subtitle:
+      '15-अंकीय GSTIN Mod-36 चेकसम ऑडिट, द्विभाषी बिल स्कैनिंग, मल्टी-क्लाइंट वर्कस्पेस और मेकर-चेकर टीम अप्रूवल।',
+    description:
+      'भारतीय चार्टर्ड अकाउंटेंट्स के लिए LedgerSutra के फीचर्स: Mod-36 GSTIN जांच, TallyPrime XML एक्सपोर्ट, GSTR-2B मिलान और बैच इनवॉइस स्कैनिंग। फीचर्स देखें।',
+    breadcrumbName: 'फीचर्स (Hindi)',
+  },
+  '/hi/pricing': {
+    enPath: '/pricing',
+    hiPath: '/hi/pricing',
+    title: 'प्राइसिंग — CA फर्मों के लिए GST इनवॉइस OCR प्लान | LedgerSutra',
+    h1: 'सोलो प्रैक्टिशनर्स और मल्टी-पार्टनर CA फर्मों के लिए प्लान',
+    subtitle:
+      'मल्टी-क्लाइंट GSTIN वर्कस्पेस, TallyPrime XML एक्सपोर्ट और GSTR-2B रिकन्सिलिएशन के साथ पारदर्शी प्लान (₹0, ₹1,499, ₹3,999)। पायलट फर्मों के लिए अर्ली-एक्सेस प्राइसिंग।',
+    description:
+      'भारतीय CA फर्मों और जीएसटी प्रैक्टिशनर्स के लिए पारदर्शी प्लान: मल्टी-क्लाइंट वर्कस्पेस, TallyPrime XML एक्सपोर्ट और GSTR-2B रिकन्सिलिएशन। प्लान चुनें।',
+    breadcrumbName: 'प्राइसिंग (Hindi)',
+  },
+  '/hi/gst-invoice-to-tally': {
+    enPath: '/gst-invoice-to-tally',
+    hiPath: '/hi/gst-invoice-to-tally',
+    title: 'GST इनवॉइस को TallyPrime XML में बदलें | LedgerSutra',
+    h1: 'GST इनवॉइस को TallyPrime XML वाउचर में स्वचालित रूप से बदलें',
+    subtitle:
+      'PDF और फोटो बिलों से सप्लायर GSTIN, इनवॉइस नंबर, कर योग्य मूल्य और CGST/SGST/IGST निकालें और सीधे TallyPrime में इम्पोर्ट करें।',
+    description:
+      'PDF और फोटो GST खरीद बिलों को सीधे TallyPrime XML वाउचर में बदलें। ऑटोमैटिक पार्टी लेजर निर्माण और प्री-एक्सपोर्ट GST जांच के साथ। XML एक्सपोर्ट करें।',
+    breadcrumbName: 'GST से Tally XML (Hindi)',
+  },
+  '/hi/gstr-2b-reconciliation-excel': {
+    enPath: '/gstr-2b-reconciliation-excel',
+    hiPath: '/hi/gstr-2b-reconciliation-excel',
+    title: 'Excel में GSTR-2B रिकन्सिलिएशन — 6-स्टेटस मिलान | LedgerSutra',
+    h1: 'Excel में GSTR-2B रिकन्सिलिएशन',
+    subtitle:
+      'अपने खरीद रजिस्टर का GST पोर्टल GSTR-2B JSON या Excel फ़ाइल से मिलान करें और पात्र ITC, राशि अंतर और छूटे हुए बिल तुरंत पहचानें।',
+    description:
+      'GST पोर्टल की GSTR-2B JSON या Excel फ़ाइल को अपने परचेस रजिस्टर से मिलाएं। कुछ ही सेकंड में पात्र ITC, मिसमैच और छूटे बिलों की रिपोर्ट पाएं। अभी मिलान करें।',
+    breadcrumbName: 'GSTR-2B रिकन्सिलिएशन (Hindi)',
+  },
+  '/hi/pdf-invoice-to-excel': {
+    enPath: '/pdf-invoice-to-excel',
+    hiPath: '/hi/pdf-invoice-to-excel',
+    title: 'PDF इनवॉइस को Excel (.XLSX) में बदलें | LedgerSutra',
+    h1: 'PDF इनवॉइस को स्वचालित रूप से Excel में बदलें',
+    subtitle:
+      'डिजिटल और स्कैन किए गए PDF खरीद बिलों को 1 बिल = 1 पंक्ति या विस्तृत आइटम-वार तालिकाओं के साथ संरचित Excel (.xlsx) वर्कबुक में बदलें।',
+    description:
+      'PDF इनवॉइस और स्कैन किए गए बिलों को संरचित Excel (.xlsx) और CSV शीट में बदलें। 1 बिल = 1 पंक्ति सारांश और विस्तृत आइटम मोड समर्थित। अभी कन्वर्ट करें।',
+    breadcrumbName: 'PDF से Excel (Hindi)',
+  },
+};
+
+export function getHreflangAlternates(cleanPath: string): {
+  enUrl: string;
+  hiUrl: string;
+} | null {
+  const hiEntry = Object.values(HINDI_LOCALIZED_ROUTES).find(
+    (item) => item.enPath === cleanPath || item.hiPath === cleanPath
+  );
+  if (!hiEntry) return null;
+  return {
+    enUrl: `${SITE_DOMAIN}${hiEntry.enPath === '/' ? '/' : hiEntry.enPath}`,
+    hiUrl: `${SITE_DOMAIN}${hiEntry.hiPath}`,
+  };
+}
+
 export const CORE_SAAS_ROUTES_META: Record<
   string,
   {
     title: string;
+    h1: string;
     description: string;
     breadcrumbName: string;
   }
 > = {
   '/': {
-    title: 'LedgerSutra - GST Invoice OCR & Data Entry Automation for CA Firms',
+    title: 'GST Invoice OCR Software for Indian CA Firms | LedgerSutra',
+    h1: 'GST Invoice OCR & Data Entry Automation for Indian CA Firms',
     description:
-      'Bilingual AI OCR built exclusively for Indian CA firms. Scan English & Hindi bills, validate GSTINs automatically, and export directly to SQL or Excel with 100% data privacy.',
+      'Automate GST invoice OCR, 15-digit GSTIN validation, GSTR-2B reconciliation, and TallyPrime XML exports for CA firms. Try the live workspace today.',
     breadcrumbName: 'Home',
   },
   '/app': {
     title: 'CA Invoice OCR, Tally XML & GSTR-2B Workspace | LedgerSutra',
+    h1: 'LedgerSutra Live Invoice OCR, GST Audit & Tally Command Center',
     description:
-      'Upload PDF or image invoices, extract GST fields, validate 15-digit GSTINs, reconcile GSTR-2B, and export TallyPrime XML, Excel, Zoho Books CSV, or Busy sheets.',
+      'Upload PDF or image invoices, extract GST fields, validate 15-digit GSTINs, reconcile GSTR-2B, and export TallyPrime XML, Excel, or Zoho CSV. Open now.',
     breadcrumbName: 'Workspace',
   },
   '/features': {
-    title: 'Features — Tally XML, GSTR-2B Recon & GST OCR | LedgerSutra',
+    title: 'GST Invoice OCR Features — GSTIN Validation & Bilingual OCR | LedgerSutra',
+    h1: 'Features Built for Indian GST Practice Workflows',
     description:
-      'Explore LedgerSutra features for Indian CA firms: TallyPrime XML export, GSTR-2B reconciliation, client workspaces, team approvals, and GSTIN validation.',
+      'Explore 15-digit GSTIN Mod-36 checksum validation, English + Hindi invoice OCR, GSTR-2B matching, and TallyPrime XML export. Explore features today.',
     breadcrumbName: 'Features',
   },
   '/how-it-works': {
-    title: 'How LedgerSutra Works — 3-Step Invoice to Tally Automation',
+    title: 'How LedgerSutra Automates GST Invoice Entry | LedgerSutra',
+    h1: 'From Client Invoice Folder to Tally Sign-Off',
     description:
-      'See how LedgerSutra converts scanned PDFs and bill photos into validated TallyPrime XML vouchers, GSTR-2B reconciliations, and Excel purchase registers.',
+      'See how Indian CA firms upload client PDF and image bills, validate GSTINs and tax splits, and export to TallyPrime XML or Excel. Start a pilot.',
     breadcrumbName: 'How It Works',
   },
   '/pricing': {
-    title: 'Pricing Plans for Indian CA Firms & Practitioners | LedgerSutra',
+    title: 'Pricing — GST Invoice OCR Plans for CA Firms | LedgerSutra',
+    h1: 'Plans for Solo Practitioners & Multi-Partner CA Firms',
     description:
-      'Transparent workflow plans (Free, Pro, and CA Firm) with multi-client workspaces, TallyPrime XML export, and GSTR-2B reconciliation. Pilot offers available.',
+      'Compare transparent plans for solo practitioners and multi-partner CA firms with multi-client workspaces and TallyPrime XML export. View plans now.',
     breadcrumbName: 'Pricing',
   },
   '/faq': {
-    title: 'Frequently Asked Questions — GST OCR & Tally XML | LedgerSutra',
+    title: 'GST Invoice OCR FAQ for Indian CA Firms | LedgerSutra',
+    h1: 'Questions from Chartered Accountants & Tax Teams',
     description:
-      'Answers to 12+ common CA questions on invoice OCR accuracy, TallyPrime XML import, GSTR-2B matching, Firestore security, multi-client workspaces, and API.',
+      'Read answers on TallyPrime XML voucher import, GSTR-2B JSON/Excel reconciliation, bilingual OCR, and client data isolation. Browse CA answers today.',
     breadcrumbName: 'FAQ',
   },
   '/security': {
-    title: 'Security & Data Privacy for CA Client Records | LedgerSutra',
+    title: 'Security & Data Isolation for Client Records | LedgerSutra',
+    h1: 'Security & Data Isolation for Client Records',
     description:
-      'How LedgerSutra protects client accounting data with Google Sign-In, per-user Firestore isolation, role-based rules enforcement, and encryption in transit.',
+      'Learn how LedgerSutra protects client financial records with client-wise workspace isolation, RBAC rules, and instant deletion. Review security now.',
     breadcrumbName: 'Security',
   },
   '/privacy': {
-    title: 'Privacy Policy — Zero Model Training & Instant Deletion | LedgerSutra',
+    title: 'Privacy Policy — Zero AI Training & Data Protection | LedgerSutra',
+    h1: 'Privacy Policy for Chartered Accountant & Client Financial Data',
     description:
-      'Read LedgerSutra’s privacy policy detailing how uploaded invoices are never used for AI model training and can be deleted immediately from the server.',
+      "Read LedgerSutra's privacy policy covering zero AI model training on client invoices, local fallback OCR processing, and one-click data deletion.",
     breadcrumbName: 'Privacy Policy',
   },
   '/terms': {
-    title: 'Terms of Service — Accounting & GST Automation | LedgerSutra',
+    title: 'Terms of Service — GST OCR & Tally XML Platform | LedgerSutra',
+    h1: 'Terms of Service for LedgerSutra CA Practice Software',
     description:
-      'Terms and conditions governing the use of LedgerSutra’s invoice OCR, TallyPrime XML generator, GSTR-2B reconciliation engine, and developer REST API.',
+      "Review the terms of service governing LedgerSutra's GST invoice OCR workspace, TallyPrime XML export, GSTR-2B reconciliation, and developer API.",
     breadcrumbName: 'Terms of Service',
   },
   '/data-deletion': {
-    title: 'Data Deletion Policy — Zero Server-Side Retention | LedgerSutra',
+    title: 'Data Deletion Policy — Instant Record Removal | LedgerSutra',
+    h1: 'Data Deletion Policy & Zero Server-Side Retention Controls',
     description:
-      'Learn how LedgerSutra enforces zero server-side data retention with Local Fallback OCR and instant one-click record and workspace deletion.',
+      'How to permanently delete individual purchase bills, client workspaces, or your entire LedgerSutra account immediately with zero server retention.',
     breadcrumbName: 'Data Deletion Policy',
   },
   '/blog': {
-    title: 'CA Practice Blog — Tally Import & GSTR-2B Guides | LedgerSutra',
+    title: 'GST & TallyPrime Guides for CA Firms | LedgerSutra',
+    h1: 'GST & TallyPrime Guides for CA Firms',
     description:
-      'Step-by-step tutorials for Indian Chartered Accountants on importing PDF purchase invoices into TallyPrime, GSTR-2B Excel reconciliation, and ITC audits.',
+      'Step-by-step guides and tutorials for Indian CA firms on GST invoice OCR, TallyPrime XML voucher import, and GSTR-2B reconciliation. Read guides.',
     breadcrumbName: 'Blog',
   },
   '/api-docs': {
-    title: 'Developer API Documentation — POST /api/v1/extract | LedgerSutra',
+    title: 'Invoice OCR REST API Documentation | LedgerSutra',
+    h1: 'Invoice Extraction REST API (v1)',
     description:
-      'Integrate LedgerSutra’s GST invoice extraction API into your ERP or CA practice portal using per-user SHA-256 API keys, multipart uploads, and JSON output.',
+      'Integrate GST invoice OCR, 15-digit GSTIN validation, and structured line-item JSON extraction into your accounting tools. Read the API docs now.',
     breadcrumbName: 'API Docs',
   },
   '/about': {
-    title: 'About LedgerSutra — Built for Indian Chartered Accountants',
+    title: 'About LedgerSutra — Built for Indian CA Firms',
+    h1: 'Built for Indian Chartered Accountants',
     description:
-      'Learn why we built LedgerSutra to eliminate repetitive manual invoice entry, Tally voucher typing, and GSTR-2B reconciliation bottlenecks for Indian CA firms.',
+      'Discover why LedgerSutra built specialized GST invoice OCR, GSTR-2B reconciliation, and TallyPrime automation for Indian CA firms. Learn more today.',
     breadcrumbName: 'About',
   },
   '/contact': {
-    title: 'Contact LedgerSutra — CA Firm Demos, Pilots & Support',
+    title: 'Contact & Book a Demo | LedgerSutra',
+    h1: 'Contact & Book a Demo',
     description:
-      'Book a live demo or request a CA firm pilot with the LedgerSutra team at support@casaarthiai.in for TallyPrime XML workflows and GSTR-2B automation.',
+      'Schedule a live walkthrough of LedgerSutra GST invoice OCR, TallyPrime XML import, and GSTR-2B reconciliation for your CA firm. Book a demo today.',
     breadcrumbName: 'Contact',
   },
 };
@@ -1564,7 +1684,7 @@ export const REDIRECT_ROUTE_MAP: Record<string, string> = {
 /**
  * Obsolete "Paisa Saarthi" / B2C personal-finance route prefixes that previously existed
  * on the domain (e.g. /schemes?page=48) and have NO relevant replacement on a B2B CA GST platform.
- * Served with HTTP 410 Gone + X-Robots-Tag: noindex, nofollow (never redirected to unrelated CA pages).
+ * Served with HTTP 410 Gone + X-Robots-Tag: noindex, nofollow (Option B in Task 2).
  */
 export const OBSOLETE_PERSONAL_FINANCE_PREFIXES: string[] = [
   '/schemes',
@@ -1663,12 +1783,13 @@ export function resolveRouteAudit(rawUrlOrPath: string): RouteAuditResolution {
     };
   }
 
-  // 5. Known canonical indexable pages
+  // 5. Known canonical indexable pages (including /hi localized pages)
   const isKnownCore = Boolean(CORE_SAAS_ROUTES_META[cleanPath]);
   const isKnownSeoLanding = Boolean(DEDICATED_SEO_PAGES[cleanPath]);
+  const isKnownHindiRoute = Boolean(HINDI_LOCALIZED_ROUTES[cleanPath]);
   const isKnownBlogArticle = RESOURCE_ARTICLES.some((a) => a.path === cleanPath || `/blog/${a.slug}` === cleanPath);
 
-  if (isKnownCore || isKnownSeoLanding || isKnownBlogArticle) {
+  if (isKnownCore || isKnownSeoLanding || isKnownHindiRoute || isKnownBlogArticle) {
     return {
       cleanPath,
       routeKind: 'canonical',
@@ -1740,6 +1861,16 @@ export function getCanonicalSitemapEntries(): Array<{
     });
   });
 
+  // Add Hindi (/hi) localized routes to sitemap.xml per Task 12
+  Object.keys(HINDI_LOCALIZED_ROUTES).forEach((hiPath) => {
+    entries.push({
+      loc: `${SITE_DOMAIN}${hiPath}`,
+      lastmod: defaultDate,
+      changefreq: 'weekly',
+      priority: hiPath === '/hi' ? '0.9' : '0.8',
+    });
+  });
+
   return entries;
 }
 
@@ -1747,6 +1878,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
   cleanPath: string;
   canonicalUrl: string;
   title: string;
+  h1: string;
   description: string;
   breadcrumbName: string;
   robots: 'index, follow' | 'noindex, follow' | 'noindex, nofollow';
@@ -1756,6 +1888,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
   pageFaqs: FaqItem[];
   seoSpec?: SeoLandingPageSpec;
   articleSpec?: ResourceArticleSpec;
+  hindiSpec?: (typeof HINDI_LOCALIZED_ROUTES)[string];
 } {
   const audit = resolveRouteAudit(rawUrlOrPath);
   const { cleanPath, robots, statusCode, routeKind, redirectTo } = audit;
@@ -1767,6 +1900,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
       cleanPath,
       canonicalUrl: `${SITE_DOMAIN}/`,
       title: `410 Gone — Legacy Personal Finance Page Removed | ${BRAND_NAME}`,
+      h1: '410 Gone — Legacy Personal-Finance Page Removed',
       description: `This legacy personal-finance or scheme directory URL has been permanently removed. ${BRAND_NAME} is a B2B GST invoice OCR, TallyPrime XML, and GSTR-2B platform for Indian CA firms.`,
       breadcrumbName: '410 Gone',
       robots: 'noindex, nofollow',
@@ -1781,6 +1915,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
       cleanPath,
       canonicalUrl: `${SITE_DOMAIN}/`,
       title: `404 Page Not Found | ${BRAND_NAME}`,
+      h1: '404 — Page Not Found',
       description: `The requested page could not be found on ${BRAND_NAME}. Explore GST Invoice OCR, TallyPrime XML export, and GSTR-2B reconciliation for Indian Chartered Accountants.`,
       breadcrumbName: '404 Not Found',
       robots: 'noindex, nofollow',
@@ -1791,19 +1926,35 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
   }
 
   let title = CORE_SAAS_ROUTES_META['/'].title;
+  let h1 = CORE_SAAS_ROUTES_META['/'].h1;
   let description = CORE_SAAS_ROUTES_META['/'].description;
   let breadcrumbName = 'Home';
   let pageFaqs: FaqItem[] = effectivePath === '/' || effectivePath === '/faq' ? HOMEPAGE_FAQS : [];
   let seoSpec: SeoLandingPageSpec | undefined;
   let articleSpec: ResourceArticleSpec | undefined;
+  let hindiSpec: (typeof HINDI_LOCALIZED_ROUTES)[string] | undefined;
 
-  if (CORE_SAAS_ROUTES_META[effectivePath]) {
+  if (HINDI_LOCALIZED_ROUTES[effectivePath]) {
+    hindiSpec = HINDI_LOCALIZED_ROUTES[effectivePath];
+    title = hindiSpec.title;
+    h1 = hindiSpec.h1;
+    description = hindiSpec.description;
+    breadcrumbName = hindiSpec.breadcrumbName;
+    if (hindiSpec.enPath === '/') {
+      pageFaqs = HOMEPAGE_FAQS;
+    } else if (DEDICATED_SEO_PAGES[hindiSpec.enPath]) {
+      seoSpec = DEDICATED_SEO_PAGES[hindiSpec.enPath];
+      pageFaqs = seoSpec.faqs;
+    }
+  } else if (CORE_SAAS_ROUTES_META[effectivePath]) {
     title = CORE_SAAS_ROUTES_META[effectivePath].title;
+    h1 = CORE_SAAS_ROUTES_META[effectivePath].h1;
     description = CORE_SAAS_ROUTES_META[effectivePath].description;
     breadcrumbName = CORE_SAAS_ROUTES_META[effectivePath].breadcrumbName;
   } else if (DEDICATED_SEO_PAGES[effectivePath]) {
     seoSpec = DEDICATED_SEO_PAGES[effectivePath];
     title = seoSpec.metaTitle;
+    h1 = seoSpec.h1;
     description = seoSpec.metaDescription;
     breadcrumbName = seoSpec.badge;
     pageFaqs = seoSpec.faqs;
@@ -1813,6 +1964,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
     );
     if (articleSpec) {
       title = articleSpec.metaTitle;
+      h1 = articleSpec.title;
       description = articleSpec.metaDescription;
       breadcrumbName = articleSpec.title;
       pageFaqs = articleSpec.faqs;
@@ -1823,6 +1975,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
     cleanPath,
     canonicalUrl,
     title,
+    h1,
     description,
     breadcrumbName,
     robots,
@@ -1832,11 +1985,12 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
     pageFaqs,
     seoSpec,
     articleSpec,
+    hindiSpec,
   };
 }
 
 export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
-  const { cleanPath, canonicalUrl, breadcrumbName, routeKind, pageFaqs, seoSpec, articleSpec } =
+  const { cleanPath, canonicalUrl, breadcrumbName, routeKind, pageFaqs, seoSpec, articleSpec, hindiSpec } =
     resolvePageSeoMetadata(rawUrlOrPath);
 
   const graph: any[] = [
@@ -1845,8 +1999,16 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
       '@id': `${SITE_DOMAIN}/#organization`,
       name: BRAND_NAME,
       url: SITE_DOMAIN,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_DOMAIN}/og-default.png`,
+        width: 1200,
+        height: 630,
+      },
       description: BRAND_TAGLINE,
       areaServed: 'IN',
+      // TODO: confirm social profile URLs
+      sameAs: [],
       contactPoint: {
         '@type': 'ContactPoint',
         email: 'support@casaarthiai.in',
@@ -1879,11 +2041,13 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
   // Only include SoftwareApplication schema on genuine software/product pages
   const qualifiesForSoftwareApp =
     cleanPath === '/' ||
+    cleanPath === '/hi' ||
     cleanPath === '/app' ||
     cleanPath === '/features' ||
     cleanPath === '/how-it-works' ||
     cleanPath === '/pricing' ||
-    Boolean(seoSpec);
+    Boolean(seoSpec) ||
+    Boolean(hindiSpec);
 
   if (qualifiesForSoftwareApp) {
     graph.push({
@@ -1894,11 +2058,39 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
       description:
         'AI-powered bilingual GST invoice OCR, TallyPrime XML export, and GSTR-2B reconciliation software designed specifically for Indian Chartered Accountants.',
       url: `${SITE_DOMAIN}/`,
+      screenshot: DEFAULT_OG_IMAGE,
+      featureList: [
+        'Invoice OCR',
+        'PDF invoice processing',
+        'JPG and PNG invoice processing',
+        'Hindi and English text extraction',
+        'GSTIN field extraction',
+        'Invoice number and date extraction',
+        'Batch document processing',
+        'Excel export',
+        'TallyPrime XML export',
+      ],
       offers: {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'INR',
       },
+    });
+  }
+
+  // Task 9.4: Add HowTo schema on /gst-invoice-to-tally (and /hi/gst-invoice-to-tally)
+  if (cleanPath === '/gst-invoice-to-tally' || cleanPath === '/hi/gst-invoice-to-tally') {
+    const tallySpec = DEDICATED_SEO_PAGES['/gst-invoice-to-tally'];
+    graph.push({
+      '@type': 'HowTo',
+      name: tallySpec.h1,
+      description: tallySpec.metaDescription,
+      step: tallySpec.workflowSteps.map((s, idx) => ({
+        '@type': 'HowToStep',
+        position: idx + 1,
+        name: s.title,
+        text: s.detail,
+      })),
     });
   }
 
@@ -1922,6 +2114,32 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
         '@type': 'ListItem',
         position: 3,
         name: articleSpec.title,
+        item: canonicalUrl,
+      });
+    } else if (hindiSpec && hindiSpec.hiPath !== '/hi') {
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Hindi (/hi)',
+        item: `${SITE_DOMAIN}/hi`,
+      });
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: 3,
+        name: breadcrumbName,
+        item: canonicalUrl,
+      });
+    } else if (seoSpec) {
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Features',
+        item: `${SITE_DOMAIN}/features`,
+      });
+      breadcrumbItems.push({
+        '@type': 'ListItem',
+        position: 3,
+        name: breadcrumbName,
         item: canonicalUrl,
       });
     } else {
@@ -1952,16 +2170,20 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
     });
   }
 
+  // Task 8: Article schema with honest editorial Organization author + Organization publisher
   if (articleSpec) {
     graph.push({
       '@type': 'Article',
       headline: articleSpec.title,
       description: articleSpec.metaDescription,
+      image: DEFAULT_OG_IMAGE,
       datePublished: articleSpec.publishedDate,
       dateModified: articleSpec.publishedDate,
       author: {
         '@type': 'Organization',
-        name: `${BRAND_NAME} CA Workflow Team`,
+        '@id': `${SITE_DOMAIN}/#organization`,
+        name: DEFAULT_CA_AUTHOR.name,
+        url: DEFAULT_CA_AUTHOR.url,
       },
       publisher: { '@id': `${SITE_DOMAIN}/#organization` },
       mainEntityOfPage: canonicalUrl,
@@ -1978,9 +2200,11 @@ export function syncDocumentSeoTags(pathname: string): void {
   if (typeof document === 'undefined') return;
   const fullPathWithQuery =
     typeof window !== 'undefined' ? `${pathname}${window.location.search || ''}` : pathname;
-  const { canonicalUrl, title, description, robots, articleSpec } = resolvePageSeoMetadata(fullPathWithQuery);
+  const { cleanPath, canonicalUrl, title, description, robots, articleSpec, hindiSpec } =
+    resolvePageSeoMetadata(fullPathWithQuery);
 
   document.title = title;
+  document.documentElement.lang = hindiSpec ? 'hi-IN' : 'en-IN';
 
   // Remove meta keywords tag if present
   const keywordsMeta = document.head.querySelector('meta[name="keywords"]');
@@ -2005,8 +2229,11 @@ export function syncDocumentSeoTags(pathname: string): void {
   setMetaTag('meta[property="og:url"]', 'property', 'og:url', canonicalUrl);
   setMetaTag('meta[property="og:type"]', 'property', 'og:type', articleSpec ? 'article' : 'website');
   setMetaTag('meta[property="og:site_name"]', 'property', 'og:site_name', BRAND_NAME);
+  setMetaTag('meta[property="og:image"]', 'property', 'og:image', DEFAULT_OG_IMAGE);
+  setMetaTag('meta[property="og:image:alt"]', 'property', 'og:image:alt', DEFAULT_OG_IMAGE_ALT);
   setMetaTag('meta[name="twitter:title"]', 'name', 'twitter:title', title);
   setMetaTag('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+  setMetaTag('meta[name="twitter:image"]', 'name', 'twitter:image', DEFAULT_OG_IMAGE);
 
   let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
   if (!canonicalLink) {
@@ -2015,6 +2242,22 @@ export function syncDocumentSeoTags(pathname: string): void {
     document.head.appendChild(canonicalLink);
   }
   canonicalLink.setAttribute('href', canonicalUrl);
+
+  // Sync hreflang links (en-IN, hi-IN, x-default) per Task 12
+  document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((el) => el.remove());
+  const alternates = getHreflangAlternates(cleanPath);
+  if (alternates) {
+    const addHreflang = (lang: string, href: string) => {
+      const link = document.createElement('link');
+      link.setAttribute('rel', 'alternate');
+      link.setAttribute('hreflang', lang);
+      link.setAttribute('href', href);
+      document.head.appendChild(link);
+    };
+    addHreflang('en-IN', alternates.enUrl);
+    addHreflang('hi-IN', alternates.hiUrl);
+    addHreflang('x-default', alternates.enUrl);
+  }
 
   // Remove any legacy duplicate JSON-LD script tags
   const legacyScript = document.head.querySelector('script#casaarthiai-software-jsonld, script#casaarthiai-jsonld');
@@ -2042,16 +2285,18 @@ function escapeHtmlAttr(raw: string): string {
 
 /**
  * Generates crawlable SSR HTML body + head metadata for public routes so search engine
- * crawlers see a single clear H1, body copy, FAQs, and JSON-LD in the raw HTML source.
+ * crawlers see a single clear H1, breadcrumb nav, contextual internal <a href> links, FAQs, and JSON-LD in raw HTML.
  */
 export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   title: string;
+  h1: string;
   description: string;
   canonicalUrl: string;
   robots: 'index, follow' | 'noindex, follow' | 'noindex, nofollow';
   statusCode: 200 | 301 | 404 | 410;
   routeKind: RouteAuditResolution['routeKind'];
   redirectTo?: string;
+  hreflangHtml: string;
   jsonLdString: string;
   ssrBodyHtml: string;
 } {
@@ -2059,7 +2304,9 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
     cleanPath,
     canonicalUrl,
     title,
+    h1,
     description,
+    breadcrumbName,
     robots,
     statusCode,
     routeKind,
@@ -2067,116 +2314,194 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
     pageFaqs,
     seoSpec,
     articleSpec,
+    hindiSpec,
   } = resolvePageSeoMetadata(rawUrlOrPath);
   const jsonLdString = JSON.stringify(buildJsonLdGraph(rawUrlOrPath));
+
+  const alternates = getHreflangAlternates(cleanPath);
+  const hreflangHtml = alternates
+    ? `<link rel="alternate" hreflang="en-IN" href="${escapeHtmlAttr(alternates.enUrl)}" />\n    <link rel="alternate" hreflang="hi-IN" href="${escapeHtmlAttr(alternates.hiUrl)}" />\n    <link rel="alternate" hreflang="x-default" href="${escapeHtmlAttr(alternates.enUrl)}" />`
+    : '';
+
+  const sharedNavHtml = `<header>
+    <nav aria-label="Primary site navigation">
+      <a href="/">${escapeHtmlAttr(BRAND_NAME)}</a>
+      <a href="/">Home</a>
+      <a href="/app">Workspace</a>
+      <a href="/features">Features</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/blog">Blog</a>
+      <a href="/api-docs">API</a>
+      <a href="/hi">हिंदी (/hi)</a>
+    </nav>
+  </header>`;
+
+  const breadcrumbNavHtml =
+    cleanPath !== '/'
+      ? `<nav aria-label="Breadcrumb">
+          <a href="/">Home</a> &gt; ${
+            articleSpec
+              ? `<a href="/blog">Blog</a> &gt; <span aria-current="page">${escapeHtmlAttr(articleSpec.title)}</span>`
+              : seoSpec
+              ? `<a href="/features">Features</a> &gt; <span aria-current="page">${escapeHtmlAttr(breadcrumbName)}</span>`
+              : `<span aria-current="page">${escapeHtmlAttr(breadcrumbName)}</span>`
+          }
+        </nav>`
+      : '';
+
+  const sharedFooterHtml = `<footer>
+    <nav aria-label="Footer navigation">
+      <a href="/">https://www.casaarthiai.in</a>
+      <a href="/invoice-ocr-for-ca">Invoice OCR for CA Firms</a>
+      <a href="/gst-invoice-to-tally">GST Invoice to TallyPrime XML</a>
+      <a href="/gstr-2b-reconciliation-excel">GSTR-2B Reconciliation in Excel</a>
+      <a href="/bulk-invoice-processing-for-ca">Bulk Invoice Processing for CA</a>
+      <a href="/gst-invoice-data-extraction">GST Invoice Data Extraction</a>
+      <a href="/pdf-invoice-to-excel">PDF Invoice to Excel Converter</a>
+      <a href="/bulk-invoice-processing">Bulk Invoice Processing</a>
+      <a href="/invoice-automation-for-accountants">Invoice Automation for Accountants</a>
+      <a href="/document-scanning-software">Document Scanning Software</a>
+      <a href="/pricing">Pricing &amp; CA Firm Pilots</a>
+      <a href="/faq">FAQ</a>
+      <a href="/security">Security &amp; Data Isolation</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/data-deletion">Data Deletion Policy</a>
+      <a href="/about">About LedgerSutra</a>
+      <a href="/contact">Contact &amp; Book a Demo</a>
+      <a href="/blog">All Blog Articles &amp; Tutorials</a>
+      ${RESOURCE_ARTICLES.map((a) => `<a href="${escapeHtmlAttr(a.path)}">${escapeHtmlAttr(a.title)}</a>`).join('\n      ')}
+    </nav>
+  </footer>`;
 
   let ssrBodyHtml = '';
 
   if (routeKind === 'obsolete_gone') {
-    ssrBodyHtml = `<main class="sr-only" aria-hidden="false">
-      <h1>410 Gone — Legacy Personal-Finance Page Removed</h1>
-      <p>This legacy personal-finance or government scheme directory URL (${escapeHtmlAttr(cleanPath)}) has been permanently retired. ${escapeHtmlAttr(BRAND_NAME)} is a dedicated B2B GST invoice OCR, TallyPrime XML export, and GSTR-2B reconciliation platform for Indian Chartered Accountants.</p>
-    </main>`;
+    ssrBodyHtml = `<div class="sr-only" aria-hidden="false">
+      ${sharedNavHtml}
+      <main>
+        <h1>410 Gone — Legacy Personal-Finance Page Removed</h1>
+        <p>This legacy personal-finance or government scheme directory URL (${escapeHtmlAttr(cleanPath)}) has been permanently retired. <a href="/">Return to ${escapeHtmlAttr(BRAND_NAME)} Homepage</a>.</p>
+      </main>
+      ${sharedFooterHtml}
+    </div>`;
   } else if (routeKind === 'not_found') {
-    ssrBodyHtml = `<main class="sr-only" aria-hidden="false">
-      <h1>404 — Page Not Found</h1>
-      <p>The requested URL (${escapeHtmlAttr(cleanPath)}) does not exist on ${escapeHtmlAttr(BRAND_NAME)}.</p>
-    </main>`;
+    ssrBodyHtml = `<div class="sr-only" aria-hidden="false">
+      ${sharedNavHtml}
+      <main>
+        <h1>404 — Page Not Found</h1>
+        <p>The requested URL (${escapeHtmlAttr(cleanPath)}) does not exist on ${escapeHtmlAttr(BRAND_NAME)}. <a href="/">Back to Homepage</a>.</p>
+      </main>
+      ${sharedFooterHtml}
+    </div>`;
   } else if (seoSpec) {
-    ssrBodyHtml = `<article class="sr-only" aria-hidden="false">
-      <h1>${escapeHtmlAttr(seoSpec.h1)}</h1>
-      <p>${escapeHtmlAttr(seoSpec.subtitle)}</p>
-      <p>${escapeHtmlAttr(seoSpec.problemStatement)}</p>
-      ${(seoSpec.longFormParagraphs || []).map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
-      <section>
-        <h2>How ${escapeHtmlAttr(BRAND_NAME)} Works</h2>
-        <ul>
-          ${seoSpec.workflowSteps
-            .map((step) => `<li><strong>${escapeHtmlAttr(step.title)}:</strong> ${escapeHtmlAttr(step.detail)}</li>`)
-            .join('')}
-        </ul>
-      </section>
-      <section>
-        <h2>Key Capabilities</h2>
-        <ul>
-          ${seoSpec.keyCapabilities
-            .map((cap) => `<li><strong>${escapeHtmlAttr(cap.title)}:</strong> ${escapeHtmlAttr(cap.description)}</li>`)
-            .join('')}
-        </ul>
-      </section>
-      ${
-        pageFaqs.length > 0
-          ? `<section><h2>Frequently Asked Questions</h2>${pageFaqs
-              .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
-              .join('')}</section>`
-          : ''
-      }
-    </article>`;
+    ssrBodyHtml = `<div class="sr-only" aria-hidden="false">
+      ${sharedNavHtml}
+      ${breadcrumbNavHtml}
+      <article>
+        <h1>${escapeHtmlAttr(h1)}</h1>
+        <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : seoSpec.subtitle)}</p>
+        <p>${escapeHtmlAttr(seoSpec.problemStatement)}</p>
+        ${(seoSpec.longFormParagraphs || []).map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
+        <p>Explore related workflows: <a href="/gst-invoice-to-tally">Convert GST Invoices to TallyPrime XML</a>, <a href="/gstr-2b-reconciliation-excel">GSTR-2B Reconciliation in Excel</a>, <a href="/pdf-invoice-to-excel">Convert PDF Invoices to Excel</a>, <a href="/bulk-invoice-processing">Bulk Invoice Processing</a>, and <a href="/pricing">CA Firm Pricing Plans</a>.</p>
+        <section>
+          <h2>How ${escapeHtmlAttr(BRAND_NAME)} Works</h2>
+          <ul>
+            ${seoSpec.workflowSteps
+              .map((step) => `<li><strong>${escapeHtmlAttr(step.title)}:</strong> ${escapeHtmlAttr(step.detail)}</li>`)
+              .join('')}
+          </ul>
+        </section>
+        <section>
+          <h2>Key Capabilities</h2>
+          <ul>
+            ${seoSpec.keyCapabilities
+              .map((cap) => `<li><strong>${escapeHtmlAttr(cap.title)}:</strong> ${escapeHtmlAttr(cap.description)}</li>`)
+              .join('')}
+          </ul>
+        </section>
+        ${
+          pageFaqs.length > 0
+            ? `<section><h2>Frequently Asked Questions</h2>${pageFaqs
+                .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
+                .join('')}</section>`
+            : ''
+        }
+      </article>
+      ${sharedFooterHtml}
+    </div>`;
   } else if (articleSpec) {
-    ssrBodyHtml = `<article class="sr-only" aria-hidden="false">
-      <h1>${escapeHtmlAttr(articleSpec.title)}</h1>
-      <p>${escapeHtmlAttr(articleSpec.summary)}</p>
-      ${articleSpec.sections
-        .map(
-          (sec) => `<section>
-        <h2>${escapeHtmlAttr(sec.heading)}</h2>
-        ${sec.paragraphs.map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
-      </section>`
-        )
-        .join('')}
-    </article>`;
+    ssrBodyHtml = `<div class="sr-only" aria-hidden="false">
+      ${sharedNavHtml}
+      ${breadcrumbNavHtml}
+      <article>
+        <p>Published ${escapeHtmlAttr(articleSpec.publishedDate)} · Updated ${escapeHtmlAttr(articleSpec.publishedDate)} · By <a href="/about">${escapeHtmlAttr(DEFAULT_CA_AUTHOR.name)} (${escapeHtmlAttr(DEFAULT_CA_AUTHOR.credentials)})</a> — ${escapeHtmlAttr(DEFAULT_CA_AUTHOR.bio)}</p>
+        <h1>${escapeHtmlAttr(articleSpec.title)}</h1>
+        <p>${escapeHtmlAttr(articleSpec.summary)}</p>
+        ${articleSpec.sections
+          .map(
+            (sec) => `<section>
+          <h2>${escapeHtmlAttr(sec.heading)}</h2>
+          ${sec.paragraphs.map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
+        </section>`
+          )
+          .join('')}
+        <p>Related CA Workflows: <a href="/gst-invoice-to-tally">GST Invoice to TallyPrime XML Converter</a> · <a href="/gstr-2b-reconciliation-excel">GSTR-2B Reconciliation in Excel</a> · <a href="/pricing">CA Practice Pricing Plans</a> · <a href="/blog">Back to All Blog Articles</a></p>
+        ${
+          pageFaqs.length > 0
+            ? `<section><h2>Frequently Asked Questions</h2>${pageFaqs
+                .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
+                .join('')}</section>`
+            : ''
+        }
+      </article>
+      ${sharedFooterHtml}
+    </div>`;
   } else {
-    const singleH1Map: Record<string, string> = {
-      '/': 'Automate GST Invoice Data Entry in Seconds.',
-      '/app': `${BRAND_NAME} Live Invoice OCR, GST Audit & Tally Command Center`,
-      '/features': `${BRAND_NAME} Capabilities for Indian Chartered Accountants`,
-      '/how-it-works': `How ${BRAND_NAME} Converts GST Invoices into TallyPrime XML & Excel`,
-      '/pricing': 'Practice Plans & CA-Firm Pilot Offers',
-      '/faq': `Frequently Asked Questions (${HOMEPAGE_FAQS.length} Questions)`,
-      '/security': 'Security & Data Isolation Architecture',
-      '/privacy': 'Privacy Policy',
-      '/terms': 'Terms of Service',
-      '/data-deletion': 'Data Deletion Policy',
-      '/blog': 'Tutorials on TallyPrime Import, GSTR-2B Reconciliation & GST Audit',
-      '/api-docs': 'Programmatic GST Invoice Extraction — POST /api/v1/extract',
-      '/about': `About ${BRAND_NAME} — Built for Indian Chartered Accountants`,
-      '/contact': 'Book a Live Demo or Request CA-Firm Pilot',
-    };
-    const resolvedH1 = singleH1Map[cleanPath] || `${BRAND_NAME} — ${BRAND_TAGLINE}`;
-    ssrBodyHtml = `<main class="sr-only" aria-hidden="false">
-      <h1>${escapeHtmlAttr(resolvedH1)}</h1>
-      <p>${escapeHtmlAttr(description)}</p>
-      <p>Best OCR software for invoices India — Automated GST data extraction for CA firms with a Hindi bilingual bill scanner, TallyPrime XML export, and GSTR-2B reconciliation.</p>
-      <section>
-        <h2>Features for Indian Chartered Accountants &amp; GST Practitioners</h2>
-        <ul>
-          <li>15-Digit GSTIN Validation (Mod-36 Checksum Audit)</li>
-          <li>Bilingual Bill Scanner (English &amp; Hindi)</li>
-          <li>Military-Grade Data Privacy with Local Fallback OCR</li>
-          <li>Developer-Friendly Exports (TallyPrime XML, GSTR-2B Excel, SQL, JSON, XLSX)</li>
-        </ul>
-      </section>
-      ${
-        cleanPath === '/' || cleanPath === '/faq'
-          ? `<section><h2>Frequently Asked Questions</h2>${HOMEPAGE_FAQS.map(
-              (f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`
-            ).join('')}</section>`
-          : ''
-      }
-    </main>`;
+    ssrBodyHtml = `<div class="sr-only" aria-hidden="false">
+      ${sharedNavHtml}
+      ${breadcrumbNavHtml}
+      <main>
+        <h1>${escapeHtmlAttr(h1)}</h1>
+        <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
+        <p>Invoice OCR software for Indian CA firms — automated GST data extraction with a Hindi + English bill scanner.</p>
+        <p>Built for Indian Chartered Accountants — explore <a href="/gst-invoice-to-tally">TallyPrime XML export</a>, <a href="/gstr-2b-reconciliation-excel">GSTR-2B reconciliation</a>, <a href="/features">all GST features</a>, and <a href="/pricing">pricing plans</a>.</p>
+        <section>
+          <h2>Core Capabilities for Indian CA Firms &amp; GST Practitioners</h2>
+          <ul>
+            <li><a href="/gst-invoice-data-extraction">15-Digit GSTIN Validation (Mod-36 Checksum Audit)</a></li>
+            <li><a href="/document-scanning-software">Bilingual Bill Scanner (English &amp; Hindi)</a></li>
+            <li><a href="/security">Zero-Retention Local Fallback OCR &amp; Firestore Client Isolation</a></li>
+            <li><a href="/gst-invoice-to-tally">TallyPrime XML</a>, <a href="/gstr-2b-reconciliation-excel">GSTR-2B Excel</a>, <a href="/pdf-invoice-to-excel">PDF to Excel (.xlsx)</a>, and <a href="/api-docs">REST API</a></li>
+          </ul>
+        </section>
+        ${
+          pageFaqs.length > 0
+            ? `<section><h2>Frequently Asked Questions</h2>${pageFaqs
+                .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
+                .join('')}</section>`
+            : ''
+        }
+      </main>
+      ${sharedFooterHtml}
+    </div>`;
   }
 
   return {
     title,
+    h1,
     description,
     canonicalUrl,
     robots,
     statusCode,
     routeKind,
     redirectTo,
+    hreflangHtml,
     jsonLdString,
     ssrBodyHtml,
   };
 }
+
 
 

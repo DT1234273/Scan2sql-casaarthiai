@@ -32,6 +32,8 @@ import {
   HOMEPAGE_FAQS,
   DEDICATED_SEO_PAGES,
   RESOURCE_ARTICLES,
+  DEFAULT_CA_AUTHOR,
+  HINDI_LOCALIZED_ROUTES,
   normalizePathname,
   resolveRouteAudit,
 } from '../seoContent';
@@ -47,8 +49,24 @@ const EditorialVisual: React.FC<{
   alt: string;
   fallbackTitle: string;
   fallbackSubtitle: string;
+  width?: number;
+  height?: number;
+  loading?: 'eager' | 'lazy';
+  decoding?: 'async' | 'auto' | 'sync';
+  fetchPriority?: 'high' | 'low' | 'auto';
   className?: string;
-}> = ({ src, alt, fallbackTitle, fallbackSubtitle, className = '' }) => {
+}> = ({
+  src,
+  alt,
+  fallbackTitle,
+  fallbackSubtitle,
+  width = 1200,
+  height = 800,
+  loading = 'lazy',
+  decoding = 'async',
+  fetchPriority,
+  className = '',
+}) => {
   const [imgFailed, setImgFailed] = useState(false);
 
   if (imgFailed) {
@@ -69,6 +87,11 @@ const EditorialVisual: React.FC<{
     <img
       src={src}
       alt={alt}
+      width={width}
+      height={height}
+      loading={loading}
+      decoding={decoding}
+      {...(fetchPriority ? { fetchPriority } : {})}
       referrerPolicy="no-referrer"
       onError={() => setImgFailed(true)}
       className={className}
@@ -386,8 +409,11 @@ export const LedgerSutraHeroBanner: React.FC<{
   onTriggerUpload?: () => void;
   onNavigate?: (path: string) => void;
   savedBillsCount: number;
-}> = ({ onOpenWorkspaceTab, onTriggerUpload, onNavigate, savedBillsCount }) => {
+  currentPath?: string;
+}> = ({ onOpenWorkspaceTab, onTriggerUpload, onNavigate, savedBillsCount, currentPath = '/' }) => {
   const [heroStage, setHeroStage] = useState<'extract' | 'tally' | 'gstr2b' | 'compare'>('extract');
+  const cleanHeroPath = normalizePathname(currentPath);
+  const hindiHome = cleanHeroPath === '/hi' ? HINDI_LOCALIZED_ROUTES['/hi'] : null;
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -403,62 +429,90 @@ export const LedgerSutraHeroBanner: React.FC<{
           {/* Left Narrative & Primary CTA */}
           <div className="lg:col-span-7 p-4 sm:p-8 lg:p-12 flex flex-col justify-between space-y-6 sm:space-y-8">
             <div className="space-y-4 sm:space-y-5">
-              <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-medium text-[var(--text-muted)]">
-                <img
-                  src="/ca-saarthi-icon.svg"
-                  alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs shrink-0"
-                />
-                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
-                  <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-0.5 shrink-0">
-                    <span className="text-[var(--text-main)]">Ledger</span>
-                    <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
-                      Sutra
+              <div className="flex items-center justify-between gap-2.5 sm:gap-3 text-xs font-medium text-[var(--text-muted)]">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <img
+                    src="/ca-saarthi-icon.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs shrink-0"
+                  />
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
+                    <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-0.5 shrink-0">
+                      <span className="text-[var(--text-main)]">Ledger</span>
+                      <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
+                        Sutra
+                      </span>
                     </span>
-                  </span>
-                  <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)]">·</span>
-                  <span className="font-semibold text-indigo-600 dark:text-indigo-400 text-[11px] sm:text-xs leading-snug">
-                    {BRAND_TAGLINE}
-                  </span>
+                    <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)]">·</span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 text-[11px] sm:text-xs leading-snug">
+                      {hindiHome ? hindiHome.breadcrumbName : BRAND_TAGLINE}
+                    </span>
+                  </div>
                 </div>
+                <a
+                  href={hindiHome ? '/' : '/hi'}
+                  onClick={(e) => {
+                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate(hindiHome ? '/' : '/hi');
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+                >
+                  {hindiHome ? 'English (EN)' : 'हिंदी (/hi)'}
+                </a>
               </div>
 
               <h1
                 className="font-display font-extrabold tracking-tight leading-[1.08] text-[var(--text-main)]"
-                style={{ fontSize: 'clamp(1.68rem, 4.8vw, 3.45rem)' }}
+                style={{ fontSize: 'clamp(1.68rem, 4.4vw, 3.15rem)' }}
               >
-                Automate GST Invoice Data Entry in Seconds.
+                {hindiHome
+                  ? hindiHome.h1
+                  : 'GST Invoice OCR & Data Entry Automation for Indian CA Firms'}
               </h1>
 
               <h2 className="text-sm sm:text-lg font-normal text-[var(--text-muted)] leading-relaxed max-w-2xl">
-                Bilingual AI OCR built exclusively for Indian CA firms. Scan English &amp; Hindi
-                bills, validate GSTINs automatically, and export directly to SQL or Excel with 100%
-                data privacy.
+                {hindiHome
+                  ? hindiHome.subtitle
+                  : 'Bilingual AI OCR built exclusively for Indian CA firms. Scan English & Hindi bills, validate GSTINs automatically, and export directly to TallyPrime XML, SQL, or Excel with 100% data privacy.'}
               </h2>
 
               <div className="space-y-3 pt-1">
                 <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3">
-                  <button
-                    onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+                  <a
+                    href="/app"
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onOpenWorkspaceTab('scanner', 'ca_mode');
+                      }
+                    }}
                     className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <span>Start Free Trial</span>
                     <ArrowRight className="w-4 h-4" />
-                  </button>
+                  </a>
 
-                  <button
-                    onClick={() => {
-                      if (onNavigate) {
-                        onNavigate('/contact');
-                      } else {
-                        onOpenWorkspaceTab('scanner', 'ca_mode');
+                  <a
+                    href="/contact"
+                    onClick={(e) => {
+                      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        if (onNavigate) {
+                          onNavigate('/contact');
+                        } else {
+                          onOpenWorkspaceTab('scanner', 'ca_mode');
+                        }
                       }
                     }}
                     className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)] text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Mail className="w-4 h-4 text-indigo-500" />
                     <span>Book a Demo</span>
-                  </button>
+                  </a>
 
                   {onTriggerUpload && (
                     <button
@@ -481,7 +535,7 @@ export const LedgerSutraHeroBanner: React.FC<{
               </div>
             </div>
 
-            {/* Clean 4-Column Architectural Proof Row + Long-Tail SEO Paragraph */}
+            {/* Clean 4-Column Architectural Proof Row + Clean Single Sentence (Task 5) */}
             <div className="space-y-3 pt-5 sm:pt-6 border-t border-[var(--border-color)] text-xs">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div>
@@ -502,9 +556,59 @@ export const LedgerSutraHeroBanner: React.FC<{
                 </div>
               </div>
               <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                Engineered as the <strong>Best OCR software for invoices India</strong>, delivering{' '}
-                <strong>Automated GST data extraction for CA firms</strong> with an accurate{' '}
-                <strong>Hindi bilingual bill scanner</strong>.
+                Invoice OCR software for Indian CA firms — automated GST data extraction with a Hindi + English bill scanner. Explore{' '}
+                <a
+                  href="/gst-invoice-to-tally"
+                  onClick={(e) => {
+                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/gst-invoice-to-tally');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  GST Invoice to TallyPrime XML
+                </a>
+                ,{' '}
+                <a
+                  href="/gstr-2b-reconciliation-excel"
+                  onClick={(e) => {
+                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/gstr-2b-reconciliation-excel');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  GSTR-2B Reconciliation in Excel
+                </a>
+                ,{' '}
+                <a
+                  href="/features"
+                  onClick={(e) => {
+                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/features');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  GST Practice Features
+                </a>
+                , and{' '}
+                <a
+                  href="/pricing"
+                  onClick={(e) => {
+                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/pricing');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  CA Firm Pricing Plans
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -513,9 +617,13 @@ export const LedgerSutraHeroBanner: React.FC<{
           <div className="lg:col-span-5 relative min-h-[340px] sm:min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
             <EditorialVisual
               src={heroStudioImg}
-              alt="LedgerSutra — GST Invoice OCR dashboard and Tally XML extraction for Indian CA firms"
+              alt="LedgerSutra invoice OCR workspace showing GSTIN validation and Tally XML export"
               fallbackTitle="LedgerSutra Practice Audit Desk"
               fallbackSubtitle="Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel"
+              width={1200}
+              height={900}
+              loading="eager"
+              fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/30" />
@@ -632,9 +740,6 @@ export const LedgerSutraHeroBanner: React.FC<{
               Four Pillars Engineered to Outperform Generic Enterprise OCR
             </h2>
           </div>
-          <p className="text-xs text-[var(--text-muted)]">
-            Best OCR software for invoices India · Automated GST data extraction for CA firms · Hindi bilingual bill scanner
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -689,13 +794,17 @@ export const LedgerSutraHeroBanner: React.FC<{
           { id: 'extracted-fields-explorer', label: '05. 30+ Extracted Fields' },
           { id: 'practice-pricing-plans', label: '06. Plans & FAQ' },
         ].map((item) => (
-          <button
+          <a
             key={item.id}
-            onClick={() => scrollToSection(item.id)}
+            href={`#${item.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection(item.id);
+            }}
             className="px-3 py-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-indigo-500/50 hover:text-[var(--text-main)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             {item.label}
-          </button>
+          </a>
         ))}
       </nav>
     </section>
@@ -1364,12 +1473,18 @@ export const LedgerSutraHomepageSections: React.FC<{
               Nine Capabilities Built for GST Practitioners &amp; Audit Teams
             </h2>
           </div>
-          <button
-            onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onOpenWorkspaceTab('scanner', 'ca_mode');
+              }
+            }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer whitespace-nowrap shrink-0"
           >
             Launch Full Suite Workspace →
-          </button>
+          </a>
         </div>
 
         {/* Asymmetric Bento Row 1: Two Marquee Spotlight Cards with Editorial Visual */}
@@ -1390,21 +1505,31 @@ export const LedgerSutraHomepageSections: React.FC<{
               <span className="text-[11px] font-mono text-[var(--text-muted)]">
                 Tally XML · Zoho Books CSV · Busy Excel
               </span>
-              <button
-                onClick={() => onNavigate('/gst-invoice-to-tally')}
+              <a
+                href="/gst-invoice-to-tally"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate('/gst-invoice-to-tally');
+                  }
+                }}
                 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
               >
                 Read Tally Guide →
-              </button>
+              </a>
             </div>
           </div>
 
           <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-slate-900 overflow-hidden relative min-h-[220px] flex flex-col justify-end">
             <EditorialVisual
               src={invoiceAuditImg}
-              alt="LedgerSutra — GST purchase register and GSTR-2B reconciliation for CA firms"
+              alt="GST purchase register with GSTR-2B reconciliation statuses"
               fallbackTitle="02. GSTR-2B Reconciliation"
               fallbackSubtitle="Match Books vs Portal JSON & Excel"
+              width={900}
+              height={600}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/20" />
@@ -1415,12 +1540,18 @@ export const LedgerSutraHomepageSections: React.FC<{
               <h3 className="text-base font-bold">
                 Upload Portal JSON/Excel &amp; Flag ITC at Risk Across 6 Statuses
               </h3>
-              <button
-                onClick={() => onNavigate('/gstr-2b-reconciliation-excel')}
-                className="text-xs font-semibold text-white hover:underline cursor-pointer"
+              <a
+                href="/gstr-2b-reconciliation-excel"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate('/gstr-2b-reconciliation-excel');
+                  }
+                }}
+                className="text-xs font-semibold text-white hover:underline cursor-pointer inline-block"
               >
                 Explore 2B Matcher →
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -1432,36 +1563,43 @@ export const LedgerSutraHomepageSections: React.FC<{
               title: '03. Duplicate Invoice Detection',
               desc: 'Checks every bill against saved records by Supplier Name and Invoice Number, prompting you to Merge Items, Overwrite, or Save as Duplicate.',
               link: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
+              linkLabel: 'Learn more about Duplicate Invoice Detection →',
             },
             {
               title: '04. GSTIN Validation & Tax Audit',
               desc: 'Validates 15-character GSTIN format, state code, and official Mod-36 checksum digit while verifying line-item taxable sums against printed tax splits.',
               link: '/gst-invoice-data-extraction',
+              linkLabel: 'Learn more about GSTIN & Tax Extraction →',
             },
             {
               title: '05. Batch Processing Queue',
               desc: 'Upload dozens of multi-page PDFs and bill photos simultaneously with an interactive file queue and per-file progress bars.',
               link: '/bulk-invoice-processing-for-ca',
+              linkLabel: 'Learn more about Bulk Invoice Processing →',
             },
             {
               title: '06. Client-Wise Workspace',
               desc: 'Organize bills, documents, GSTR-2B reconciliations, and Tally ledger settings under dedicated CA client profiles in Firestore.',
               link: '/features',
+              linkLabel: 'Learn more about Client-Wise Workspaces →',
             },
             {
               title: '07. Team Access & Approval Workflow',
               desc: 'Assign Owner/CA, Reviewer, and Staff roles. Staff upload Draft/Pending bills; Reviewers approve or reject with an audit trail.',
               link: '/security',
+              linkLabel: 'Learn more about Team RBAC & Security →',
             },
             {
               title: '08. Multi-Format Accounting Export',
               desc: 'Export validated purchase registers to TallyPrime XML, multi-sheet Excel (.xlsx), Zoho Books CSV, Busy Excel, JSON, SQL, and verbatim TXT.',
               link: '/pdf-invoice-to-excel',
+              linkLabel: 'Learn more about PDF to Excel Exports →',
             },
             {
               title: '09. Developer REST API (v1)',
               desc: 'Integrate POST /api/v1/extract into your custom ERP or firm portal using SHA-256 hashed API keys with built-in rate limiting.',
               link: '/api-docs',
+              linkLabel: 'Learn more about REST API v1 →',
             },
           ].map((feat) => (
             <div
@@ -1472,12 +1610,18 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <h3 className="text-sm font-bold text-[var(--text-main)]">{feat.title}</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed">{feat.desc}</p>
               </div>
-              <button
-                onClick={() => onNavigate(feat.link)}
+              <a
+                href={feat.link}
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate(feat.link);
+                  }
+                }}
                 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer"
               >
-                Learn more →
-              </button>
+                {feat.linkLabel}
+              </a>
             </div>
           ))}
         </div>
@@ -1616,9 +1760,13 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="relative h-52 bg-slate-900">
               <EditorialVisual
                 src={caWorkspaceImg}
-                alt="LedgerSutra — Dual-monitor Chartered Accountant GST & TallyPrime workspace"
+                alt="CA reviewing flagged invoices in the LedgerSutra Tally validator"
                 fallbackTitle="CA Practice Dual-Monitor Workflow"
                 fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
+                width={900}
+                height={520}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
@@ -1689,14 +1837,18 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <span className="text-[11px] text-[var(--text-muted)]">
                   Available live above in workspace
                 </span>
-                <button
-                  onClick={() =>
-                    onOpenWorkspaceTab(previewMode === 'queue' ? 'scanner' : 'master_sheet', 'ca_mode')
-                  }
+                <a
+                  href="/app"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onOpenWorkspaceTab(previewMode === 'queue' ? 'scanner' : 'master_sheet', 'ca_mode');
+                    }
+                  }}
                   className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                 >
                   Open this view live →
-                </button>
+                </a>
               </div>
             </div>
           </div>
@@ -1716,28 +1868,34 @@ export const LedgerSutraHomepageSections: React.FC<{
               Security &amp; Data Isolation for Client Records
             </h2>
           </div>
-          <button
-            onClick={() => onNavigate('/security')}
+          <a
+            href="/security"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/security');
+              }
+            }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
           >
             Read Full Security Architecture →
-          </button>
+          </a>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Google Sign-In Authentication</span>
+              <span>Google Sign-In &amp; Practice Authentication</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Users authenticate via Google OAuth (Firebase Authentication). No plaintext passwords are stored by {BRAND_NAME}.
+              Users authenticate via Google OAuth (Firebase Authentication) or Instant CA Firm Email Sign-In. No plaintext passwords are stored by {BRAND_NAME}.
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Per-User &amp; Per-Client Firestore Isolation</span>
+              <span>Per-User &amp; Per-Client Data Isolation</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
               All saved clients, bills, and audit trails are scoped under{' '}
@@ -1757,25 +1915,30 @@ export const LedgerSutraHomepageSections: React.FC<{
       </section>
 
       {/* =================================================================== */}
-      {/* SECTION 9: PRICING SECTION (PLACEHOLDER PLANS + PILOT NOTE)         */}
+      {/* SECTION 9: PRICING SECTION (TASK 7 — CLEAN EARLY-ACCESS PLANS)       */}
       {/* =================================================================== */}
       <section
         id="practice-pricing-plans"
         className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 space-y-6 scroll-mt-20"
       >
-        <div>
-          <div className="text-xs font-medium text-[var(--text-muted)]">
-            Placeholder Practice Plans · Custom CA-Firm Pilot Offers Available
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <div className="text-xs font-medium text-[var(--text-muted)]">
+              Transparent Practice Plans · Custom CA-Firm Pilot Offers Available
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
+              Plans for Solo Practitioners &amp; Multi-Partner CA Firms
+            </h2>
           </div>
-          <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-            Plans for Solo Practitioners &amp; Multi-Partner CA Firms
-          </h2>
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+            Early-access pricing — locked for pilot firms.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             {
-              tier: 'For Evaluating Workflows · Free Starter (Placeholder)',
+              tier: 'For Evaluating Workflows · Free Starter',
               price: '₹0 / month',
               subtitle: 'For testing OCR, GSTIN validation & Tally XML export structure',
               highlighted: false,
@@ -1787,8 +1950,8 @@ export const LedgerSutraHomepageSections: React.FC<{
               ],
             },
             {
-              tier: 'For Solo CAs & Tax Consultants · Pro Practitioner (Placeholder)',
-              price: '₹1,499 / month (Placeholder)',
+              tier: 'For Solo CAs & Tax Consultants · Pro Practitioner',
+              price: '₹1,499 / month',
               subtitle: 'For independent CAs & GST practitioners filing monthly returns',
               highlighted: true,
               features: [
@@ -1799,8 +1962,8 @@ export const LedgerSutraHomepageSections: React.FC<{
               ],
             },
             {
-              tier: 'For Multi-Partner Audit Firms · CA Firm & Team (Placeholder)',
-              price: '₹3,999 / month (Placeholder)',
+              tier: 'For Multi-Partner Audit Firms · CA Firm & Team',
+              price: '₹3,999 / month',
               subtitle: 'For multi-partner CA firms with articles & reviewer workflows',
               highlighted: false,
               features: [
@@ -1836,16 +1999,22 @@ export const LedgerSutraHomepageSections: React.FC<{
                   ))}
                 </ul>
               </div>
-              <button
-                onClick={() => onNavigate('/contact')}
-                className={`w-full py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+              <a
+                href="/contact"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate('/contact');
+                  }
+                }}
+                className={`w-full py-2.5 rounded-xl text-xs font-semibold text-center transition-colors cursor-pointer block ${
                   plan.highlighted
                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                     : 'bg-[var(--bg-card)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)]'
                 }`}
               >
                 Request CA-Firm Pilot Offer
-              </button>
+              </a>
             </div>
           ))}
         </div>
@@ -1937,10 +2106,48 @@ export const LedgerSutraRouteView: React.FC<{
   const [contactEmail, setContactEmail] = useState('');
   const [contactFirm, setContactFirm] = useState('');
 
+  // Shared Visible Breadcrumb Strip for all non-home routes (Task 1 — Home > Section > Current Page)
+  const renderBreadcrumb = (label: string, section?: { name: string; path: string }) => (
+    <nav aria-label="Breadcrumb" className="text-xs text-[var(--text-muted)] flex flex-wrap items-center gap-1.5">
+      <a
+        href="/"
+        onClick={(e) => {
+          if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+            e.preventDefault();
+            onNavigate('/');
+          }
+        }}
+        className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline font-medium"
+      >
+        Home
+      </a>
+      {section && (
+        <>
+          <span aria-hidden="true">&gt;</span>
+          <a
+            href={section.path}
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate(section.path);
+              }
+            }}
+            className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline font-medium"
+          >
+            {section.name}
+          </a>
+        </>
+      )}
+      <span aria-hidden="true">&gt;</span>
+      <span className="font-semibold text-[var(--text-main)] truncate max-w-md">{label}</span>
+    </nav>
+  );
+
   // 0a. Obsolete Paisa Saarthi / Personal-Finance Routes (HTTP 410 Gone — no indiscriminate redirect)
   if (routeAudit.routeKind === 'obsolete_gone') {
     return (
       <section className="rounded-2xl border border-amber-500/30 bg-[var(--bg-card)] p-6 sm:p-10 space-y-5 max-w-3xl">
+        {renderBreadcrumb('410 Gone')}
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>HTTP 410 Gone · Legacy Personal-Finance Route Retired · noindex, nofollow</span>
@@ -1956,18 +2163,30 @@ export const LedgerSutraRouteView: React.FC<{
           and tax practitioners.
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
-          <button
-            onClick={() => onNavigate('/')}
+          <a
+            href="/"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/');
+              }
+            }}
             className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
           >
             Go to {BRAND_NAME} Homepage
-          </button>
-          <button
-            onClick={() => onNavigate('/app')}
+          </a>
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/app');
+              }
+            }}
             className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
           >
             Open CA Invoice OCR Workspace (/app)
-          </button>
+          </a>
         </div>
       </section>
     );
@@ -1977,6 +2196,7 @@ export const LedgerSutraRouteView: React.FC<{
   if (routeAudit.routeKind === 'not_found') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5 max-w-3xl">
+        {renderBreadcrumb('404 Not Found')}
         <div className="text-xs font-semibold text-rose-600 dark:text-rose-400">
           HTTP 404 Not Found · noindex, nofollow
         </div>
@@ -1988,26 +2208,122 @@ export const LedgerSutraRouteView: React.FC<{
           could not be found on {BRAND_NAME}. Choose a canonical CA workflow page below:
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
-          <button
-            onClick={() => onNavigate('/')}
+          <a
+            href="/"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/');
+              }
+            }}
             className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
           >
             Return to Homepage
-          </button>
-          <button
-            onClick={() => onNavigate('/app')}
+          </a>
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/app');
+              }
+            }}
             className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
           >
             Open CA Workspace (/app)
-          </button>
-          <button
-            onClick={() => onNavigate('/blog')}
+          </a>
+          <a
+            href="/blog"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/blog');
+              }
+            }}
             className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
           >
             Browse CA Practice Blog
-          </button>
+          </a>
         </div>
       </section>
+    );
+  }
+
+  // 0c. Hindi Localized Routes (/hi/* — Task 12)
+  if (HINDI_LOCALIZED_ROUTES[cleanPath]) {
+    const hiSpec = HINDI_LOCALIZED_ROUTES[cleanPath];
+    return (
+      <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {renderBreadcrumb(hiSpec.h1)}
+          <a
+            href={hiSpec.enPath}
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate(hiSpec.enPath);
+              }
+            }}
+            className="px-3 py-1 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Read in English ({hiSpec.enPath}) →
+          </a>
+        </div>
+        <div className="space-y-3 border-b border-[var(--border-color)] pb-6">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{hiSpec.breadcrumbName}</div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">{hiSpec.h1}</h1>
+          <p className="text-base text-[var(--text-muted)]">{hiSpec.subtitle}</p>
+          <div className="pt-2 flex flex-wrap gap-3">
+            <a
+              href="/app"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onOpenWorkspaceTab('scanner', 'ca_mode');
+                }
+              }}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
+            >
+              CA वर्कस्पेस खोलें (/app)
+            </a>
+            <a
+              href="/hi"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/hi');
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
+            >
+              हिंदी होमपेज (/hi)
+            </a>
+          </div>
+        </div>
+        <div className="space-y-4 max-w-3xl">
+          <p className="text-sm text-[var(--text-main)] leading-relaxed">
+            {hiSpec.description}
+          </p>
+        </div>
+        <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-muted)] leading-relaxed">
+          संबंधित वर्कफ़्लो:{' '}
+          <a href="/hi/gst-invoice-to-tally" onClick={(e) => { e.preventDefault(); onNavigate('/hi/gst-invoice-to-tally'); }} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            GST बिल से TallyPrime XML
+          </a>{' '}
+          ·{' '}
+          <a href="/hi/gstr-2b-reconciliation-excel" onClick={(e) => { e.preventDefault(); onNavigate('/hi/gstr-2b-reconciliation-excel'); }} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            GSTR-2B रिकॉन्सिलिएशन
+          </a>{' '}
+          ·{' '}
+          <a href="/hi/pdf-invoice-to-excel" onClick={(e) => { e.preventDefault(); onNavigate('/hi/pdf-invoice-to-excel'); }} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            PDF से Excel (.XLSX)
+          </a>{' '}
+          ·{' '}
+          <a href="/hi/pricing" onClick={(e) => { e.preventDefault(); onNavigate('/hi/pricing'); }} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            प्राइसिंग प्लान्स
+          </a>
+        </div>
+      </article>
     );
   }
 
@@ -2016,6 +2332,7 @@ export const LedgerSutraRouteView: React.FC<{
     const spec = DEDICATED_SEO_PAGES[cleanPath];
     return (
       <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+        {renderBreadcrumb(spec.h1, { name: 'Features', path: '/features' })}
         <div className="space-y-3 border-b border-[var(--border-color)] pb-6">
           <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
             {spec.badge}
@@ -2028,33 +2345,115 @@ export const LedgerSutraRouteView: React.FC<{
             {spec.problemStatement}
           </p>
           <div className="pt-2 flex flex-wrap gap-3">
-            <button
-              onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+            <a
+              href="/app"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onOpenWorkspaceTab('scanner', 'ca_mode');
+                }
+              }}
               className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
             >
               Try Free Demo in CA Workspace
-            </button>
-            <button
-              onClick={() => onNavigate('/')}
+            </a>
+            <a
+              href="/"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/');
+                }
+              }}
               className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
             >
               Back to Homepage
-            </button>
+            </a>
           </div>
         </div>
 
-        {spec.longFormParagraphs && spec.longFormParagraphs.length > 0 && (
-          <div className="space-y-4 max-w-3xl">
-            <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
-              Why Indian CA Firms Automate This Workflow with {BRAND_NAME}
-            </h2>
-            {spec.longFormParagraphs.map((para, i) => (
-              <p key={i} className="text-sm text-[var(--text-muted)] leading-relaxed">
-                {para}
-              </p>
-            ))}
-          </div>
-        )}
+        <div className="space-y-4 max-w-3xl">
+          {spec.longFormParagraphs && spec.longFormParagraphs.length > 0 && (
+            <>
+              <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
+                Why Indian CA Firms Automate This Workflow with {BRAND_NAME}
+              </h2>
+              {spec.longFormParagraphs.map((para, i) => (
+                <p key={i} className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  {para}
+                </p>
+              ))}
+            </>
+          )}
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+            Explore related CA workflows:{' '}
+            <a
+              href="/gst-invoice-to-tally"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gst-invoice-to-tally');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GST Invoice to TallyPrime XML
+            </a>
+            ,{' '}
+            <a
+              href="/gstr-2b-reconciliation-excel"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gstr-2b-reconciliation-excel');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GSTR-2B Reconciliation in Excel
+            </a>
+            ,{' '}
+            <a
+              href="/bulk-invoice-processing"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/bulk-invoice-processing');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Bulk Invoice Processing
+            </a>
+            ,{' '}
+            <a
+              href="/pdf-invoice-to-excel"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/pdf-invoice-to-excel');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Convert PDF Invoices to Excel
+            </a>
+            , and{' '}
+            <a
+              href="/pricing"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/pricing');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              CA Firm Pricing Plans
+            </a>
+            .
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {spec.workflowSteps.map((step, i) => (
@@ -2110,23 +2509,63 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 2. Blog / Resource Article Detail Page
+  // 2. Blog / Resource Article Detail Page (Task 1, Task 4, Task 8)
   const article = RESOURCE_ARTICLES.find(
     (a) => a.path === cleanPath || `/blog/${a.slug}` === cleanPath || `/resources/${a.slug}` === cleanPath
   );
   if (article) {
+    const author = DEFAULT_CA_AUTHOR;
+    const updatedDate = article.publishedDate;
     return (
       <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+        {renderBreadcrumb(article.title, { name: 'Blog', path: '/blog' })}
         <div className="space-y-3 border-b border-[var(--border-color)] pb-6">
           <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)]">
             <span className="font-semibold text-indigo-600 dark:text-indigo-400">{article.category}</span>
             <span aria-hidden="true">·</span>
             <span>{article.readTime}</span>
             <span aria-hidden="true">·</span>
-            <span>Published {article.publishedDate}</span>
+            <span>
+              Published {article.publishedDate} · Updated {updatedDate}
+            </span>
           </div>
           <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">{article.title}</h1>
           <p className="text-sm text-[var(--text-muted)] max-w-3xl">{article.summary}</p>
+
+          {/* Visible Author Byline Block (Task 8 — Honest Editorial Attribution) */}
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs">
+            <div className="space-y-0.5">
+              <div className="font-bold text-[var(--text-main)]">
+                By{' '}
+                <a
+                  href="/about"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/about');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  {author.name}
+                </a>{' '}
+                <span className="font-normal text-[var(--text-muted)]">({author.credentials})</span>
+              </div>
+              <div className="text-[var(--text-muted)]">{author.bio}</div>
+            </div>
+            <a
+              href="/about"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/about');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              About {BRAND_NAME} →
+            </a>
+          </div>
         </div>
 
         <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
@@ -2158,58 +2597,121 @@ export const LedgerSutraRouteView: React.FC<{
               )}
             </section>
           ))}
+
+          {/* Contextual Internal Links from Blog Copy to Money Pages + Pricing (Task 1) */}
+          <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-muted)] leading-relaxed">
+            <strong className="text-[var(--text-main)]">Related {BRAND_NAME} Workflows:</strong> Automate{' '}
+            <a
+              href="/gst-invoice-to-tally"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gst-invoice-to-tally');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GST Invoice to TallyPrime XML Import
+            </a>
+            , run 6-status{' '}
+            <a
+              href="/gstr-2b-reconciliation-excel"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gstr-2b-reconciliation-excel');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GSTR-2B Reconciliation in Excel
+            </a>
+            , or compare{' '}
+            <a
+              href="/pricing"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/pricing');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              CA Firm Pricing Plans
+            </a>
+            .
+          </div>
         </div>
 
-        <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
-          <button
-            onClick={() => onNavigate('/blog')}
+        <div className="pt-4 border-t border-[var(--border-color)] flex flex-wrap items-center justify-between gap-3">
+          <a
+            href="/blog"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/blog');
+              }
+            }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
           >
             ← Back to All Blog Articles
-          </button>
-          <button
-            onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+          </a>
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onOpenWorkspaceTab('scanner', 'ca_mode');
+              }
+            }}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
           >
-            Try {BRAND_NAME} Live Workspace
-          </button>
+            Try the live workspace
+          </a>
         </div>
       </article>
     );
   }
 
-  // 3. Blog / Resources Index
+  // 3. Blog / Resources Index (Task 1.6 & Task 4)
   if (cleanPath === '/blog' || cleanPath === '/resources') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        {renderBreadcrumb('Blog')}
         <div>
           <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
             CA Practice Blog &amp; Guides
           </div>
           <h1 className="font-display text-3xl font-bold text-[var(--text-main)] mt-1">
-            Tutorials on TallyPrime Import, GSTR-2B Reconciliation &amp; GST Audit
+            GST &amp; TallyPrime Guides for CA Firms
           </h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {RESOURCE_ARTICLES.map((art) => (
-            <div
+            <a
               key={art.slug}
-              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4"
+              href={art.path}
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate(art.path);
+                }
+              }}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] hover:border-indigo-500/50 transition-colors flex flex-col justify-between space-y-4 group"
             >
               <div className="space-y-2">
                 <div className="text-xs text-[var(--text-muted)]">
-                  {art.category} · {art.readTime}
+                  {art.category} · {art.readTime} · {art.publishedDate}
                 </div>
-                <h2 className="text-base font-bold text-[var(--text-main)]">{art.title}</h2>
+                <h2 className="text-base font-bold text-[var(--text-main)] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {art.title}
+                </h2>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed">{art.summary}</p>
               </div>
-              <button
-                onClick={() => onNavigate(art.path)}
-                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer"
-              >
+              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 group-hover:underline text-left">
                 Read Full Article →
-              </button>
-            </div>
+              </span>
+            </a>
           ))}
         </div>
       </section>
@@ -2220,13 +2722,13 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/api-docs') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        {renderBreadcrumb('REST API v1')}
         <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
           <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
             REST API v1 Documentation
           </div>
           <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-            Programmatic GST Invoice Extraction —{' '}
-            <code className="text-indigo-600 dark:text-indigo-400">POST /api/v1/extract</code>
+            Invoice Extraction REST API (v1)
           </h1>
           <p className="text-sm text-[var(--text-muted)] max-w-3xl">
             Authenticate with the built-in endpoint or generate per-user API keys in the workspace{' '}
@@ -2281,6 +2783,7 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/privacy') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        {renderBreadcrumb('Privacy Policy')}
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Privacy Policy</h1>
         <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
@@ -2297,7 +2800,33 @@ export const LedgerSutraRouteView: React.FC<{
           <p>
             <strong className="text-[var(--text-main)]">3. Strict Per-User Isolation &amp; Deletion:</strong> If you
             sign in to save history, your client profiles and bills are isolated under your authenticated account and can
-            be permanently deleted at any time with a single click.
+            be permanently deleted at any time with a single click. See our{' '}
+            <a
+              href="/data-deletion"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/data-deletion');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Data Deletion Policy
+            </a>{' '}
+            and{' '}
+            <a
+              href="/security"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/security');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Security Architecture
+            </a>
+            .
           </p>
         </div>
       </section>
@@ -2308,6 +2837,7 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/terms') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        {renderBreadcrumb('Terms of Service')}
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Terms of Service</h1>
         <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
@@ -2331,6 +2861,7 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/data-deletion') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        {renderBreadcrumb('Data Deletion Policy')}
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Data Deletion Policy</h1>
         <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
@@ -2360,14 +2891,15 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/security') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+        {renderBreadcrumb('Security & Data Isolation')}
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-          Security &amp; Data Isolation Architecture
+          Security &amp; Data Isolation for Client Records
         </h1>
         <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
           We describe only the technical security controls that are implemented and active in {BRAND_NAME}:
         </p>
         <ul className="space-y-3 text-sm text-[var(--text-main)] max-w-3xl">
-          <li>• <b>Google Sign-In (Firebase Auth):</b> All user sessions are authenticated via Google OAuth tokens.</li>
+          <li>• <b>Google Sign-In &amp; CA Practice Auth:</b> Sessions are authenticated via Google OAuth tokens or scoped CA Practice accounts.</li>
           <li>• <b>Database-Level Ownership Rules:</b> <code className="font-mono">firestore.rules</code> enforces strict <code className="font-mono">request.auth.uid == userId</code> ownership and role-based approval permissions on every read and write.</li>
           <li>• <b>SHA-256 Hashed API Keys:</b> Developer API keys generated for <code className="font-mono">/api/v1/extract</code> are hashed in the browser using SHA-256 before saving to Firestore; plaintext keys are never persisted.</li>
           <li>• <b>Encryption in Transit:</b> All client-to-server and client-to-Firestore traffic is encrypted over HTTPS/TLS.</li>
@@ -2380,8 +2912,9 @@ export const LedgerSutraRouteView: React.FC<{
   if (cleanPath === '/faq') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        {renderBreadcrumb('FAQ')}
         <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-          Frequently Asked Questions ({HOMEPAGE_FAQS.length} Questions)
+          Questions from Chartered Accountants &amp; Tax Teams
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {HOMEPAGE_FAQS.map((f, i) => (
@@ -2395,19 +2928,46 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  // 9. Contact / Demo Booking Interactive Form (/contact) + Pricing Fallback
+  // 9. Contact / Demo Booking Interactive Form (/contact)
   if (cleanPath === '/contact') {
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6 max-w-3xl">
+        {renderBreadcrumb('Contact & Book a Demo')}
         <div className="space-y-2">
           <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
             CA Practice Onboarding
           </div>
           <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-            Book a Live Demo or Request CA-Firm Pilot
+            Contact &amp; Book a Demo
           </h1>
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            Schedule a live walkthrough of TallyPrime XML import, GSTR-2B reconciliation, and multi-client firm workspaces with our engineering team at{' '}
+            Schedule a live walkthrough of{' '}
+            <a
+              href="/gst-invoice-to-tally"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gst-invoice-to-tally');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              TallyPrime XML import
+            </a>
+            ,{' '}
+            <a
+              href="/gstr-2b-reconciliation-excel"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gstr-2b-reconciliation-excel');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GSTR-2B reconciliation
+            </a>
+            , and multi-client firm workspaces with our engineering team at{' '}
             <a href="mailto:support@casaarthiai.in" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
               support@casaarthiai.in
             </a>.
@@ -2466,13 +3026,18 @@ export const LedgerSutraRouteView: React.FC<{
               >
                 Request Demo Walkthrough
               </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('/')}
+              <a
+                href="/"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate('/');
+                  }
+                }}
                 className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
               >
                 Back to Homepage
-              </button>
+              </a>
             </div>
           </form>
         )}
@@ -2482,26 +3047,26 @@ export const LedgerSutraRouteView: React.FC<{
 
   const corePageH1Map: Record<string, { badge: string; h1: string; summary: string }> = {
     '/pricing': {
-      badge: 'Transparent CA Practice Plans',
-      h1: 'Practice Plans & CA-Firm Pilot Offers',
+      badge: 'Early-Access Pricing — Locked for Pilot Firms',
+      h1: 'Plans for Solo Practitioners & Multi-Partner CA Firms',
       summary:
-        'Start with the free browser demo (3 custom scans/day), or request a custom CA-Firm Pilot with multi-client workspaces, TallyPrime XML export, and GSTR-2B reconciliation.',
+        'Start with Free Starter (₹0 / month, 3 demo scans/day), upgrade to Pro Practitioner (₹1,499 / month for up to 25 client workspaces and GSTR-2B reconciliation), or choose CA Firm & Team (₹3,999 / month with unlimited clients, RBAC, and REST API).',
     },
     '/features': {
       badge: 'CA Practice Capabilities Suite',
-      h1: `${BRAND_NAME} Capabilities for Indian Chartered Accountants`,
+      h1: 'Features Built for Indian GST Practice Workflows',
       summary:
         'Explore our 9 core modules: TallyPrime XML voucher export, 6-status GSTR-2B reconciliation, duplicate invoice detection, 15-digit GSTIN Mod-36 checksum audit, batch queue, client workspaces, team RBAC, and REST API.',
     },
     '/how-it-works': {
       badge: '3-Step Accounting Workflow',
-      h1: `How ${BRAND_NAME} Converts GST Invoices into TallyPrime XML & Excel`,
+      h1: 'From Client Invoice Folder to Tally Sign-Off',
       summary:
         'Select your client workspace, upload single or batch PDF/image bills, verify flagged fields in the CA audit queue, and export directly to TallyPrime XML or multi-sheet GSTR-2B Excel.',
     },
     '/about': {
       badge: 'Built for Indian CA Firms',
-      h1: `About ${BRAND_NAME} — Built for Indian Chartered Accountants`,
+      h1: 'Built for Indian Chartered Accountants',
       summary: `${BRAND_NAME} eliminates repetitive purchase voucher typing, GSTIN verification bottlenecks, and manual GSTR-2B VLOOKUP work for Indian Chartered Accountants, tax practitioners, and accounting teams.`,
     },
   };
@@ -2513,6 +3078,7 @@ export const LedgerSutraRouteView: React.FC<{
 
   return (
     <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      {renderBreadcrumb(corePageInfo.h1)}
       <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{corePageInfo.badge}</div>
       <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
         {corePageInfo.h1}
@@ -2521,25 +3087,37 @@ export const LedgerSutraRouteView: React.FC<{
         {corePageInfo.summary}
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
-          onClick={() => onNavigate('/')}
+        <a
+          href="/"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              onNavigate('/');
+            }
+          }}
           className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold cursor-pointer"
         >
           View Full Landing Page
-        </button>
-        <button
-          onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+        </a>
+        <a
+          href="/app"
+          onClick={(e) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+              e.preventDefault();
+              onOpenWorkspaceTab('scanner', 'ca_mode');
+            }
+          }}
           className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
         >
           Jump to Workspace
-        </button>
+        </a>
       </div>
     </section>
   );
 };
 
 // ============================================================================
-// SECTION 11: QUIET ARCHITECTURAL FOOTER (PART 7.11)
+// SECTION 11: QUIET ARCHITECTURAL FOOTER (PART 7.11 & TASK 1)
 // ============================================================================
 export const LedgerSutraFooter: React.FC<{
   onNavigate: (path: string) => void;
@@ -2548,6 +3126,13 @@ export const LedgerSutraFooter: React.FC<{
     mode?: 'normal_user' | 'ca_mode'
   ) => void;
 }> = ({ onNavigate, onOpenWorkspaceTab }) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+      e.preventDefault();
+      onNavigate(path);
+    }
+  };
+
   return (
     <footer className="border-t border-[var(--border-color)] bg-[var(--bg-card)] mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-8">
@@ -2557,21 +3142,33 @@ export const LedgerSutraFooter: React.FC<{
             <div className="flex items-center gap-3.5">
               <img
                 src="/ca-saarthi-icon.svg"
-                alt="LedgerSutra — GST Invoice OCR & Tally XML Tool for Indian CA Firms"
+                alt=""
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded-2xl object-contain shadow-sm shrink-0"
               />
               <div>
-                <span className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-0.5">
+                <a
+                  href="/"
+                  onClick={(e) => handleLinkClick(e, '/')}
+                  className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-0.5"
+                >
                   <span className="text-[var(--text-main)]">Ledger</span>
                   <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
                     Sutra
                   </span>
-                </span>
-                <span className="text-[11px] font-medium text-[var(--text-muted)] block">{SITE_DOMAIN}</span>
+                </a>
+                <a
+                  href="/"
+                  onClick={(e) => handleLinkClick(e, '/')}
+                  className="text-[11px] font-medium text-[var(--text-muted)] hover:text-indigo-500 block"
+                >
+                  {SITE_DOMAIN}
+                </a>
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Bilingual AI OCR built exclusively for Indian CA firms. Best OCR software for invoices India with automated GST data extraction for CA firms and a Hindi bilingual bill scanner.
+              Built for Indian Chartered Accountants — automated GST invoice extraction, English &amp; Hindi bill OCR, TallyPrime XML export, and GSTR-2B reconciliation.
             </p>
             <div className="text-xs text-[var(--text-main)] font-medium">
               Support:{' '}
@@ -2583,18 +3180,32 @@ export const LedgerSutraFooter: React.FC<{
               </a>
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
-              <button
-                onClick={() => onOpenWorkspaceTab('scanner', 'ca_mode')}
+              <a
+                href="/app"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onOpenWorkspaceTab('scanner', 'ca_mode');
+                  }
+                }}
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
               >
                 Start Free Trial
-              </button>
-              <button
-                onClick={() => onNavigate('/api-docs')}
+              </a>
+              <a
+                href="/api-docs"
+                onClick={(e) => handleLinkClick(e, '/api-docs')}
                 className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
               >
                 REST API Docs
-              </button>
+              </a>
+              <a
+                href="/hi"
+                onClick={(e) => handleLinkClick(e, '/hi')}
+                className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold text-indigo-600 dark:text-indigo-400 cursor-pointer"
+              >
+                हिंदी (/hi)
+              </a>
             </div>
           </div>
 
@@ -2603,48 +3214,76 @@ export const LedgerSutraFooter: React.FC<{
             <h3 className="text-xs font-bold text-[var(--text-main)]">Platform &amp; Legal Trust</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
-                <button
-                  onClick={() => onNavigate('/privacy')}
+                <a
+                  href="/privacy"
+                  onClick={(e) => handleLinkClick(e, '/privacy')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
                   Privacy Policy
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/terms')}
+                <a
+                  href="/terms"
+                  onClick={(e) => handleLinkClick(e, '/terms')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
                   Terms of Service
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/data-deletion')}
+                <a
+                  href="/data-deletion"
+                  onClick={(e) => handleLinkClick(e, '/data-deletion')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
                   Data Deletion Policy
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => onNavigate('/security')} className="hover:text-indigo-500 cursor-pointer">
+                <a
+                  href="/security"
+                  onClick={(e) => handleLinkClick(e, '/security')}
+                  className="hover:text-indigo-500 cursor-pointer"
+                >
                   Security &amp; Data Isolation
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => onNavigate('/pricing')} className="hover:text-indigo-500 cursor-pointer">
+                <a
+                  href="/pricing"
+                  onClick={(e) => handleLinkClick(e, '/pricing')}
+                  className="hover:text-indigo-500 cursor-pointer"
+                >
                   Pricing &amp; CA Firm Pilots
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => onNavigate('/faq')} className="hover:text-indigo-500 cursor-pointer">
+                <a
+                  href="/faq"
+                  onClick={(e) => handleLinkClick(e, '/faq')}
+                  className="hover:text-indigo-500 cursor-pointer"
+                >
                   FAQ ({HOMEPAGE_FAQS.length} Questions)
-                </button>
+                </a>
               </li>
               <li>
-                <button onClick={() => onNavigate('/contact')} className="hover:text-indigo-500 cursor-pointer">
+                <a
+                  href="/contact"
+                  onClick={(e) => handleLinkClick(e, '/contact')}
+                  className="hover:text-indigo-500 cursor-pointer"
+                >
                   Contact &amp; Book a Demo
-                </button>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/about"
+                  onClick={(e) => handleLinkClick(e, '/about')}
+                  className="hover:text-indigo-500 cursor-pointer"
+                >
+                  About LedgerSutra
+                </a>
               </li>
             </ul>
           </div>
@@ -2654,52 +3293,58 @@ export const LedgerSutraFooter: React.FC<{
             <h3 className="text-xs font-bold text-[var(--text-main)]">CA &amp; GST Workflows</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
-                <button
-                  onClick={() => onNavigate('/gst-invoice-to-tally')}
+                <a
+                  href="/gst-invoice-to-tally"
+                  onClick={(e) => handleLinkClick(e, '/gst-invoice-to-tally')}
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   GST Invoice to TallyPrime XML
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/gstr-2b-reconciliation-excel')}
+                <a
+                  href="/gstr-2b-reconciliation-excel"
+                  onClick={(e) => handleLinkClick(e, '/gstr-2b-reconciliation-excel')}
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   GSTR-2B Reconciliation in Excel
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/bulk-invoice-processing-for-ca')}
+                <a
+                  href="/bulk-invoice-processing-for-ca"
+                  onClick={(e) => handleLinkClick(e, '/bulk-invoice-processing-for-ca')}
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
                   Bulk Invoice Processing for CA
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/invoice-ocr-for-ca')}
+                <a
+                  href="/invoice-ocr-for-ca"
+                  onClick={(e) => handleLinkClick(e, '/invoice-ocr-for-ca')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
                   Invoice OCR for CA Firms
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/gst-invoice-data-extraction')}
+                <a
+                  href="/gst-invoice-data-extraction"
+                  onClick={(e) => handleLinkClick(e, '/gst-invoice-data-extraction')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
                   GST Invoice Data Extraction
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate('/pdf-invoice-to-excel')}
+                <a
+                  href="/pdf-invoice-to-excel"
+                  onClick={(e) => handleLinkClick(e, '/pdf-invoice-to-excel')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
                   PDF Invoice to Excel (.XLSX)
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -2709,21 +3354,23 @@ export const LedgerSutraFooter: React.FC<{
             <h3 className="text-xs font-bold text-[var(--text-main)]">CA Blog &amp; Guides</h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
-                <button
-                  onClick={() => onNavigate('/blog')}
+                <a
+                  href="/blog"
+                  onClick={(e) => handleLinkClick(e, '/blog')}
                   className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer text-left"
                 >
                   All Blog Articles &amp; Tutorials →
-                </button>
+                </a>
               </li>
-              {RESOURCE_ARTICLES.slice(0, 5).map((art) => (
+              {RESOURCE_ARTICLES.map((art) => (
                 <li key={art.slug}>
-                  <button
-                    onClick={() => onNavigate(art.path)}
-                    className="hover:text-indigo-500 cursor-pointer text-left line-clamp-1"
+                  <a
+                    href={art.path}
+                    onClick={(e) => handleLinkClick(e, art.path)}
+                    className="hover:text-indigo-500 cursor-pointer text-left line-clamp-1 block"
                   >
                     {art.title}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -2738,7 +3385,11 @@ export const LedgerSutraFooter: React.FC<{
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
             <span>
-              © {new Date().getFullYear()} {BRAND_NAME} (casaarthiai.in). Contact: support@casaarthiai.in
+              © {new Date().getFullYear()} {BRAND_NAME} (
+              <a href="/" onClick={(e) => handleLinkClick(e, '/')} className="hover:underline">
+                casaarthiai.in
+              </a>
+              ). Contact: support@casaarthiai.in
             </span>
             <span>🔒 Local Fallback OCR · Zero Server-Side Data Retention · TallyPrime XML · GSTR-2B · SQL &amp; XLSX</span>
           </div>
