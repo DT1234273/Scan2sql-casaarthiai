@@ -353,8 +353,8 @@ export async function saveUserProfileToFirestore(
   // Always save profile to local account store
   writeLocalAccountData(uid, 'profile', {
     uid,
-    email: clampString(user.email, 200, 3, 'user@ledgersutra.in'),
-    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'LedgerSutra User'),
+    email: clampString(user.email, 200, 3, 'user@casaarthiai.in'),
+    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
     photoURL: clampString(user.photoURL, 1000, 0, ''),
     userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
     firmRole: activeRole === 'reviewer' || activeRole === 'staff' ? activeRole : 'owner',
@@ -368,8 +368,8 @@ export async function saveUserProfileToFirestore(
 
   const payload = {
     uid,
-    email: clampString(user.email, 200, 3, 'user@ledgersutra.in'),
-    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'LedgerSutra User'),
+    email: clampString(user.email, 200, 3, 'user@casaarthiai.in'),
+    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
     photoURL: clampString(user.photoURL, 1000, 0, ''),
     userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
     firmRole: activeRole === 'reviewer' || activeRole === 'staff' ? activeRole : 'owner',
@@ -778,12 +778,12 @@ export async function saveTallySettingsToFirestore(
   writeLocalAccountData(uid, 'profile', {
     ...prevProfile,
     uid,
-    email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@ledgersutra.in'),
+    email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@casaarthiai.in'),
     displayName: clampString(
       cur?.displayName || prevProfile.displayName || cur?.email?.split('@')[0],
       150,
       1,
-      'LedgerSutra User'
+      'CA Saarthi AI User'
     ),
     photoURL: clampString(cur?.photoURL || prevProfile.photoURL, 1000, 0, ''),
     tallySettingsJson,
@@ -797,12 +797,12 @@ export async function saveTallySettingsToFirestore(
       doc(db, 'users', uid),
       {
         uid,
-        email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@ledgersutra.in'),
+        email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@casaarthiai.in'),
         displayName: clampString(
           cur?.displayName || prevProfile.displayName || cur?.email?.split('@')[0],
           150,
           1,
-          'LedgerSutra User'
+          'CA Saarthi AI User'
         ),
         photoURL: clampString(cur?.photoURL || prevProfile.photoURL, 1000, 0, ''),
         tallySettingsJson,
@@ -879,8 +879,8 @@ export async function createAndSaveApiKeyToFirestore(
   const record: UserApiKeyRecord = {
     id: `KEY_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     ownerId: uid,
-    label: label.trim() || 'LedgerSutra API Key',
-    name: label.trim() || 'LedgerSutra API Key',
+    label: label.trim() || 'CA Saarthi AI API Key',
+    name: label.trim() || 'CA Saarthi AI API Key',
     keyPrefix,
     keyHash,
     createdAt: nowStr,

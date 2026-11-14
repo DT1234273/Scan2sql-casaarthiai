@@ -1456,7 +1456,7 @@ export function App() {
       await signOutGoogleUser();
       setSavedBills([]);
       setSavedDocuments([]);
-      showToast('Signed out of your LedgerSutra workspace.');
+      showToast('Signed out of your CA Saarthi AI workspace.');
     } catch (err: any) {
       showToast(`Sign out failed: ${err?.message || 'Error'}`);
     }
@@ -3192,7 +3192,7 @@ export function App() {
     const wsText = XLSX.utils.json_to_sheet(textSheetData);
     XLSX.utils.book_append_sheet(wb, wsText, 'Exact_Extracted_Text');
 
-    XLSX.writeFile(wb, `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `CA_Saarthi_AI_Bills_${new Date().toISOString().slice(0, 10)}.xlsx`);
     showToast(`Exported ${masterSheetRows.length} rows to ${BRAND_NAME} Excel (.xlsx)!`);
   };
 
@@ -3201,7 +3201,7 @@ export function App() {
       showToast('No bills in the sheet yet. Scan a bill first!');
       return;
     }
-    const filename = `LedgerSutra_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
+    const filename = `CA_Saarthi_AI_Bills_${new Date().toISOString().slice(0, 10)}.csv`;
     exportMasterRowsToCsv(masterSheetRows, activeSelectedColumnDefs, columnTotals, filename);
     showToast(`Exported ${masterSheetRows.length} rows to CSV (${filename})!`);
   };
@@ -3758,16 +3758,33 @@ export function App() {
           <div className="w-full max-w-md rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-2xl overflow-hidden">
             <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-subtle)]">
               <div className="flex items-center gap-3">
-                <img
-                  src="/ca-saarthi-icon.svg"
-                  alt="LedgerSutra mark"
-                  width={36}
-                  height={36}
-                  className="w-9 h-9 rounded-xl object-contain shrink-0"
-                />
+                <div className="relative p-0.5 rounded-xl bg-gradient-to-br from-sky-500/40 via-amber-400/40 to-indigo-500/40 shadow-sm shrink-0">
+                  <img
+                    src="/ca-saarthi-icon.svg"
+                    alt="CA Saarthi AI mark"
+                    width={36}
+                    height={36}
+                    className="w-9 h-9 rounded-[10px] object-contain block"
+                  />
+                </div>
                 <div>
-                  <h3 id="ledgersutra-signin-modal-title" className="text-base font-bold text-[var(--text-main)]">
-                    Sign in to LedgerSutra Workspace
+                  <h3
+                    id="ledgersutra-signin-modal-title"
+                    className="font-display text-base font-extrabold tracking-tight flex items-center gap-1.5"
+                  >
+                    <span className="inline-flex items-baseline">
+                      <span className="text-[var(--text-main)]">C</span>
+                      <span className="bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+                        A
+                      </span>
+                    </span>
+                    <span className="text-[var(--text-main)]">Saarthi</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-black tracking-wider bg-gradient-to-r from-cyan-500/15 to-sky-500/15 border border-cyan-500/30 bg-clip-padding">
+                      <span className="bg-gradient-to-r from-cyan-500 via-sky-500 to-teal-400 dark:from-cyan-300 dark:via-sky-400 dark:to-teal-300 bg-clip-text text-transparent">
+                        AI
+                      </span>
+                    </span>
+                    <span className="text-[var(--text-main)] font-bold text-sm">Workspace</span>
                   </h3>
                   <p className="text-xs text-[var(--text-muted)]">
                     Sync client GSTIN workspaces, Tally XML ledgers &amp; scanned invoices
@@ -3895,23 +3912,40 @@ export function App() {
                 navigateTo('/');
               }
             }}
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer group whitespace-nowrap shrink-0 text-left min-w-0"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group whitespace-nowrap shrink-0 text-left min-w-0"
           >
-            <img
-              src="/ca-saarthi-icon.svg"
-              alt="LedgerSutra logo"
-              width={40}
-              height={40}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain shadow-sm group-hover:scale-105 transition-transform duration-200 shrink-0"
-            />
-            <span className="font-display font-extrabold text-base sm:text-xl tracking-tight whitespace-nowrap shrink-0 flex items-baseline gap-0.5">
-              <span className="text-[var(--text-main)] group-hover:text-indigo-500 transition-colors">
-                Ledger
+            <div className="relative p-0.5 rounded-xl bg-gradient-to-br from-sky-400/50 via-amber-400/50 to-indigo-500/50 shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200 shrink-0">
+              <img
+                src="/ca-saarthi-icon.svg"
+                alt="CA Saarthi AI logo"
+                width={40}
+                height={40}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-[10px] object-contain block"
+              />
+            </div>
+            <div className="flex flex-col justify-center leading-none">
+              <span className="font-display font-extrabold text-base sm:text-[21px] tracking-tight whitespace-nowrap shrink-0 flex items-center gap-1 sm:gap-1.5">
+                <span className="inline-flex items-baseline">
+                  <span className="text-[var(--text-main)] group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    C
+                  </span>
+                  <span className="bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(245,158,11,0.2)]">
+                    A
+                  </span>
+                </span>
+                <span className="text-[var(--text-main)] group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                  Saarthi
+                </span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-black tracking-wider bg-gradient-to-r from-cyan-500/15 via-sky-500/15 to-teal-500/15 border border-cyan-500/35 shadow-2xs">
+                  <span className="bg-gradient-to-r from-cyan-600 via-sky-500 to-teal-500 dark:from-cyan-300 dark:via-sky-400 dark:to-teal-300 bg-clip-text text-transparent">
+                    AI
+                  </span>
+                </span>
               </span>
-              <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
-                Sutra
+              <span className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] mt-0.5">
+                Bill Scanning &amp; Data Automation
               </span>
-            </span>
+            </div>
           </a>
 
           {/* Zone 2: Client Switcher + Concise Route Links (Desktop) */}
@@ -6870,7 +6904,7 @@ class AppErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[LedgerSutra ErrorBoundary]', error, info);
+    console.error('[CA Saarthi AI ErrorBoundary]', error, info);
   }
 
   render() {
@@ -6880,7 +6914,7 @@ class AppErrorBoundary extends React.Component<
           <div className="max-w-md w-full rounded-2xl border border-rose-500/30 bg-slate-900 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-base">
               <AlertTriangle className="w-5 h-5" />
-              <span>LedgerSutra Workspace Recovery</span>
+              <span>CA Saarthi AI Workspace Recovery</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               The interface encountered an unexpected rendering error. Your saved invoices and client workspaces in Firestore remain safe.
@@ -6896,7 +6930,7 @@ class AppErrorBoundary extends React.Component<
               }}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
             >
-              Reload LedgerSutra Workspace
+              Reload CA Saarthi AI Workspace
             </button>
           </div>
         </div>

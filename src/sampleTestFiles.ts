@@ -15,7 +15,7 @@ export interface SampleTestFileSpec {
 export const SAMPLE_TEST_FILES: SampleTestFileSpec[] = [
   {
     id: 'user-demo-bill-1-jpg',
-    fileName: 'LedgerSutra_Demo_Bill_1.jpg',
+    fileName: 'CA_Saarthi_AI_Demo_Bill_1.jpg',
     title: '1. Green Mart Grocery Bill (JPG • 4 Products)',
     subtitle: 'Tilted receipt with Basmati Rice, Amul Milk, Sugar & Tea (₹423.00)',
     badge: '4-Item JPG Bill',
@@ -28,7 +28,7 @@ export const SAMPLE_TEST_FILES: SampleTestFileSpec[] = [
   },
   {
     id: 'user-demo-bill-2-pdf',
-    fileName: 'LedgerSutra_Demo_Bill_2.pdf',
+    fileName: 'CA_Saarthi_AI_Demo_Bill_2.pdf',
     title: '2. City Electronics Scanned Bill (PDF • 3 Products)',
     subtitle: 'Scanned PDF with USB-C Cable, Wireless Mouse & Screen Guard (₹1,082.06)',
     badge: '3-Item Scanned PDF',

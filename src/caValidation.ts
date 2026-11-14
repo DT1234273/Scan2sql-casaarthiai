@@ -414,7 +414,7 @@ export function exportMasterRowsToCsv(
 
 export function exportBillsToJsonFile(bills: NoSQLBillRecord[], filename: string): void {
   const payload = {
-    platform: 'LedgerSutra — GST Invoice to Tally & Excel for Indian CA Firms',
+    platform: 'CA Saarthi AI — GST Invoice to Tally & Excel for Indian CA Firms',
     exportedAt: new Date().toISOString(),
     totalInvoices: bills.length,
     summary: {
@@ -443,7 +443,7 @@ export function exportBillsToSqlFile(bills: NoSQLBillRecord[], filename: string)
 
   const lines: string[] = [
     '-- ============================================================================',
-    '-- LedgerSutra — Automated Accounting SQL Dump',
+    '-- CA Saarthi AI — Automated Accounting SQL Dump',
     `-- Generated At: ${new Date().toISOString()}`,
     `-- Total Invoices: ${bills.length}`,
     '-- Compatible with SQL-compliant accounting systems',

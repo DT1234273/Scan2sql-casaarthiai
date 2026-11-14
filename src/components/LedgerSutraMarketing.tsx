@@ -431,18 +431,28 @@ export const LedgerSutraHeroBanner: React.FC<{
             <div className="space-y-4 sm:space-y-5">
               <div className="flex items-center justify-between gap-2.5 sm:gap-3 text-xs font-medium text-[var(--text-muted)]">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <img
-                    src="/ca-saarthi-icon.svg"
-                    alt=""
-                    width={36}
-                    height={36}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain shadow-xs shrink-0"
-                  />
-                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 min-w-0">
-                    <span className="font-display font-extrabold text-sm tracking-tight inline-flex items-baseline gap-0.5 shrink-0">
-                      <span className="text-[var(--text-main)]">Ledger</span>
-                      <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
-                        Sutra
+                  <div className="relative p-0.5 rounded-xl bg-gradient-to-br from-sky-400/50 via-amber-400/50 to-indigo-500/50 shadow-xs shrink-0">
+                    <img
+                      src="/ca-saarthi-icon.svg"
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-[10px] object-contain block"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                    <span className="font-display font-extrabold text-sm sm:text-base tracking-tight inline-flex items-center gap-1 shrink-0">
+                      <span className="inline-flex items-baseline">
+                        <span className="text-[var(--text-main)]">C</span>
+                        <span className="bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+                          A
+                        </span>
+                      </span>
+                      <span className="text-[var(--text-main)]">Saarthi</span>
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black tracking-wider bg-gradient-to-r from-cyan-500/15 via-sky-500/15 to-teal-500/15 border border-cyan-500/35">
+                        <span className="bg-gradient-to-r from-cyan-600 via-sky-500 to-teal-500 dark:from-cyan-300 dark:via-sky-400 dark:to-teal-300 bg-clip-text text-transparent">
+                          AI
+                        </span>
                       </span>
                     </span>
                     <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)]">·</span>
@@ -617,8 +627,8 @@ export const LedgerSutraHeroBanner: React.FC<{
           <div className="lg:col-span-5 relative min-h-[340px] sm:min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
             <EditorialVisual
               src={heroStudioImg}
-              alt="LedgerSutra invoice OCR workspace showing GSTIN validation and Tally XML export"
-              fallbackTitle="LedgerSutra Practice Audit Desk"
+              alt="CA Saarthi AI invoice OCR workspace showing GSTIN validation and Tally XML export"
+              fallbackTitle="CA Saarthi AI Practice Audit Desk"
               fallbackSubtitle="Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel"
               width={1200}
               height={900}
@@ -1733,7 +1743,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                  {
                   num: '02.',
                   title: 'Automated GST Audit & Review Queue',
-                  desc: 'LedgerSutra extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
+                  desc: 'CA Saarthi AI extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
                 },
                 {
                   num: '03.',
@@ -1760,7 +1770,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="relative h-52 bg-slate-900">
               <EditorialVisual
                 src={caWorkspaceImg}
-                alt="CA reviewing flagged invoices in the LedgerSutra Tally validator"
+                alt="CA reviewing flagged invoices in the CA Saarthi AI Tally validator"
                 fallbackTitle="CA Practice Dual-Monitor Workflow"
                 fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
                 width={900}
@@ -3140,28 +3150,45 @@ export const LedgerSutraFooter: React.FC<{
           {/* Col 1: Brand & Logo */}
           <div className="space-y-3">
             <div className="flex items-center gap-3.5">
-              <img
-                src="/ca-saarthi-icon.svg"
-                alt=""
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-2xl object-contain shadow-sm shrink-0"
-              />
+              <div className="relative p-0.5 rounded-2xl bg-gradient-to-br from-sky-400/50 via-amber-400/50 to-indigo-500/50 shadow-sm shrink-0">
+                <img
+                  src="/ca-saarthi-icon.svg"
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] object-contain block"
+                />
+              </div>
               <div>
                 <a
                   href="/"
                   onClick={(e) => handleLinkClick(e, '/')}
-                  className="font-display font-extrabold text-lg tracking-tight flex items-baseline gap-0.5"
+                  className="font-display font-extrabold text-lg sm:text-xl tracking-tight flex items-center gap-1.5 group"
                 >
-                  <span className="text-[var(--text-main)]">Ledger</span>
-                  <span className="bg-gradient-to-r from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-400 bg-clip-text text-transparent">
-                    Sutra
+                  <span className="inline-flex items-baseline">
+                    <span className="text-[var(--text-main)] group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                      C
+                    </span>
+                    <span className="bg-gradient-to-b from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+                      A
+                    </span>
+                  </span>
+                  <span className="text-[var(--text-main)] group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    Saarthi
+                  </span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs font-black tracking-wider bg-gradient-to-r from-cyan-500/15 via-sky-500/15 to-teal-500/15 border border-cyan-500/35">
+                    <span className="bg-gradient-to-r from-cyan-600 via-sky-500 to-teal-500 dark:from-cyan-300 dark:via-sky-400 dark:to-teal-300 bg-clip-text text-transparent">
+                      AI
+                    </span>
                   </span>
                 </a>
+                <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">
+                  Bill Scanning &amp; Data Automation
+                </div>
                 <a
                   href="/"
                   onClick={(e) => handleLinkClick(e, '/')}
-                  className="text-[11px] font-medium text-[var(--text-muted)] hover:text-indigo-500 block"
+                  className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline block mt-0.5"
                 >
                   {SITE_DOMAIN}
                 </a>
@@ -3282,7 +3309,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/about')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  About LedgerSutra
+                  About CA Saarthi AI
                 </a>
               </li>
             </ul>
