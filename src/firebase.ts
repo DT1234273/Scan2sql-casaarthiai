@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   signOut,
   onAuthStateChanged,
   User,
@@ -41,6 +42,9 @@ const DIRECT_FIREBASE_CONFIG = {
   storageBucket: 'gen-lang-client-0134509229.firebasestorage.app',
   messagingSenderId: '794445351838',
 };
+
+export const AUTHORIZED_FIREBASE_BRIDGE_URL =
+  'https://ais-pre-q4ipoorh5v7bm6opjmjgnw-563992839263.asia-southeast1.run.app';
 
 const env = (import.meta as any).env || {};
 
@@ -164,6 +168,7 @@ export function signInWithLivePracticeAccount(params: {
   email: string;
   displayName?: string;
   firmName?: string;
+  photoURL?: string | null;
 }): User {
   const cleanEmail = params.email.trim().toLowerCase();
   const emailPrefix = cleanEmail.split('@')[0] || 'ca_user';
@@ -179,15 +184,15 @@ export function signInWithLivePracticeAccount(params: {
     displayName: cleanName,
     emailVerified: true,
     isAnonymous: false,
-    photoURL: null,
+    photoURL: params.photoURL || null,
     providerData: [
       {
-        providerId: 'ledgersutra.live',
+        providerId: 'casaarthiai.live',
         uid: cleanEmail,
         displayName: cleanName,
         email: cleanEmail,
         phoneNumber: null,
-        photoURL: null,
+        photoURL: params.photoURL || null,
       },
     ],
   };
@@ -204,8 +209,13 @@ export function signInWithLivePracticeAccount(params: {
   return userObj;
 }
 
-export async function signInWithGooglePopup(): Promise<User> {
-  const credential = await signInWithPopup(auth, googleProvider);
+export async function signInWithGooglePopupWithToken(): Promise<{
+  user: User;
+  idToken: string | null;
+}> {
+  const result = await signInWithPopup(auth, googleProvider);
+  const oauthCred = GoogleAuthProvider.credentialFromResult(result);
+  const idToken = oauthCred?.idToken || null;
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem(LIVE_SESSION_STORAGE_KEY);
@@ -213,8 +223,27 @@ export async function signInWithGooglePopup(): Promise<User> {
       // ignore
     }
   }
-  notifyAuthListeners(credential.user);
-  return credential.user;
+  notifyAuthListeners(result.user);
+  return { user: result.user, idToken };
+}
+
+export async function signInWithGoogleIdToken(idToken: string): Promise<User> {
+  const credential = GoogleAuthProvider.credential(idToken);
+  const result = await signInWithCredential(auth, credential);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(LIVE_SESSION_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  }
+  notifyAuthListeners(result.user);
+  return result.user;
+}
+
+export async function signInWithGooglePopup(): Promise<User> {
+  const { user } = await signInWithGooglePopupWithToken();
+  return user;
 }
 
 export async function signOutGoogleUser(): Promise<void> {

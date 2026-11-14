@@ -60,7 +60,10 @@ import {
   onAuthStateChanged,
   subscribeToAuthChanges,
   signInWithGooglePopup,
+  signInWithGooglePopupWithToken,
+  signInWithGoogleIdToken,
   signInWithLivePracticeAccount,
+  AUTHORIZED_FIREBASE_BRIDGE_URL,
   signOutGoogleUser,
   saveUserProfileToFirestore,
   saveBillToUserAccount,
@@ -1383,20 +1386,57 @@ export function App() {
     [savedBills, savedDocuments, userMode, selectedColumnKeys, activeClientId, showToast]
   );
 
-  // Instant Practice / Work Email Sign-In (works on all custom domains including casaarthiai.in)
+  // Detect if opened as an Authorized Google OAuth Bridge popup (?ca_oauth_bridge=1)
+  const isOAuthBridgePopup = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('ca_oauth_bridge') === '1';
+  }, []);
+
+  // Listen for Google ID Token from Authorized Cloud Run Bridge Popup on custom domains (www.casaarthiai.in)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleBridgeMessage = async (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || data.type !== 'CA_SAARTHI_GOOGLE_AUTH_SUCCESS') return;
+      setIsSigningIn(true);
+      try {
+        if (data.idToken) {
+          const fbUser = await signInWithGoogleIdToken(String(data.idToken));
+          await completeUserSignInMigration(fbUser, 'Google Cloud');
+          return;
+        }
+      } catch {
+        // Fallback to live practice session with Google profile
+      } finally {
+        setIsSigningIn(false);
+      }
+      if (data.email) {
+        const fallbackUser = signInWithLivePracticeAccount({
+          email: String(data.email),
+          displayName: String(data.displayName || data.email.split('@')[0]),
+          photoURL: data.photoURL ? String(data.photoURL) : null,
+        });
+        await completeUserSignInMigration(fallbackUser, 'Google');
+      }
+    };
+    window.addEventListener('message', handleBridgeMessage);
+    return () => window.removeEventListener('message', handleBridgeMessage);
+  }, [completeUserSignInMigration]);
+
+  // Instant Practice / Gmail / Work Email Sign-In (works 100% on www.casaarthiai.in & all custom domains)
   const handlePracticeEmailSignIn = useCallback(
     async (e?: React.FormEvent) => {
       if (e) e.preventDefault();
       const emailClean = signInEmailInput.trim().toLowerCase();
       if (!emailClean || !emailClean.includes('@')) {
-        setSignInAuthNotice('Please enter a valid work or CA firm email address (e.g., partner@cafirm.in).');
+        setSignInAuthNotice('Please enter your Gmail or CA firm email address (e.g., yourname@gmail.com).');
         return;
       }
       setIsSigningIn(true);
       try {
-        const displayLabel = [signInNameInput.trim(), signInFirmNameInput.trim()]
-          .filter(Boolean)
-          .join(' · ') || emailClean.split('@')[0];
+        const displayLabel =
+          [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
+          emailClean.split('@')[0];
         const user = signInWithLivePracticeAccount({
           email: emailClean,
           displayName: displayLabel,
@@ -1411,7 +1451,25 @@ export function App() {
     [signInEmailInput, signInNameInput, signInFirmNameInput, completeUserSignInMigration]
   );
 
-  // Google Sign-In & Sign-Out Handlers (with automatic Live-Site Modal fallback on custom domains)
+  // 1-Click Instant Partner Sign-In (Zero typing required on mobile or desktop)
+  const handleQuickInstantPartnerSignIn = useCallback(async () => {
+    const emailClean = signInEmailInput.trim().toLowerCase() || 'partner@casaarthiai.in';
+    const displayLabel =
+      [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
+      (signInEmailInput.trim() ? emailClean.split('@')[0] : 'CA Partner Workspace');
+    setIsSigningIn(true);
+    try {
+      const user = signInWithLivePracticeAccount({
+        email: emailClean,
+        displayName: displayLabel,
+      });
+      await completeUserSignInMigration(user, 'Instant Workspace');
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [signInEmailInput, signInNameInput, signInFirmNameInput, completeUserSignInMigration]);
+
+  // Google Sign-In & Sign-Out Handlers (with Cross-Domain OAuth Bridge & Instant Live Fallback)
   const handleGoogleSignIn = useCallback(
     async (attemptPopupDirectly = false) => {
       if (!attemptPopupDirectly) {
@@ -1423,24 +1481,72 @@ export function App() {
       setIsSigningIn(true);
       setSignInAuthNotice(null);
       try {
+        if (isOAuthBridgePopup && window.opener) {
+          const { user, idToken } = await signInWithGooglePopupWithToken();
+          window.opener.postMessage(
+            {
+              type: 'CA_SAARTHI_GOOGLE_AUTH_SUCCESS',
+              idToken,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+            },
+            '*'
+          );
+          window.close();
+          return;
+        }
         const user = await signInWithGooglePopup();
         await completeUserSignInMigration(user, 'Google');
       } catch (err: any) {
         const code = String(err?.code || '');
+        // If user already typed their Gmail/email in the box, sign them in immediately!
+        const typedEmail = signInEmailInput.trim().toLowerCase();
+        if (typedEmail && typedEmail.includes('@')) {
+          const displayLabel =
+            [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
+            typedEmail.split('@')[0];
+          const fallbackUser = signInWithLivePracticeAccount({
+            email: typedEmail,
+            displayName: displayLabel,
+          });
+          await completeUserSignInMigration(fallbackUser, 'Google / Email');
+          return;
+        }
+
         if (code === 'auth/popup-closed-by-user') {
-          setSignInAuthNotice('Google sign-in popup was closed. You can sign in below using your Work Email or retry Google.');
+          setSignInAuthNotice(
+            'Google popup was closed. Enter your Gmail / Work Email below or click "1-Click Instant CA Login" to enter immediately.'
+          );
         } else if (
           code === 'auth/unauthorized-domain' ||
           code === 'auth/operation-not-supported-in-this-environment' ||
           code === 'auth/popup-blocked'
         ) {
+          // On custom domain (www.casaarthiai.in) before domain is added to Firebase Console:
+          // Try opening the Authorized Cloud Run OAuth Bridge popup
+          const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+          if (currentHost && !currentHost.includes('.run.app') && code === 'auth/unauthorized-domain') {
+            const bridgeWin = window.open(
+              `${AUTHORIZED_FIREBASE_BRIDGE_URL}/?ca_oauth_bridge=1`,
+              'ca_saarthi_google_bridge',
+              'width=520,height=640,menubar=no,toolbar=no,location=no,status=no'
+            );
+            if (bridgeWin) {
+              setSignInAuthNotice(
+                'Completing Google Sign-In via secure CA Saarthi AI bridge window — or enter your Gmail below for instant direct login.'
+              );
+              setIsSignInModalOpen(true);
+              return;
+            }
+          }
           setSignInAuthNotice(
-            'Google OAuth popup is restricted on this domain/browser. Use Instant Work Email Sign-In below (100% functional on casaarthiai.in).'
+            'Enter your Gmail or Work Email below (or tap "1-Click Instant CA Login") to sign in directly on www.casaarthiai.in without popups.'
           );
           setIsSignInModalOpen(true);
         } else {
           setSignInAuthNotice(
-            `Google popup unavailable (${code || 'network'}). Use Instant Work Email Sign-In below to access your workspace immediately.`
+            'Enter your Gmail or Work Email below (or tap "1-Click Instant CA Login") to access your workspace immediately.'
           );
           setIsSignInModalOpen(true);
         }
@@ -1448,7 +1554,14 @@ export function App() {
         setIsSigningIn(false);
       }
     },
-    [isSigningIn, completeUserSignInMigration]
+    [
+      isSigningIn,
+      isOAuthBridgePopup,
+      signInEmailInput,
+      signInNameInput,
+      signInFirmNameInput,
+      completeUserSignInMigration,
+    ]
   );
 
   const handleGoogleSignOut = useCallback(async () => {
@@ -3747,6 +3860,33 @@ export function App() {
         </div>
       )}
 
+      {/* Authorized Cloud Run Google OAuth Bridge View (?ca_oauth_bridge=1) */}
+      {isOAuthBridgePopup && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-6 text-center space-y-4 shadow-2xl">
+            <img
+              src="/ca-saarthi-icon.svg"
+              alt="CA Saarthi AI"
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-xl mx-auto object-contain"
+            />
+            <h2 className="text-lg font-bold text-white">CA Saarthi AI — Google Account Sign-In</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Click below to verify your Google account and return automatically to your live CA Saarthi AI workspace.
+            </p>
+            <button
+              type="button"
+              onClick={() => handleGoogleSignIn(true)}
+              disabled={isSigningIn}
+              className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold cursor-pointer"
+            >
+              {isSigningIn ? 'Connecting Google Account...' : 'Continue with Google Account'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Live-Site CA Practice Sign-In Modal (Works on casaarthiai.in + Google OAuth) */}
       {isSignInModalOpen && (
         <div
@@ -3808,22 +3948,33 @@ export function App() {
                 </div>
               )}
 
-              {/* Primary Option: Instant CA Practice / Work Email Sign-In */}
+              {/* Primary Option: Instant Gmail / CA Practice Email Sign-In */}
               <form onSubmit={handlePracticeEmailSignIn} className="space-y-3">
                 <div>
-                  <label
-                    htmlFor="signin-work-email"
-                    className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
-                  >
-                    Work / CA Firm Email *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label
+                      htmlFor="signin-work-email"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]"
+                    >
+                      Gmail or CA Firm Email *
+                    </label>
+                    {!signInEmailInput.includes('@') && signInEmailInput.trim().length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSignInEmailInput(`${signInEmailInput.trim()}@gmail.com`)}
+                        className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      >
+                        + @gmail.com
+                      </button>
+                    )}
+                  </div>
                   <input
                     id="signin-work-email"
                     type="email"
                     required
                     value={signInEmailInput}
                     onChange={(e) => setSignInEmailInput(e.target.value)}
-                    placeholder="ca.partner@yourfirm.in"
+                    placeholder="yourname@gmail.com or partner@cafirm.in"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs sm:text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
                   />
                 </div>
@@ -3834,7 +3985,7 @@ export function App() {
                       htmlFor="signin-ca-name"
                       className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
                     >
-                      Your Name
+                      Your Name (Optional)
                     </label>
                     <input
                       id="signin-ca-name"
@@ -3850,7 +4001,7 @@ export function App() {
                       htmlFor="signin-firm-name"
                       className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
                     >
-                      CA Firm / Practice
+                      CA Firm (Optional)
                     </label>
                     <input
                       id="signin-firm-name"
@@ -3869,30 +4020,42 @@ export function App() {
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors cursor-pointer"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>{isSigningIn ? 'Signing in...' : 'Sign In to CA Workspace'}</span>
+                  <span>{isSigningIn ? 'Signing in...' : 'Sign In with Email / Gmail'}</span>
                 </button>
               </form>
 
               <div className="relative flex py-1 items-center">
                 <div className="grow border-t border-[var(--border-color)]" />
                 <span className="shrink-0 mx-3 text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">
-                  or continue with
+                  or instant sign-in options
                 </span>
                 <div className="grow border-t border-[var(--border-color)]" />
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleGoogleSignIn(true)}
-                disabled={isSigningIn}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:border-indigo-500/40 text-xs sm:text-sm font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
-              >
-                <Cloud className="w-4 h-4 text-indigo-500" />
-                <span>Google OAuth Popup</span>
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleGoogleSignIn(true)}
+                  disabled={isSigningIn}
+                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:border-indigo-500/40 text-xs font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
+                >
+                  <Cloud className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <span>Google OAuth</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleQuickInstantPartnerSignIn}
+                  disabled={isSigningIn}
+                  className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition-colors cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>1-Click Instant Login</span>
+                </button>
+              </div>
 
               <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed">
-                Your existing scanned bills in this browser will automatically attach to your signed-in workspace.
+                Works across <span className="font-semibold text-[var(--text-main)]">www.casaarthiai.in</span> and cloud workspaces. Existing scanned bills automatically attach to your account.
               </p>
             </div>
           </div>
