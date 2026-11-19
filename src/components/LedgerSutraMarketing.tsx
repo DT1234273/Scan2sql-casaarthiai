@@ -34,6 +34,14 @@ import {
   RESOURCE_ARTICLES,
   DEFAULT_CA_AUTHOR,
   HINDI_LOCALIZED_ROUTES,
+  PRACTICE_PRICING_PLANS,
+  DETAILED_FEATURES_SPECS,
+  SECURITY_ARCHITECTURE_SECTIONS,
+  PRIVACY_POLICY_SECTIONS,
+  DATA_DELETION_SECTIONS,
+  ABOUT_PAGE_SECTIONS,
+  HOW_IT_WORKS_SECTIONS,
+  API_DOCS_SPEC,
   normalizePathname,
   resolveRouteAudit,
 } from '../seoContent';
@@ -487,7 +495,7 @@ export const LedgerSutraHeroBanner: React.FC<{
               <h2 className="text-sm sm:text-lg font-normal text-[var(--text-muted)] leading-relaxed max-w-2xl">
                 {hindiHome
                   ? hindiHome.subtitle
-                  : 'Bilingual AI OCR built exclusively for Indian CA firms. Scan English & Hindi bills, validate GSTINs automatically, and export directly to TallyPrime XML, SQL, or Excel with 100% data privacy.'}
+                  : 'Bilingual AI OCR built exclusively for Indian CA firms. Scan English & Hindi bills, validate 15-digit GSTINs with Mod-36 checksums, and export directly to TallyPrime XML, SQL, or Excel with client-scoped data isolation.'}
               </h2>
 
               <div className="space-y-3 pt-1">
@@ -540,7 +548,7 @@ export const LedgerSutraHeroBanner: React.FC<{
 
                 {/* Trust Badge / Micro-copy under CTA */}
                 <p className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                  <span>🔒 Local Fallback OCR | Zero Server-Side Data Retention</span>
+                  <span>🔒 Hybrid Cloud &amp; Local Fallback OCR | Client-Scoped Isolation &amp; Instant Deletion</span>
                 </p>
               </div>
             </div>
@@ -757,22 +765,22 @@ export const LedgerSutraHeroBanner: React.FC<{
             {
               num: '01.',
               title: '15-Digit GSTIN Validation',
-              copy: 'Built for India. Automatically extracts and cross-verifies 15-digit GSTINs from complex invoice layouts to ensure flawless GSTR filing.',
+              copy: 'Built for India. Automatically extracts and cross-verifies 15-digit GSTIN format, state code, PAN structure, and Mod-36 checksum before GSTR filing.',
             },
             {
               num: '02.',
               title: 'Bilingual Bill Scanner',
-              copy: 'Regional bills are no longer a bottleneck. Flawlessly extract line items and vendor details from both English and Hindi invoices.',
+              copy: 'Regional bills are supported alongside standard tax invoices. Extract header fields, line items, and vendor details from printed English and Hindi invoices.',
             },
             {
               num: '03.',
-              title: 'Military-Grade Data Privacy',
-              copy: "Your clients' financial data never lingers. With our Local Fallback OCR and instant record deletion, your data is processed and purged immediately.",
+              title: 'Client-Scoped Data Isolation',
+              copy: 'Uploaded files are parsed in memory during OCR, while saved client workspaces and bills are isolated under per-user Firestore rules with one-click deletion.',
             },
             {
               num: '04.',
               title: 'Developer-Friendly Exports',
-              copy: 'Say goodbye to manual copy-pasting. Push extracted data directly into your existing systems via SQL, JSON, or download formatted XLSX files.',
+              copy: 'Say goodbye to manual copy-pasting. Push extracted data directly into your existing systems via TallyPrime XML, SQL, JSON, or formatted XLSX files.',
             },
           ].map((pillar) => (
             <div
@@ -1896,29 +1904,29 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Google Sign-In &amp; Practice Authentication</span>
+              <span>Hybrid OCR: Cloud AI &amp; Local Browser Fallback</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Users authenticate via Google OAuth (Firebase Authentication) or Instant CA Firm Email Sign-In. No plaintext passwords are stored by {BRAND_NAME}.
+              Primary OCR runs in memory via <code className="font-mono">/api/extract-document</code> without writing raw files to server disk. Offline or fallback OCR runs locally in the browser using PDF.js &amp; Tesseract.js (<code className="font-mono">eng+hin</code>).
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Per-User &amp; Per-Client Data Isolation</span>
+              <span>Per-User &amp; Per-Client Firestore Isolation</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              All saved clients, bills, and audit trails are scoped under{' '}
-              <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by Firestore rules.
+              When signed in, saved clients, bills, and audit trails are persisted under{' '}
+              <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by <code className="font-mono">firestore.rules</code> ownership &amp; RBAC checks.
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Encryption in Transit &amp; Instant Deletion</span>
+              <span>HTTPS in Transit, SHA-256 Keys &amp; Instant Deletion</span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              All traffic uses HTTPS/TLS encryption in transit, and users can delete any client or purge all account data anytime.
+              All traffic uses HTTPS/TLS in transit, REST API keys are hashed with SHA-256 before storage, and users can delete individual bills, client workspaces, or all account records anytime.
             </p>
           </div>
         </div>
@@ -2315,6 +2323,89 @@ export const LedgerSutraRouteView: React.FC<{
             {hiSpec.description}
           </p>
         </div>
+
+        {cleanPath === '/hi/pricing' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+            {PRACTICE_PRICING_PLANS.map((plan) => (
+              <div
+                key={plan.id}
+                className={`p-6 rounded-xl border flex flex-col justify-between space-y-5 ${
+                  plan.highlighted
+                    ? 'border-indigo-500 bg-indigo-500/5'
+                    : 'border-[var(--border-color)] bg-[var(--bg-subtle)]'
+                }`}
+              >
+                <div className="space-y-2.5">
+                  <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                    {plan.tier}
+                  </div>
+                  <div className="font-display text-2xl font-bold text-[var(--text-main)] tabular-nums">
+                    {plan.price}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">{plan.audience}</p>
+                  <ul className="space-y-2 pt-3 border-t border-[var(--border-color)] text-xs text-[var(--text-main)]">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <a
+                  href={plan.ctaHref}
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      if (plan.ctaHref === '/app') {
+                        onOpenWorkspaceTab('scanner', 'ca_mode');
+                      } else {
+                        onNavigate(plan.ctaHref);
+                      }
+                    }
+                  }}
+                  className={`w-full py-2.5 rounded-xl text-xs font-semibold text-center transition-colors cursor-pointer block ${
+                    plan.highlighted
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'bg-[var(--bg-card)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)]'
+                  }`}
+                >
+                  {plan.ctaLabel}
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {cleanPath === '/hi/features' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+            {DETAILED_FEATURES_SPECS.map((feat) => (
+              <div
+                key={feat.id}
+                className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+              >
+                <div className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {feat.number}. {feat.badge}
+                </div>
+                <h2 className="text-base font-bold text-[var(--text-main)]">{feat.title}</h2>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{feat.whatItDoes}</p>
+                <a
+                  href={feat.linkHref}
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate(feat.linkHref);
+                    }
+                  }}
+                  className="inline-block text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  {feat.linkLabel}
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-muted)] leading-relaxed">
           संबंधित वर्कफ़्लो:{' '}
           <a href="/hi/gst-invoice-to-tally" onClick={(e) => { e.preventDefault(); onNavigate('/hi/gst-invoice-to-tally'); }} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
@@ -2731,31 +2822,85 @@ export const LedgerSutraRouteView: React.FC<{
   // 4. Developer API Docs Page (/api-docs)
   if (cleanPath === '/api-docs') {
     return (
-      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
         {renderBreadcrumb('REST API v1')}
-        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+        <div className="space-y-2.5 border-b border-[var(--border-color)] pb-5">
           <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
-            REST API v1 Documentation
+            REST API v1 Documentation · Programmatic GST Invoice OCR
           </div>
-          <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
             Invoice Extraction REST API (v1)
           </h1>
-          <p className="text-sm text-[var(--text-muted)] max-w-3xl">
-            Authenticate with the built-in endpoint or generate per-user API keys in the workspace{' '}
-            <b>QA &amp; API</b> tab. Keys are hashed with SHA-256 before storage. Rate limit: 30 requests/minute; max payload: 15 MB.
+          <p className="text-sm text-[var(--text-muted)] max-w-3xl leading-relaxed">
+            Programmatic GST invoice OCR and 15-digit GSTIN verification for Indian CA firms, ERP integrators, and accounting tools. Generate per-user API keys (<code className="font-mono">ls_live_...</code>) inside the{' '}
+            <a
+              href="/app"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.defaultPrevented && e.button === 0) {
+                  e.preventDefault();
+                  onOpenWorkspaceTab('scanner', 'ca_mode');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              CA Workspace (/app)
+            </a>{' '}
+            under the <b>QA &amp; API</b> tab.
           </p>
         </div>
 
+        {/* Authentication & Rate Limits */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <h2 className="text-sm font-bold text-[var(--text-main)]">Authentication &amp; Key Security</h2>
+            <p className="text-[var(--text-muted)] leading-relaxed">{API_DOCS_SPEC.authDescription}</p>
+          </div>
+          <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <h2 className="text-sm font-bold text-[var(--text-main)]">Rate Limits &amp; Payload Caps</h2>
+            <p className="text-[var(--text-muted)] leading-relaxed">{API_DOCS_SPEC.limitsDescription}</p>
+          </div>
+        </div>
+
+        {/* Implemented Endpoints */}
+        <div className="space-y-3">
+          <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
+            Implemented API Endpoints
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {API_DOCS_SPEC.auxiliaryEndpoints.map((ep) => (
+              <div
+                key={ep.path}
+                className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 font-mono text-xs font-bold">
+                    {ep.method}
+                  </span>
+                  <code className="font-mono text-xs sm:text-sm font-bold text-[var(--text-main)]">
+                    {ep.path}
+                  </code>
+                </div>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{ep.summary}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Request & Response Examples */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-3">
-            <h2 className="text-base font-bold text-[var(--text-main)]">cURL Multipart Request Example</h2>
+            <h2 className="text-base font-bold text-[var(--text-main)]">
+              1. Multipart File Upload (<code className="font-mono text-xs">multipart/form-data</code>)
+            </h2>
             <pre className="p-4 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs overflow-x-auto">
               {`curl -X POST ${SITE_DOMAIN}/api/v1/extract \\
   -H "Authorization: Bearer ls_live_your_api_key_here" \\
   -F "file=@/path/to/purchase_invoice.pdf"`}
             </pre>
 
-            <h2 className="text-base font-bold text-[var(--text-main)] pt-2">JSON Base64 Request Example</h2>
+            <h2 className="text-base font-bold text-[var(--text-main)] pt-2">
+              2. JSON Base64 Payload (<code className="font-mono text-xs">application/json</code>)
+            </h2>
             <pre className="p-4 rounded-xl bg-slate-950 text-indigo-300 font-mono text-xs overflow-x-auto">
               {`curl -X POST ${SITE_DOMAIN}/api/v1/extract \\
   -H "x-api-key: ls_live_your_api_key_here" \\
@@ -2769,7 +2914,9 @@ export const LedgerSutraRouteView: React.FC<{
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-base font-bold text-[var(--text-main)]">200 OK JSON Response Example</h2>
+            <h2 className="text-base font-bold text-[var(--text-main)]">
+              200 OK JSON Response Schema Example
+            </h2>
             <pre className="p-4 rounded-xl bg-slate-950 text-amber-300 font-mono text-xs overflow-x-auto max-h-96">
               {JSON.stringify(
                 {
@@ -2785,6 +2932,79 @@ export const LedgerSutraRouteView: React.FC<{
             </pre>
           </div>
         </div>
+
+        {/* Error Codes Table */}
+        <div className="space-y-3">
+          <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
+            HTTP Status &amp; Error Responses
+          </h2>
+          <div className="overflow-x-auto rounded-xl border border-[var(--border-color)]">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[var(--bg-subtle)] border-b border-[var(--border-color)] text-[var(--text-main)]">
+                  <th className="py-2.5 px-4 font-bold">HTTP Status</th>
+                  <th className="py-2.5 px-4 font-bold">Condition</th>
+                  <th className="py-2.5 px-4 font-bold">Error Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-color)]">
+                {API_DOCS_SPEC.errorCodes.map((err) => (
+                  <tr key={err.status}>
+                    <td className="py-2.5 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                      {err.status}
+                    </td>
+                    <td className="py-2.5 px-4 font-semibold text-[var(--text-main)]">
+                      {err.code}
+                    </td>
+                    <td className="py-2.5 px-4 text-[var(--text-muted)]">
+                      {err.description}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Related Links */}
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap items-center gap-3 text-xs">
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onOpenWorkspaceTab('scanner', 'ca_mode');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+          >
+            Generate API Key in Workspace (/app)
+          </a>
+          <a
+            href="/features"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/features');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            Explore All 9 Capabilities
+          </a>
+          <a
+            href="/security"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/security');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            Security &amp; SHA-256 Key Storage
+          </a>
+        </div>
       </section>
     );
   }
@@ -2792,52 +3012,89 @@ export const LedgerSutraRouteView: React.FC<{
   // 5. Privacy Policy (/privacy)
   if (cleanPath === '/privacy') {
     return (
-      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         {renderBreadcrumb('Privacy Policy')}
-        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Privacy Policy</h1>
-        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
-        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
-          <p>
-            <strong className="text-[var(--text-main)]">1. Zero AI Model Training on Client Data:</strong>{' '}
-            {BRAND_NAME} never uses your uploaded invoices, GSTINs, or client financial documents to train, fine-tune, or
-            improve public or third-party AI models.
-          </p>
-          <p>
-            <strong className="text-[var(--text-main)]">2. Zero Server-Side Retention &amp; Instant Purge:</strong>{' '}
-            Uploaded invoice files are processed in memory for OCR extraction and purged immediately from the processing
-            server. With our Local Fallback OCR, extraction can also run directly inside your browser.
-          </p>
-          <p>
-            <strong className="text-[var(--text-main)]">3. Strict Per-User Isolation &amp; Deletion:</strong> If you
-            sign in to save history, your client profiles and bills are isolated under your authenticated account and can
-            be permanently deleted at any time with a single click. See our{' '}
-            <a
-              href="/data-deletion"
-              onClick={(e) => {
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                  e.preventDefault();
-                  onNavigate('/data-deletion');
-                }
-              }}
-              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-            >
-              Data Deletion Policy
-            </a>{' '}
-            and{' '}
-            <a
-              href="/security"
-              onClick={(e) => {
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                  e.preventDefault();
-                  onNavigate('/security');
-                }
-              }}
-              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-            >
-              Security Architecture
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            Data Handling &amp; Storage Transparency
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            Privacy Policy for Chartered Accountant &amp; Client Financial Data
+          </h1>
+          <p className="text-xs text-[var(--text-muted)]">
+            Last Updated: November 2026 · Privacy &amp; Data Protection Contact:{' '}
+            <a href="mailto:support@casaarthiai.in" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+              support@casaarthiai.in
             </a>
-            .
           </p>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+            This Privacy Policy describes what data {BRAND_NAME} collects, how uploaded GST invoices are processed during OCR extraction, what structured records are stored when you save bills to a client workspace, and how you can delete your data at any time.
+          </p>
+        </div>
+
+        <div className="space-y-5 max-w-4xl">
+          {PRIVACY_POLICY_SECTIONS.map((sec) => (
+            <div
+              key={sec.title}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+            >
+              <h2 className="text-base font-bold text-[var(--text-main)]">{sec.title}</h2>
+              {sec.paragraphs.map((p, idx) => (
+                <p key={idx} className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {sec.bullets && (
+                <ul className="space-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-main)]">
+                  {sec.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/security"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/security');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Security &amp; Data Isolation Architecture →
+          </a>
+          <a
+            href="/data-deletion"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/data-deletion');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Data Deletion Policy →
+          </a>
+          <a
+            href="/terms"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/terms');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Terms of Service →
+          </a>
         </div>
       </section>
     );
@@ -2846,22 +3103,55 @@ export const LedgerSutraRouteView: React.FC<{
   // 6. Terms of Service (/terms)
   if (cleanPath === '/terms') {
     return (
-      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         {renderBreadcrumb('Terms of Service')}
-        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Terms of Service</h1>
-        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            Terms of Service for CA Saarthi AI CA Practice Software
+          </h1>
+          <p className="text-xs text-[var(--text-muted)]">
+            Last Updated: November 2026 · Support: support@casaarthiai.in
+          </p>
+        </div>
         <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
-          <p>
-            <strong className="text-[var(--text-main)]">1. Professional Verification Responsibility:</strong>{' '}
-            {BRAND_NAME} is an OCR extraction and accounting preparation tool for Chartered Accountants and tax
-            practitioners. Users must review and verify extracted GSTINs, tax amounts, GSTR-2B statuses, and Tally XML
-            vouchers before filing statutory GST returns or financial statements.
-          </p>
-          <p>
-            <strong className="text-[var(--text-main)]">2. Acceptable API &amp; Demo Usage:</strong> Unauthenticated
-            demo usage is limited to 3 custom scans per browser per day. Authenticated API usage on{' '}
-            <code className="font-mono">POST /api/v1/extract</code> is subject to rate limits (30 requests/min) and payload limits (15 MB).
-          </p>
+          <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <h2 className="text-base font-bold text-[var(--text-main)]">
+              1. Professional Verification Responsibility
+            </h2>
+            <p>
+              {BRAND_NAME} is an OCR extraction and accounting preparation tool for Chartered Accountants and tax practitioners. Users must review and verify extracted GSTINs, invoice numbers, dates, HSN/SAC codes, tax amounts, GSTR-2B statuses, and TallyPrime XML vouchers before importing into accounting ledgers or filing statutory GST returns.
+            </p>
+          </div>
+          <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <h2 className="text-base font-bold text-[var(--text-main)]">
+              2. Acceptable Demo &amp; REST API Usage
+            </h2>
+            <p>
+              Unauthenticated evaluation usage is limited to 3 custom scans per browser per day (plus 3 built-in sample invoices). Authenticated REST API requests on{' '}
+              <code className="font-mono">POST /api/v1/extract</code> are subject to a rate limit of 30 requests per minute per API key and a maximum request body size of 15 MB.
+            </p>
+          </div>
+          <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2">
+            <h2 className="text-base font-bold text-[var(--text-main)]">
+              3. Client Data Ownership &amp; Deletion
+            </h2>
+            <p>
+              You retain full ownership of the invoices and accounting records you process in {BRAND_NAME}. You may export your records to Excel, CSV, JSON, SQL, or TallyPrime XML, or delete saved records at any time as detailed in our{' '}
+              <a
+                href="/data-deletion"
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate('/data-deletion');
+                  }
+                }}
+                className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+              >
+                Data Deletion Policy
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </section>
     );
@@ -2870,28 +3160,77 @@ export const LedgerSutraRouteView: React.FC<{
   // 6b. Data Deletion Policy (/data-deletion)
   if (cleanPath === '/data-deletion') {
     return (
-      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         {renderBreadcrumb('Data Deletion Policy')}
-        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">Data Deletion Policy</h1>
-        <p className="text-xs text-[var(--text-muted)]">Last Updated: November 2026 · Support: support@casaarthiai.in</p>
-        <div className="space-y-4 text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
-          <p>
-            <strong className="text-[var(--text-main)]">1. Ephemeral In-Memory OCR Processing:</strong> Every invoice PDF
-            or image uploaded to {BRAND_NAME} is processed ephemerally and purged from server memory immediately after the
-            structured response is returned.
-          </p>
-          <p>
-            <strong className="text-[var(--text-main)]">2. Instant One-Click Record &amp; Workspace Purge:</strong>{' '}
-            Within the {BRAND_NAME} workspace, you can delete any single invoice row, clear an entire client workspace, or
-            purge all saved records immediately without waiting for manual support tickets.
-          </p>
-          <p>
-            <strong className="text-[var(--text-main)]">3. Direct Deletion Assistance:</strong> For enterprise compliance
-            confirmations or account-wide deletion requests, email{' '}
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            Self-Service &amp; Assisted Deletion Controls
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            Data Deletion Policy &amp; Workspace Purge Controls
+          </h1>
+          <p className="text-xs text-[var(--text-muted)]">
+            Last Updated: November 2026 · Support:{' '}
             <a href="mailto:support@casaarthiai.in" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
               support@casaarthiai.in
-            </a>.
+            </a>
           </p>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+            How to delete single invoice records, clear an entire client workspace, purge all saved Cloud Firestore data, or clear browser-local storage in {BRAND_NAME}.
+          </p>
+        </div>
+
+        <div className="space-y-4 max-w-4xl">
+          {DATA_DELETION_SECTIONS.map((sec) => (
+            <div
+              key={sec.title}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+            >
+              <h2 className="text-base font-bold text-[var(--text-main)]">{sec.title}</h2>
+              {sec.paragraphs.map((p, idx) => (
+                <p key={idx} className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {sec.bullets && (
+                <ul className="space-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-main)]">
+                  {sec.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/privacy');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Privacy Policy →
+          </a>
+          <a
+            href="/security"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/security');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Security &amp; Data Isolation →
+          </a>
         </div>
       </section>
     );
@@ -2900,20 +3239,84 @@ export const LedgerSutraRouteView: React.FC<{
   // 7. Security Page (/security)
   if (cleanPath === '/security') {
     return (
-      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
         {renderBreadcrumb('Security & Data Isolation')}
-        <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-          Security &amp; Data Isolation for Client Records
-        </h1>
-        <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
-          We describe only the technical security controls that are implemented and active in {BRAND_NAME}:
-        </p>
-        <ul className="space-y-3 text-sm text-[var(--text-main)] max-w-3xl">
-          <li>• <b>Google Sign-In &amp; CA Practice Auth:</b> Sessions are authenticated via Google OAuth tokens or scoped CA Practice accounts.</li>
-          <li>• <b>Database-Level Ownership Rules:</b> <code className="font-mono">firestore.rules</code> enforces strict <code className="font-mono">request.auth.uid == userId</code> ownership and role-based approval permissions on every read and write.</li>
-          <li>• <b>SHA-256 Hashed API Keys:</b> Developer API keys generated for <code className="font-mono">/api/v1/extract</code> are hashed in the browser using SHA-256 before saving to Firestore; plaintext keys are never persisted.</li>
-          <li>• <b>Encryption in Transit:</b> All client-to-server and client-to-Firestore traffic is encrypted over HTTPS/TLS.</li>
-        </ul>
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            Code-Verified Security Architecture
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            Security &amp; Data Isolation for Client Records
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+            We document only the technical security controls, OCR data flows, and database access rules that are implemented and active in the {BRAND_NAME} codebase (<code className="font-mono">firestore.rules</code>, <code className="font-mono">server.ts</code>, <code className="font-mono">api/index.ts</code>, and <code className="font-mono">src/firebase.ts</code>).
+          </p>
+        </div>
+
+        <div className="space-y-5 max-w-4xl">
+          {SECURITY_ARCHITECTURE_SECTIONS.map((sec) => (
+            <div
+              key={sec.title}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+            >
+              <h2 className="text-base font-bold text-[var(--text-main)]">{sec.title}</h2>
+              {sec.paragraphs.map((p, idx) => (
+                <p key={idx} className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {sec.bullets && (
+                <ul className="space-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-main)]">
+                  {sec.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/privacy');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Read Privacy Policy →
+          </a>
+          <a
+            href="/data-deletion"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/data-deletion');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Read Data Deletion Policy →
+          </a>
+          <a
+            href="/api-docs"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/api-docs');
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            REST API v1 Documentation →
+          </a>
+        </div>
       </section>
     );
   }
@@ -3055,46 +3458,488 @@ export const LedgerSutraRouteView: React.FC<{
     );
   }
 
-  const corePageH1Map: Record<string, { badge: string; h1: string; summary: string }> = {
-    '/pricing': {
-      badge: 'Early-Access Pricing — Locked for Pilot Firms',
-      h1: 'Plans for Solo Practitioners & Multi-Partner CA Firms',
-      summary:
-        'Start with Free Starter (₹0 / month, 3 demo scans/day), upgrade to Pro Practitioner (₹1,499 / month for up to 25 client workspaces and GSTR-2B reconciliation), or choose CA Firm & Team (₹3,999 / month with unlimited clients, RBAC, and REST API).',
-    },
-    '/features': {
-      badge: 'CA Practice Capabilities Suite',
-      h1: 'Features Built for Indian GST Practice Workflows',
-      summary:
-        'Explore our 9 core modules: TallyPrime XML voucher export, 6-status GSTR-2B reconciliation, duplicate invoice detection, 15-digit GSTIN Mod-36 checksum audit, batch queue, client workspaces, team RBAC, and REST API.',
-    },
-    '/how-it-works': {
-      badge: '3-Step Accounting Workflow',
-      h1: 'From Client Invoice Folder to Tally Sign-Off',
-      summary:
-        'Select your client workspace, upload single or batch PDF/image bills, verify flagged fields in the CA audit queue, and export directly to TallyPrime XML or multi-sheet GSTR-2B Excel.',
-    },
-    '/about': {
-      badge: 'Built for Indian CA Firms',
-      h1: 'Built for Indian Chartered Accountants',
-      summary: `${BRAND_NAME} eliminates repetitive purchase voucher typing, GSTIN verification bottlenecks, and manual GSTR-2B VLOOKUP work for Indian Chartered Accountants, tax practitioners, and accounting teams.`,
-    },
-  };
-  const corePageInfo = corePageH1Map[cleanPath] || {
-    badge: BRAND_NAME,
-    h1: `${BRAND_NAME} — ${BRAND_TAGLINE}`,
-    summary: 'Explore our live workspace below or return to the homepage for the interactive walkthrough.',
-  };
+  // 10. Pricing Page (/pricing)
+  if (cleanPath === '/pricing') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+        {renderBreadcrumb('Pricing')}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[var(--border-color)] pb-5">
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+              Transparent Practice Plans · Early-Access Pricing Locked for Pilot Firms
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+              Plans for Solo Practitioners &amp; Multi-Partner CA Firms
+            </h1>
+            <p className="text-sm text-[var(--text-muted)] max-w-3xl leading-relaxed">
+              Choose the plan that matches your practice workflow. Evaluate invoice OCR, 15-digit GSTIN Mod-36 checksum validation, and TallyPrime XML exports on the ₹0 Starter / Trial plan, or scale across client workspaces and audit staff.
+            </p>
+          </div>
+          <a
+            href="/hi/pricing"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/hi/pricing');
+              }
+            }}
+            className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+          >
+            हिंदी में देखें (/hi/pricing) →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {PRACTICE_PRICING_PLANS.map((plan) => (
+            <div
+              key={plan.id}
+              className={`p-6 rounded-xl border flex flex-col justify-between space-y-5 ${
+                plan.highlighted
+                  ? 'border-indigo-500 bg-indigo-500/5'
+                  : 'border-[var(--border-color)] bg-[var(--bg-subtle)]'
+              }`}
+            >
+              <div className="space-y-2.5">
+                <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                  {plan.tier}
+                </div>
+                <div className="font-display text-2xl sm:text-3xl font-bold text-[var(--text-main)] tabular-nums">
+                  {plan.price}
+                </div>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{plan.audience}</p>
+                <ul className="space-y-2.5 pt-3 border-t border-[var(--border-color)] text-xs text-[var(--text-main)]">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a
+                href={plan.ctaHref}
+                onClick={(e) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                    e.preventDefault();
+                    if (plan.ctaHref === '/app') {
+                      onOpenWorkspaceTab('scanner', 'ca_mode');
+                    } else {
+                      onNavigate(plan.ctaHref);
+                    }
+                  }
+                }}
+                className={`w-full py-2.5 rounded-xl text-xs font-semibold text-center transition-colors cursor-pointer block ${
+                  plan.highlighted
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    : 'bg-[var(--bg-card)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)]'
+                }`}
+              >
+                {plan.ctaLabel}
+              </a>
+            </div>
+          ))}
+        </div>
+
+        {/* Plan Comparison & Practice Scope Explanation */}
+        <div className="p-5 sm:p-6 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-4">
+          <h2 className="font-display text-lg sm:text-xl font-bold text-[var(--text-main)]">
+            How Plan Differences Work in Practice
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <div className="font-bold text-[var(--text-main)]">Starter / Trial (₹0 / month)</div>
+              <p className="text-[var(--text-muted)] leading-relaxed">
+                Includes 3 built-in GST sample invoices plus up to 3 custom file scans per browser per day without login, or a 1-client workspace when signed in to test TallyPrime XML and Excel (.xlsx) output.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="font-bold text-[var(--text-main)]">CA Practice Pro (₹1,499 / month)</div>
+              <p className="text-[var(--text-muted)] leading-relaxed">
+                Designed for solo CAs and GST practitioners managing up to 25 distinct client GSTIN workspaces, adding 6-status GSTR-2B JSON/Excel reconciliation, Zoho Books CSV, Busy Excel, and e-invoice IRN/bank field extraction.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="font-bold text-[var(--text-main)]">Firm / Enterprise (₹3,999 / month)</div>
+              <p className="text-[var(--text-muted)] leading-relaxed">
+                Designed for multi-partner CA firms needing unlimited client workspaces, role-based access control (Owner/CA, Reviewer, Staff), bill approval &amp; lock workflows, and programmatic REST API (<code className="font-mono">POST /api/v1/extract</code>) access.
+              </p>
+            </div>
+          </div>
+          <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+            <a
+              href="/features"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/features');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Compare All 9 Technical Capabilities →
+            </a>
+            <a
+              href="/gst-invoice-to-tally"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gst-invoice-to-tally');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              TallyPrime XML Import Guide →
+            </a>
+            <a
+              href="/gstr-2b-reconciliation-excel"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/gstr-2b-reconciliation-excel');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              GSTR-2B Reconciliation Engine →
+            </a>
+            <a
+              href="/security"
+              onClick={(e) => {
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                  e.preventDefault();
+                  onNavigate('/security');
+                }
+              }}
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+            >
+              Security &amp; Data Isolation →
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // 11. Features Page (/features)
+  if (cleanPath === '/features') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
+        {renderBreadcrumb('Features')}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[var(--border-color)] pb-5">
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+              CA Practice Capabilities Suite · Code-Verified Specifications
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+              Features Built for Indian GST Practice Workflows
+            </h1>
+            <p className="text-sm text-[var(--text-muted)] max-w-3xl leading-relaxed">
+              Detailed technical breakdown of every capability implemented in {BRAND_NAME} — including accepted inputs, generated outputs, what the Chartered Accountant or article assistant needs to review, and known operational limitations.
+            </p>
+          </div>
+          <a
+            href="/hi/features"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/hi/features');
+              }
+            }}
+            className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+          >
+            हिंदी में देखें (/hi/features) →
+          </a>
+        </div>
+
+        <div className="space-y-5">
+          {DETAILED_FEATURES_SPECS.map((feat) => (
+            <article
+              key={feat.id}
+              id={feat.id}
+              className="p-5 sm:p-6 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-color)] pb-3">
+                <div>
+                  <div className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    {feat.number}. {feat.badge}
+                  </div>
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-[var(--text-main)] mt-0.5">
+                    {feat.title}
+                  </h2>
+                </div>
+                <a
+                  href={feat.linkHref}
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate(feat.linkHref);
+                    }
+                  }}
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+                >
+                  {feat.linkLabel}
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-2">
+                  <div>
+                    <strong className="text-[var(--text-main)] block mb-0.5">What It Does:</strong>
+                    <p className="text-[var(--text-muted)] leading-relaxed">{feat.whatItDoes}</p>
+                  </div>
+                  <div>
+                    <strong className="text-[var(--text-main)] block mb-0.5">Input Accepted:</strong>
+                    <p className="text-[var(--text-muted)] leading-relaxed">{feat.inputAccepted}</p>
+                  </div>
+                  <div>
+                    <strong className="text-[var(--text-main)] block mb-0.5">Output Produced:</strong>
+                    <p className="text-[var(--text-muted)] leading-relaxed">{feat.outputProduced}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="p-3.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                    <strong className="text-[var(--text-main)] block mb-1">
+                      What the CA / Accountant Needs to Review:
+                    </strong>
+                    <p className="text-[var(--text-muted)] leading-relaxed">{feat.whatCaNeedsToReview}</p>
+                  </div>
+                  <div className="p-3.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
+                    <strong className="text-[var(--text-main)] block mb-1">
+                      Known Limitations &amp; Constraints:
+                    </strong>
+                    <p className="text-[var(--text-muted)] leading-relaxed">{feat.limitations}</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onOpenWorkspaceTab('scanner', 'ca_mode');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+          >
+            Test Features in Live Workspace (/app)
+          </a>
+          <a
+            href="/pricing"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/pricing');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            View CA Practice Pricing Plans →
+          </a>
+          <a
+            href="/how-it-works"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/how-it-works');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            Read 4-Step Workflow Guide →
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  // 12. About Page (/about)
+  if (cleanPath === '/about') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        {renderBreadcrumb('About CA Saarthi AI')}
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            Built for Indian Chartered Accountants &amp; Tax Practitioners
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            Built for Indian Chartered Accountants
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+            {BRAND_NAME} eliminates repetitive purchase voucher typing, GSTIN verification bottlenecks, and manual GSTR-2B spreadsheet preparation for Indian CA firms, GST practitioners, and accounting teams.
+          </p>
+        </div>
+
+        <div className="space-y-5 max-w-4xl">
+          {ABOUT_PAGE_SECTIONS.map((sec) => (
+            <div
+              key={sec.title}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+            >
+              <h2 className="text-base font-bold text-[var(--text-main)]">{sec.title}</h2>
+              {sec.paragraphs.map((p, idx) => (
+                <p key={idx} className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {sec.bullets && (
+                <ul className="space-y-1.5 pt-1 text-xs sm:text-sm text-[var(--text-main)]">
+                  {sec.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/features"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/features');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+          >
+            Explore All 9 Capabilities →
+          </a>
+          <a
+            href="/pricing"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/pricing');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            View Pricing Plans →
+          </a>
+          <a
+            href="/security"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/security');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            Security &amp; Data Isolation →
+          </a>
+          <a
+            href="/contact"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/contact');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            Contact &amp; Book a Demo →
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  // 13. How It Works Page (/how-it-works)
+  if (cleanPath === '/how-it-works') {
+    return (
+      <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6">
+        {renderBreadcrumb('How It Works')}
+        <div className="space-y-2 border-b border-[var(--border-color)] pb-5">
+          <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+            4-Step CA Practice Workflow
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[var(--text-main)]">
+            From Client Invoice Folder to Tally Sign-Off
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
+            How Chartered Accountants and article assistants use {BRAND_NAME} to process client purchase bills, validate 15-digit GSTINs, reconcile GSTR-2B, and export TallyPrime XML vouchers.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {HOW_IT_WORKS_SECTIONS.map((s) => (
+            <div
+              key={s.step}
+              className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2.5"
+            >
+              <div className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                {s.step}
+              </div>
+              <h2 className="text-base font-bold text-[var(--text-main)]">{s.title}</h2>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">{s.description}</p>
+              <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-xs text-[var(--text-main)]">
+                <strong>CA Review Checkpoint:</strong> {s.reviewNote}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-2 border-t border-[var(--border-color)] flex flex-wrap gap-3 text-xs">
+          <a
+            href="/app"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onOpenWorkspaceTab('scanner', 'ca_mode');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+          >
+            Open Live Workspace (/app)
+          </a>
+          <a
+            href="/features"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/features');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            View All 9 Features →
+          </a>
+          <a
+            href="/pricing"
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                e.preventDefault();
+                onNavigate('/pricing');
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] font-semibold cursor-pointer"
+          >
+            View Pricing Plans →
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-5">
-      {renderBreadcrumb(corePageInfo.h1)}
-      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{corePageInfo.badge}</div>
+      {renderBreadcrumb(BRAND_NAME)}
+      <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{BRAND_NAME}</div>
       <h1 className="font-display text-3xl font-bold text-[var(--text-main)]">
-        {corePageInfo.h1}
+        {BRAND_NAME} — {BRAND_TAGLINE}
       </h1>
       <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-3xl">
-        {corePageInfo.summary}
+        Explore our live workspace below or return to the homepage for the interactive walkthrough.
       </p>
       <div className="flex flex-wrap gap-3">
         <a
@@ -3418,7 +4263,7 @@ export const LedgerSutraFooter: React.FC<{
               </a>
               ). Contact: support@casaarthiai.in
             </span>
-            <span>🔒 Local Fallback OCR · Zero Server-Side Data Retention · TallyPrime XML · GSTR-2B · SQL &amp; XLSX</span>
+            <span>🔒 Hybrid Cloud &amp; Local OCR · Client-Scoped Isolation · TallyPrime XML · GSTR-2B · SQL &amp; XLSX</span>
           </div>
         </div>
       </div>

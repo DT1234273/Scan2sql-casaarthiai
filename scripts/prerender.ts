@@ -180,6 +180,8 @@ function runPrerender() {
   }
 
   const baseTemplate = fs.readFileSync(distIndexPath, 'utf-8');
+  // Preserve unmodified template with <!--SSR_OUTLET--> for dynamic production server rendering
+  fs.writeFileSync(path.join(distDir, '_template.html'), baseTemplate, 'utf-8');
   const entries = getCanonicalSitemapEntries();
   const routesToPrerender = new Set<string>(['/']);
 
@@ -210,7 +212,11 @@ function runPrerender() {
     count++;
   }
 
-  console.log(`[prerender] Successfully prerendered ${count} routes + og-default.png & favicon.ico into dist/.`);
+  // Also emit dist/404.html for unknown routes on static hosts (Vercel / Netlify / Cloudflare)
+  const notFoundHtml = injectRouteSeoIntoTemplate(baseTemplate, '/404');
+  fs.writeFileSync(path.join(distDir, '404.html'), notFoundHtml, 'utf-8');
+
+  console.log(`[prerender] Successfully prerendered ${count} routes + 404.html + og-default.png & favicon.ico into dist/.`);
 }
 
 runPrerender();

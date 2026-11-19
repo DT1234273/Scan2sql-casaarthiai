@@ -25,16 +25,27 @@
       "source": "/resources/:slug",
       "destination": "/blog/:slug",
       "permanent": true
+    },
+    {
+      "source": "/invoice-ocr",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
+      "source": "/workspace",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
+      "source": "/scanner",
+      "destination": "/app",
+      "permanent": true
     }
   ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index"
-    },
-    {
-      "source": "/((?!api/|assets/|robots\\.txt|sitemap\\.xml|og-default\\.png|favicon\\.ico|favicon\\.svg).*)",
-      "destination": "/index.html"
     }
   ]
 }

@@ -851,7 +851,14 @@ async function startServer() {
       /<script type="application\/ld\+json" id="ledgersutra-jsonld">[\s\S]*?<\/script>/i,
       `<script type="application/ld+json" id="ledgersutra-jsonld">${seo.jsonLdString}</script>`
     );
-    html = html.replace('<!--SSR_OUTLET-->', seo.ssrBodyHtml);
+    if (html.includes('<!--SSR_OUTLET-->')) {
+      html = html.replace('<!--SSR_OUTLET-->', seo.ssrBodyHtml);
+    } else {
+      html = html.replace(
+        /<div id="root">[\s\S]*?<\/div>\s*(?=<script)/i,
+        `<div id="root">${seo.ssrBodyHtml}</div>\n    `
+      );
+    }
     return { html, seo };
   };
 
@@ -894,7 +901,8 @@ async function startServer() {
     app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
       const url = req.originalUrl || req.path || '/';
-      const indexPath = path.join(distPath, 'index.html');
+      const templatePath = path.join(distPath, '_template.html');
+      const indexPath = fs.existsSync(templatePath) ? templatePath : path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
         const rawHtml = fs.readFileSync(indexPath, 'utf-8');
         const { html: finalHtml, seo } = injectSeoPrerenderIntoHtml(rawHtml, url);

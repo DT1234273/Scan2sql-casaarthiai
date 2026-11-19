@@ -4399,8 +4399,22 @@ export function App() {
           />
         )}
 
-        {/* Task 11.3: On /blog/* routes, do not mount the heavy live workspace by default; show lightweight CTA */}
-        {(currentPath.startsWith('/blog') || currentPath.startsWith('/resources')) &&
+        {/* On standalone informational, pricing, trust, legal, and blog routes, defer the heavy live workspace behind a lightweight CTA so page-specific content stays primary */}
+        {(currentPath.startsWith('/blog') ||
+          currentPath.startsWith('/resources') ||
+          currentPath === '/pricing' ||
+          currentPath === '/hi/pricing' ||
+          currentPath === '/features' ||
+          currentPath === '/hi/features' ||
+          currentPath === '/how-it-works' ||
+          currentPath === '/security' ||
+          currentPath === '/privacy' ||
+          currentPath === '/data-deletion' ||
+          currentPath === '/terms' ||
+          currentPath === '/about' ||
+          currentPath === '/api-docs' ||
+          currentPath === '/faq' ||
+          currentPath === '/contact') &&
           !mountWorkspaceOnBlog && (
             <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5 max-w-2xl">
@@ -4438,10 +4452,26 @@ export function App() {
             </section>
           )}
 
-        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes, and deferred on /blog/* until requested) */}
+        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes, and deferred on standalone informational/blog routes until requested) */}
         {currentRouteAudit.routeKind !== 'obsolete_gone' &&
           currentRouteAudit.routeKind !== 'not_found' &&
-          (!(currentPath.startsWith('/blog') || currentPath.startsWith('/resources')) ||
+          (!(
+            currentPath.startsWith('/blog') ||
+            currentPath.startsWith('/resources') ||
+            currentPath === '/pricing' ||
+            currentPath === '/hi/pricing' ||
+            currentPath === '/features' ||
+            currentPath === '/hi/features' ||
+            currentPath === '/how-it-works' ||
+            currentPath === '/security' ||
+            currentPath === '/privacy' ||
+            currentPath === '/data-deletion' ||
+            currentPath === '/terms' ||
+            currentPath === '/about' ||
+            currentPath === '/api-docs' ||
+            currentPath === '/faq' ||
+            currentPath === '/contact'
+          ) ||
             mountWorkspaceOnBlog) && (
         <div id="live-ocr-workspace" className="space-y-4 sm:space-y-5 scroll-mt-16 sm:scroll-mt-20">
           <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-3.5 sm:p-5 space-y-4">
