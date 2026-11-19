@@ -30,11 +30,13 @@ import {
   BRAND_TAGLINE,
   SITE_DOMAIN,
   HOMEPAGE_FAQS,
+  HOMEPAGE_FAQS_HI,
   DEDICATED_SEO_PAGES,
   RESOURCE_ARTICLES,
   DEFAULT_CA_AUTHOR,
   HINDI_LOCALIZED_ROUTES,
   PRACTICE_PRICING_PLANS,
+  PRACTICE_PRICING_PLANS_HI,
   DETAILED_FEATURES_SPECS,
   SECURITY_ARCHITECTURE_SECTIONS,
   PRIVACY_POLICY_SECTIONS,
@@ -510,7 +512,7 @@ export const LedgerSutraHeroBanner: React.FC<{
                     }}
                     className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
-                    <span>Start Free Trial</span>
+                    <span>{hindiHome ? 'मुफ़्त ट्रायल शुरू करें' : 'Start Free Trial'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
 
@@ -529,7 +531,7 @@ export const LedgerSutraHeroBanner: React.FC<{
                     className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)] text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Mail className="w-4 h-4 text-indigo-500" />
-                    <span>Book a Demo</span>
+                    <span>{hindiHome ? 'डेमो बुक करें' : 'Book a Demo'}</span>
                   </a>
 
                   {onTriggerUpload && (
@@ -541,14 +543,22 @@ export const LedgerSutraHeroBanner: React.FC<{
                       className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] text-indigo-600 dark:text-indigo-400 border border-[var(--border-color)] text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Upload Invoice ({savedBillsCount} Saved)</span>
+                      <span>
+                        {hindiHome
+                          ? `इनवॉइस अपलोड करें (${savedBillsCount} सहेजे गए)`
+                          : `Upload Invoice (${savedBillsCount} Saved)`}
+                      </span>
                     </button>
                   )}
                 </div>
 
                 {/* Trust Badge / Micro-copy under CTA */}
                 <p className="text-[11px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                  <span>🔒 Hybrid Cloud &amp; Local Fallback OCR | Client-Scoped Isolation &amp; Instant Deletion</span>
+                  <span>
+                    {hindiHome
+                      ? '🔒 हाइब्रिड क्लाउड और लोकल फ़ॉलबैक OCR | क्लाइंट-स्कोप्ड आइसोलेशन और तुरंत डिलीट नियंत्रण'
+                      : '🔒 Hybrid Cloud & Local Fallback OCR | Client-Scoped Isolation & Instant Deletion'}
+                  </span>
                 </p>
               </div>
             </div>
@@ -557,77 +567,151 @@ export const LedgerSutraHeroBanner: React.FC<{
             <div className="space-y-3 pt-5 sm:pt-6 border-t border-[var(--border-color)] text-xs">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div>
-                  <div className="font-semibold text-[var(--text-main)]">15-Digit GSTIN Audit</div>
-                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">Mod-36 checksum &amp; PAN check</div>
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {hindiHome ? '15-अंकीय GSTIN जांच' : '15-Digit GSTIN Audit'}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">
+                    {hindiHome ? 'Mod-36 चेकसम और PAN जांच' : 'Mod-36 checksum & PAN check'}
+                  </div>
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-main)]">Bilingual OCR</div>
-                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">English &amp; Hindi bill scanner</div>
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {hindiHome ? 'द्विभाषी OCR (eng+hin)' : 'Bilingual OCR'}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">
+                    {hindiHome ? 'अंग्रेज़ी और हिंदी बिल स्कैनर' : 'English & Hindi bill scanner'}
+                  </div>
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-main)]">TallyPrime &amp; 2B</div>
-                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">XML vouchers &amp; 6-status match</div>
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {hindiHome ? 'TallyPrime और GSTR-2B' : 'TallyPrime & 2B'}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">
+                    {hindiHome ? 'XML वाउचर और 6-स्टेटस मिलान' : 'XML vouchers & 6-status match'}
+                  </div>
                 </div>
                 <div>
-                  <div className="font-semibold text-[var(--text-main)]">SQL, JSON &amp; XLSX</div>
-                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">Developer-ready exports</div>
+                  <div className="font-semibold text-[var(--text-main)]">
+                    {hindiHome ? 'SQL, JSON और XLSX' : 'SQL, JSON & XLSX'}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-[var(--text-muted)] mt-0.5">
+                    {hindiHome ? 'डेवलपर-रेडी एक्सपोर्ट्स' : 'Developer-ready exports'}
+                  </div>
                 </div>
               </div>
-              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                Invoice OCR software for Indian CA firms — automated GST data extraction with a Hindi + English bill scanner. Explore{' '}
-                <a
-                  href="/gst-invoice-to-tally"
-                  onClick={(e) => {
-                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                      e.preventDefault();
-                      onNavigate('/gst-invoice-to-tally');
-                    }
-                  }}
-                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-                >
-                  GST Invoice to TallyPrime XML
-                </a>
-                ,{' '}
-                <a
-                  href="/gstr-2b-reconciliation-excel"
-                  onClick={(e) => {
-                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                      e.preventDefault();
-                      onNavigate('/gstr-2b-reconciliation-excel');
-                    }
-                  }}
-                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-                >
-                  GSTR-2B Reconciliation in Excel
-                </a>
-                ,{' '}
-                <a
-                  href="/features"
-                  onClick={(e) => {
-                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                      e.preventDefault();
-                      onNavigate('/features');
-                    }
-                  }}
-                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-                >
-                  GST Practice Features
-                </a>
-                , and{' '}
-                <a
-                  href="/pricing"
-                  onClick={(e) => {
-                    if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                      e.preventDefault();
-                      onNavigate('/pricing');
-                    }
-                  }}
-                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
-                >
-                  CA Firm Pricing Plans
-                </a>
-                .
-              </p>
+              {hindiHome ? (
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  भारतीय CA फर्मों के लिए इनवॉइस OCR सॉफ्टवेयर — हिंदी + अंग्रेज़ी बिल स्कैनर के साथ स्वचालित GST डेटा एक्सट्रैक्शन। देखें:{' '}
+                  <a
+                    href="/hi/gst-invoice-to-tally"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/hi/gst-invoice-to-tally');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    GST इनवॉइस से TallyPrime XML
+                  </a>
+                  ,{' '}
+                  <a
+                    href="/hi/gstr-2b-reconciliation-excel"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/hi/gstr-2b-reconciliation-excel');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    Excel में GSTR-2B रिकन्सिलिएशन
+                  </a>
+                  ,{' '}
+                  <a
+                    href="/hi/features"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/hi/features');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    GST प्रैक्टिस फीचर्स
+                  </a>
+                  , और{' '}
+                  <a
+                    href="/hi/pricing"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/hi/pricing');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    CA फर्म प्राइसिंग प्लान
+                  </a>
+                  ।
+                </p>
+              ) : (
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  Invoice OCR software for Indian CA firms — automated GST data extraction with a Hindi + English bill scanner. Explore{' '}
+                  <a
+                    href="/gst-invoice-to-tally"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/gst-invoice-to-tally');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    GST Invoice to TallyPrime XML
+                  </a>
+                  ,{' '}
+                  <a
+                    href="/gstr-2b-reconciliation-excel"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/gstr-2b-reconciliation-excel');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    GSTR-2B Reconciliation in Excel
+                  </a>
+                  ,{' '}
+                  <a
+                    href="/features"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/features');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    GST Practice Features
+                  </a>
+                  , and{' '}
+                  <a
+                    href="/pricing"
+                    onClick={(e) => {
+                      if (onNavigate && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                        e.preventDefault();
+                        onNavigate('/pricing');
+                      }
+                    }}
+                    className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                  >
+                    CA Firm Pricing Plans
+                  </a>
+                  .
+                </p>
+              )}
             </div>
           </div>
 
@@ -635,9 +719,17 @@ export const LedgerSutraHeroBanner: React.FC<{
           <div className="lg:col-span-5 relative min-h-[340px] sm:min-h-[370px] lg:min-h-full bg-slate-950 border-t lg:border-t-0 lg:border-l border-[var(--border-color)] flex flex-col justify-end">
             <EditorialVisual
               src={heroStudioImg}
-              alt="CA Saarthi AI invoice OCR workspace showing GSTIN validation and Tally XML export"
-              fallbackTitle="CA Saarthi AI Practice Audit Desk"
-              fallbackSubtitle="Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel"
+              alt={
+                hindiHome
+                  ? 'CA Saarthi AI इनवॉइस OCR वर्कस्पेस — GSTIN सत्यापन और TallyPrime XML एक्सपोर्ट'
+                  : 'CA Saarthi AI invoice OCR workspace showing GSTIN validation and Tally XML export'
+              }
+              fallbackTitle={hindiHome ? 'CA Saarthi AI प्रैक्टिस ऑडिट डेस्क' : 'CA Saarthi AI Practice Audit Desk'}
+              fallbackSubtitle={
+                hindiHome
+                  ? 'खरीद बिलों से TallyPrime XML, SQL और GSTR-2B Excel'
+                  : 'Purchase bills to TallyPrime XML, SQL, and GSTR-2B Excel'
+              }
               width={1200}
               height={900}
               loading="eager"
@@ -649,14 +741,14 @@ export const LedgerSutraHeroBanner: React.FC<{
             <div className="relative z-10 p-4 sm:p-6 space-y-3 text-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span className="text-xs font-medium text-slate-300">
-                  Live Practice Output &amp; Benchmark
+                  {hindiHome ? 'लाइव प्रैक्टिस आउटपुट और बेंचमार्क' : 'Live Practice Output & Benchmark'}
                 </span>
                 <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-900/95 border border-slate-700/80 overflow-x-auto no-scrollbar max-w-full">
                   {[
-                    { id: 'extract' as const, label: '01. GST Fields' },
+                    { id: 'extract' as const, label: hindiHome ? '01. GST फ़ील्ड्स' : '01. GST Fields' },
                     { id: 'tally' as const, label: '02. Tally XML' },
                     { id: 'gstr2b' as const, label: '03. GSTR-2B' },
-                    { id: 'compare' as const, label: '04. vs Others' },
+                    { id: 'compare' as const, label: hindiHome ? '04. तुलना' : '04. vs Others' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -677,11 +769,13 @@ export const LedgerSutraHeroBanner: React.FC<{
                 {heroStage === 'extract' && (
                   <>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Supplier GSTIN</span>
-                      <span className="text-emerald-400 font-semibold break-all sm:break-normal">27AABCK4829M1Z5 (Valid Mod-36)</span>
+                      <span className="text-slate-400">{hindiHome ? 'सप्लायर GSTIN' : 'Supplier GSTIN'}</span>
+                      <span className="text-emerald-400 font-semibold break-all sm:break-normal">
+                        {hindiHome ? '27AABCK4829M1Z5 (मान्य Mod-36)' : '27AABCK4829M1Z5 (Valid Mod-36)'}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Invoice / Date</span>
+                      <span className="text-slate-400">{hindiHome ? 'इनवॉइस / तिथि' : 'Invoice / Date'}</span>
                       <span className="text-slate-100">INV/26-27/0842 · 2026-10-18</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
@@ -694,7 +788,7 @@ export const LedgerSutraHeroBanner: React.FC<{
                 {heroStage === 'tally' && (
                   <>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Voucher Type</span>
+                      <span className="text-slate-400">{hindiHome ? 'वाउचर प्रकार' : 'Voucher Type'}</span>
                       <span className="text-indigo-300 font-semibold">Purchase · Action: Create</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
@@ -711,16 +805,18 @@ export const LedgerSutraHeroBanner: React.FC<{
                 {heroStage === 'gstr2b' && (
                   <>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Normalized Invoice Key</span>
+                      <span className="text-slate-400">{hindiHome ? 'नॉर्मलाइज़्ड इनवॉइस की (Key)' : 'Normalized Invoice Key'}</span>
                       <span className="text-slate-100 break-all sm:break-normal">27AABCK4829M1Z5 · INV26270842</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Portal vs Books Delta</span>
-                      <span className="text-emerald-400 font-semibold">₹0.00 Variance</span>
+                      <span className="text-slate-400">{hindiHome ? 'पोर्टल बनाम बुक्स अंतर' : 'Portal vs Books Delta'}</span>
+                      <span className="text-emerald-400 font-semibold">{hindiHome ? '₹0.00 अंतर' : '₹0.00 Variance'}</span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Reconciliation Status</span>
-                      <span className="text-emerald-400 font-semibold">Matched · ITC Eligible</span>
+                      <span className="text-slate-400">{hindiHome ? 'रिकन्सिलिएशन स्थिति' : 'Reconciliation Status'}</span>
+                      <span className="text-emerald-400 font-semibold">
+                        {hindiHome ? 'Matched · ITC पात्र' : 'Matched · ITC Eligible'}
+                      </span>
                     </div>
                   </>
                 )}
@@ -728,15 +824,23 @@ export const LedgerSutraHeroBanner: React.FC<{
                 {heroStage === 'compare' && (
                   <>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Tally Pre-Export Blocker Check</span>
-                      <span className="text-emerald-400 font-semibold">Built-In (vs None in Basic OCR)</span>
+                      <span className="text-slate-400">
+                        {hindiHome ? 'Tally प्री-एक्सपोर्ट ब्लॉकर जांच' : 'Tally Pre-Export Blocker Check'}
+                      </span>
+                      <span className="text-emerald-400 font-semibold">
+                        {hindiHome ? 'इन-बिल्ट (सामान्य OCR में नहीं)' : 'Built-In (vs None in Basic OCR)'}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">GSTR-2B 6-Status Excel Match</span>
-                      <span className="text-emerald-400 font-semibold">Included (JSON + XLSX)</span>
+                      <span className="text-slate-400">
+                        {hindiHome ? 'GSTR-2B 6-स्टेटस Excel मिलान' : 'GSTR-2B 6-Status Excel Match'}
+                      </span>
+                      <span className="text-emerald-400 font-semibold">
+                        {hindiHome ? 'शामिल (JSON + XLSX)' : 'Included (JSON + XLSX)'}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-3">
-                      <span className="text-slate-400">Exports Supported</span>
+                      <span className="text-slate-400">{hindiHome ? 'समर्थित एक्सपोर्ट्स' : 'Exports Supported'}</span>
                       <span className="text-slate-100">Tally XML · Zoho · Busy · SQL</span>
                     </div>
                   </>
@@ -752,37 +856,65 @@ export const LedgerSutraHeroBanner: React.FC<{
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
             <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
-              Core Features · Built for Indian Chartered Accountants
+              {hindiHome
+                ? 'मुख्य विशेषताएं · भारतीय चार्टर्ड अकाउंटेंट्स के लिए निर्मित'
+                : 'Core Features · Built for Indian Chartered Accountants'}
             </p>
             <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-main)] mt-0.5">
-              Four Pillars Engineered to Outperform Generic Enterprise OCR
+              {hindiHome
+                ? 'भारतीय चार्टर्ड अकाउंटेंट्स (CA) के लिए निर्मित चार प्रमुख स्तंभ'
+                : 'Four Pillars Engineered to Outperform Generic Enterprise OCR'}
             </h2>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              num: '01.',
-              title: '15-Digit GSTIN Validation',
-              copy: 'Built for India. Automatically extracts and cross-verifies 15-digit GSTIN format, state code, PAN structure, and Mod-36 checksum before GSTR filing.',
-            },
-            {
-              num: '02.',
-              title: 'Bilingual Bill Scanner',
-              copy: 'Regional bills are supported alongside standard tax invoices. Extract header fields, line items, and vendor details from printed English and Hindi invoices.',
-            },
-            {
-              num: '03.',
-              title: 'Client-Scoped Data Isolation',
-              copy: 'Uploaded files are parsed in memory during OCR, while saved client workspaces and bills are isolated under per-user Firestore rules with one-click deletion.',
-            },
-            {
-              num: '04.',
-              title: 'Developer-Friendly Exports',
-              copy: 'Say goodbye to manual copy-pasting. Push extracted data directly into your existing systems via TallyPrime XML, SQL, JSON, or formatted XLSX files.',
-            },
-          ].map((pillar) => (
+          {(hindiHome
+            ? [
+                {
+                  num: '01.',
+                  title: '15-अंकीय GSTIN सत्यापन',
+                  copy: 'भारत के लिए निर्मित। GSTR फाइलिंग से पहले 15-अंकीय GSTIN फ़ॉर्मेट, राज्य कोड (01–38), PAN संरचना और Mod-36 चेकसम को स्वचालित रूप से निकालता और सत्यापित करता है।',
+                },
+                {
+                  num: '02.',
+                  title: 'द्विभाषी बिल स्कैनर (अंग्रेज़ी + हिंदी)',
+                  copy: 'मानक टैक्स इनवॉइस के साथ क्षेत्रीय बिल भी समर्थित हैं। प्रिंटेड अंग्रेज़ी और देवनागरी हिंदी इनवॉइस से हेडर फ़ील्ड्स, लाइन आइटम और विक्रेता विवरण निकालता है।',
+                },
+                {
+                  num: '03.',
+                  title: 'क्लाइंट-स्कोप्ड डेटा आइसोलेशन',
+                  copy: 'अपलोड की गई फ़ाइलें OCR के दौरान मेमोरी में प्रोसेस होती हैं, जबकि सहेजे गए क्लाइंट वर्कस्पेस और बिल प्रति-उपयोगकर्ता Firestore नियमों और वन-क्लिक डिलीट सुविधा से सुरक्षित रहते हैं।',
+                },
+                {
+                  num: '04.',
+                  title: 'डेवलपर-फ्रेंडली एक्सपोर्ट्स',
+                  copy: 'मैनुअल कॉपी-पेस्ट से मुक्ति पाएं। निकाले गए डेटा को सीधे TallyPrime XML, SQL, JSON या फ़ॉर्मेटेड Excel (.xlsx) फ़ाइलों के माध्यम से अपने मौजूदा अकाउंटिंग सिस्टम में भेजें।',
+                },
+              ]
+            : [
+                {
+                  num: '01.',
+                  title: '15-Digit GSTIN Validation',
+                  copy: 'Built for India. Automatically extracts and cross-verifies 15-digit GSTIN format, state code, PAN structure, and Mod-36 checksum before GSTR filing.',
+                },
+                {
+                  num: '02.',
+                  title: 'Bilingual Bill Scanner',
+                  copy: 'Regional bills are supported alongside standard tax invoices. Extract header fields, line items, and vendor details from printed English and Hindi invoices.',
+                },
+                {
+                  num: '03.',
+                  title: 'Client-Scoped Data Isolation',
+                  copy: 'Uploaded files are parsed in memory during OCR, while saved client workspaces and bills are isolated under per-user Firestore rules with one-click deletion.',
+                },
+                {
+                  num: '04.',
+                  title: 'Developer-Friendly Exports',
+                  copy: 'Say goodbye to manual copy-pasting. Push extracted data directly into your existing systems via TallyPrime XML, SQL, JSON, or formatted XLSX files.',
+                },
+              ]
+          ).map((pillar) => (
             <div
               key={pillar.title}
               className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-2.5"
@@ -801,17 +933,27 @@ export const LedgerSutraHeroBanner: React.FC<{
 
       {/* Quick Section Wayfinder Strip — Keeps Users Exploring */}
       <nav
-        aria-label="Homepage workflow sections"
+        aria-label={hindiHome ? 'होमपेज वर्कफ़्लो सेक्शन' : 'Homepage workflow sections'}
         className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-medium text-[var(--text-muted)]"
       >
-        {[
-          { id: 'live-no-login-demo', label: '01. Live Demo (No Login)' },
-          { id: 'live-ocr-workspace', label: '02. Full OCR & GSTR-2B Workspace' },
-          { id: 'practice-roi-estimator', label: '03. Time-Saved & Competitor Matrix' },
-          { id: 'ca-suite-capabilities', label: '04. 9 Core Capabilities' },
-          { id: 'extracted-fields-explorer', label: '05. 30+ Extracted Fields' },
-          { id: 'practice-pricing-plans', label: '06. Plans & FAQ' },
-        ].map((item) => (
+        {(hindiHome
+          ? [
+              { id: 'live-no-login-demo', label: '01. लाइव डेमो (बिना लॉगिन)' },
+              { id: 'live-ocr-workspace', label: '02. पूर्ण OCR और GSTR-2B वर्कस्पेस' },
+              { id: 'practice-roi-estimator', label: '03. समय की बचत और तुलना' },
+              { id: 'ca-suite-capabilities', label: '04. 9 मुख्य क्षमताएं' },
+              { id: 'extracted-fields-explorer', label: '05. 30+ निकाले गए फ़ील्ड्स' },
+              { id: 'practice-pricing-plans', label: '06. प्लान और सामान्य प्रश्न (FAQ)' },
+            ]
+          : [
+              { id: 'live-no-login-demo', label: '01. Live Demo (No Login)' },
+              { id: 'live-ocr-workspace', label: '02. Full OCR & GSTR-2B Workspace' },
+              { id: 'practice-roi-estimator', label: '03. Time-Saved & Competitor Matrix' },
+              { id: 'ca-suite-capabilities', label: '04. 9 Core Capabilities' },
+              { id: 'extracted-fields-explorer', label: '05. 30+ Extracted Fields' },
+              { id: 'practice-pricing-plans', label: '06. Plans & FAQ' },
+            ]
+        ).map((item) => (
           <a
             key={item.id}
             href={`#${item.id}`}
@@ -867,6 +1009,41 @@ const ALL_EXTRACTED_FIELDS: Array<{
   { name: 'Customs Port Code (Import BOE)', category: 'boe', categoryLabel: 'Import BOE' },
 ];
 
+const ALL_EXTRACTED_FIELDS_HI: Array<{
+  name: string;
+  category: 'party' | 'einvoice' | 'tax' | 'boe';
+  categoryLabel: string;
+}> = [
+  { name: 'सप्लायर का नाम (Party Ledger)', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'सप्लायर का 15-अंकीय GSTIN', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'सप्लायर का 10-अंकीय PAN', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'सप्लायर का पता और राज्य कोड', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'खरीदार का नाम और खरीदार GSTIN', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'खरीदार का पता और राज्य कोड', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'आपूर्ति का स्थान (Place of Supply)', category: 'party', categoryLabel: 'पार्टी और GSTIN' },
+  { name: 'इनवॉइस नंबर और वाउचर प्रकार', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: 'इनवॉइस तिथि और देय तिथि (Due Date)', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: '64-कैरेक्टर e-Invoice IRN', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: '12-अंकीय e-Way Bill नंबर', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: 'e-Invoice QR कोड डेटा', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: 'परचेस ऑर्डर (PO) नंबर', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: 'भुगतान शर्तें और माध्यम', category: 'einvoice', categoryLabel: 'E-Invoice और लॉजिस्टिक्स' },
+  { name: 'बैंक का नाम, खाता संख्या और IFSC', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'इनवॉइस मुद्रा (INR / Forex)', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'लाइन आइटम विवरण (Description)', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'प्रति पंक्ति HSN / SAC कोड', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'मात्रा (Quantity), इकाई (UOM) और दर', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'कर योग्य मूल्य (Taxable Subtotal)', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'CGST दर और राशि', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'SGST / UTGST दर और राशि', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'IGST दर और राशि', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'ट्रेड डिस्काउंट और अन्य शुल्क', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'राउंड-ऑफ (Round-Off) समायोजन', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'अंतिम कुल योग (Final Grand Total)', category: 'tax', categoryLabel: 'टैक्स और बैंक गणना' },
+  { name: 'Bill of Entry (BOE) नंबर और तिथि', category: 'boe', categoryLabel: 'इम्पोर्ट BOE' },
+  { name: 'कस्टम्स पोर्ट कोड (Import BOE)', category: 'boe', categoryLabel: 'इम्पोर्ट BOE' },
+];
+
 export const LedgerSutraHomepageSections: React.FC<{
   onNavigate: (path: string) => void;
   onOpenWorkspaceTab: (
@@ -876,7 +1053,11 @@ export const LedgerSutraHomepageSections: React.FC<{
   onTriggerUpload?: () => void;
   savedBillsCount: number;
   onSignInRequest?: () => void;
-}> = ({ onNavigate, onOpenWorkspaceTab, onSignInRequest }) => {
+  currentPath?: string;
+}> = ({ onNavigate, onOpenWorkspaceTab, onSignInRequest, currentPath = '/' }) => {
+  const cleanSectionPath = normalizePathname(currentPath);
+  const isHindi = cleanSectionPath === '/hi' || cleanSectionPath.startsWith('/hi/');
+
   // Live Demo State
   const [selectedSampleId, setSelectedSampleId] = useState<string>(BUILTIN_DEMO_SAMPLES[0].id);
   const [demoViewTab, setDemoViewTab] = useState<'table' | 'tally_xml' | 'gstr2b' | 'json'>('table');
@@ -918,27 +1099,31 @@ export const LedgerSutraHomepageSections: React.FC<{
     return { manualHours, withLedgerSutraHours, hoursSaved };
   }, [monthlyInvoices, clientCount, include2bReconciliation]);
 
+  const activeFieldsSource = isHindi ? ALL_EXTRACTED_FIELDS_HI : ALL_EXTRACTED_FIELDS;
+
   const filteredFields = useMemo(() => {
     const q = fieldSearch.trim().toLowerCase();
-    return ALL_EXTRACTED_FIELDS.filter((f) => {
+    return activeFieldsSource.filter((f) => {
       if (fieldCategory !== 'all' && f.category !== fieldCategory) return false;
       if (q && !f.name.toLowerCase().includes(q) && !f.categoryLabel.toLowerCase().includes(q)) {
         return false;
       }
       return true;
     });
-  }, [fieldCategory, fieldSearch]);
+  }, [activeFieldsSource, fieldCategory, fieldSearch]);
+
+  const activeFaqsSource = isHindi ? HOMEPAGE_FAQS_HI : HOMEPAGE_FAQS;
 
   const filteredFaqs = useMemo(() => {
-    return HOMEPAGE_FAQS.filter((faq) => {
+    return activeFaqsSource.filter((faq) => {
       if (faqCategory === 'All') return true;
       const text = `${faq.question} ${faq.answer}`.toLowerCase();
       if (faqCategory === 'Tally') return text.includes('tally') || text.includes('xml') || text.includes('zoho');
-      if (faqCategory === 'GSTR-2B') return text.includes('2b') || text.includes('itc') || text.includes('reconcil');
-      if (faqCategory === 'Security') return text.includes('secur') || text.includes('data') || text.includes('firestore') || text.includes('team');
-      return !text.includes('tally') && !text.includes('2b') && !text.includes('secur');
+      if (faqCategory === 'GSTR-2B') return text.includes('2b') || text.includes('itc') || text.includes('reconcil') || text.includes('रिकन्सिलिएशन');
+      if (faqCategory === 'Security') return text.includes('secur') || text.includes('data') || text.includes('firestore') || text.includes('team') || text.includes('सुरक्षित') || text.includes('टीम');
+      return !text.includes('tally') && !text.includes('2b') && !text.includes('secur') && !text.includes('सुरक्षित');
     });
-  }, [faqCategory]);
+  }, [activeFaqsSource, faqCategory]);
 
   const handleCustomDemoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -948,7 +1133,9 @@ export const LedgerSutraHomepageSections: React.FC<{
     const used = getBrowserDemoScansUsed();
     if (used >= 3) {
       setCustomDemoError(
-        'You have used all 3 free browser scans for today. Please sign in with Google to scan more invoices.'
+        isHindi
+          ? 'आपने आज के सभी 3 मुफ़्त ब्राउज़र डेमो स्कैन का उपयोग कर लिया है। अधिक इनवॉइस स्कैन करने के लिए कृपया Google से साइन इन करें।'
+          : 'You have used all 3 free browser scans for today. Please sign in with Google to scan more invoices.'
       );
       return;
     }
@@ -1030,13 +1217,19 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--border-color)] pb-4 sm:pb-5">
           <div className="space-y-1">
             <div className="text-xs font-medium text-[var(--text-muted)]">
-              Interactive Extraction Sandbox · No Login Required ·{' '}
+              {isHindi
+                ? 'इंटरैक्टिव एक्सट्रैक्शन सैंडबॉक्स · लॉगिन आवश्यक नहीं · '
+                : 'Interactive Extraction Sandbox · No Login Required · '}
               <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-                {Math.max(0, 3 - scansUsedToday)} of 3 custom demo scans remaining today
+                {isHindi
+                  ? `आज 3 में से ${Math.max(0, 3 - scansUsedToday)} कस्टम डेमो स्कैन शेष`
+                  : `${Math.max(0, 3 - scansUsedToday)} of 3 custom demo scans remaining today`}
               </span>
             </div>
             <h2 className="font-display text-xl sm:text-3xl font-bold tracking-tight text-[var(--text-main)]">
-              Inspect GST Invoice Extraction, TallyPrime XML &amp; JSON Live
+              {isHindi
+                ? 'GST इनवॉइस एक्सट्रैक्शन, TallyPrime XML और JSON का लाइव निरीक्षण करें'
+                : 'Inspect GST Invoice Extraction, TallyPrime XML & JSON Live'}
             </h2>
           </div>
 
@@ -1044,7 +1237,15 @@ export const LedgerSutraHomepageSections: React.FC<{
             {scansUsedToday < 3 ? (
               <label className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors whitespace-nowrap shrink-0">
                 <Upload className="w-4 h-4" />
-                <span>{customDemoLoading ? 'Extracting Invoice...' : 'Upload Sample Invoice'}</span>
+                <span>
+                  {customDemoLoading
+                    ? isHindi
+                      ? 'इनवॉइस प्रोसेस हो रहा है...'
+                      : 'Extracting Invoice...'
+                    : isHindi
+                    ? 'सैंपल इनवॉइस अपलोड करें'
+                    : 'Upload Sample Invoice'}
+                </span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -1058,7 +1259,11 @@ export const LedgerSutraHomepageSections: React.FC<{
                 className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Daily 3-Scan Limit Reached — Sign in for More</span>
+                <span>
+                  {isHindi
+                    ? 'दैनिक 3-स्कैन सीमा पूर्ण — अधिक के लिए साइन इन करें'
+                    : 'Daily 3-Scan Limit Reached — Sign in for More'}
+                </span>
               </button>
             )}
           </div>
@@ -1072,7 +1277,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                 onClick={onSignInRequest}
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold shrink-0 cursor-pointer"
               >
-                Sign In with Google
+                {isHindi ? 'Google से साइन इन करें' : 'Sign In with Google'}
               </button>
             )}
           </div>
@@ -1082,6 +1287,11 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
           {BUILTIN_DEMO_SAMPLES.map((samp, index) => {
             const isSelected = !customDemoResult && selectedSampleId === samp.id;
+            const hiLabels = [
+              { meta: 'इंटर-स्टेट B2B · IGST 18%', label: 'भारती एयरटेल एंटरप्राइज लीज्ड लाइन बिल' },
+              { meta: 'इंट्रा-स्टेट · CGST 9% + SGST 9%', label: 'अल्ट्राटेक सीमेंट और हार्डवेयर सप्लाई इनवॉइस' },
+              { meta: 'द्विभाषी (हिंदी + अंग्रेज़ी) · GST 5%', label: 'श्री बालाजी एग्रो एंड ट्रेडर्स (देवनागरी बिल)' },
+            ];
             return (
               <button
                 key={samp.id}
@@ -1096,9 +1306,13 @@ export const LedgerSutraHomepageSections: React.FC<{
                 }`}
               >
                 <div className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
-                  Sample 0{index + 1} · {samp.meta}
+                  {isHindi
+                    ? `सैंपल 0${index + 1} · ${hiLabels[index]?.meta || samp.meta}`
+                    : `Sample 0${index + 1} · ${samp.meta}`}
                 </div>
-                <div className="text-xs sm:text-sm font-semibold text-[var(--text-main)] mt-1">{samp.label}</div>
+                <div className="text-xs sm:text-sm font-semibold text-[var(--text-main)] mt-1">
+                  {isHindi ? hiLabels[index]?.label || samp.label : samp.label}
+                </div>
               </button>
             );
           })}
@@ -1112,7 +1326,7 @@ export const LedgerSutraHomepageSections: React.FC<{
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-[var(--border-color)] pb-3">
                 <div className="min-w-0">
                   <div className="text-[11px] font-medium text-[var(--text-muted)]">
-                    Tax Invoice Preview
+                    {isHindi ? 'टैक्स इनवॉइस प्रीव्यू' : 'Tax Invoice Preview'}
                   </div>
                   <div className="text-sm font-bold text-[var(--text-main)] mt-0.5 break-words">
                     {displayedInvoice.shopName}
@@ -1131,7 +1345,7 @@ export const LedgerSutraHomepageSections: React.FC<{
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="min-w-0">
-                  <div className="text-[11px] text-[var(--text-muted)]">Billed To</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">{isHindi ? 'खरीदार (Billed To)' : 'Billed To'}</div>
                   <div className="font-semibold text-[var(--text-main)] truncate">
                     {displayedInvoice.buyerName}
                   </div>
@@ -1140,7 +1354,9 @@ export const LedgerSutraHomepageSections: React.FC<{
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11px] text-[var(--text-muted)]">Place of Supply &amp; Logistics</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">
+                    {isHindi ? 'आपूर्ति का स्थान और लॉजिस्टिक्स' : 'Place of Supply & Logistics'}
+                  </div>
                   <div className="font-medium text-[var(--text-main)]">{displayedInvoice.placeOfSupply}</div>
                   <div className="font-mono text-[11px] text-[var(--text-muted)] truncate">
                     e-Way: {displayedInvoice.ewayBillNo}
@@ -1169,7 +1385,7 @@ export const LedgerSutraHomepageSections: React.FC<{
 
             <div className="border-t border-[var(--border-color)] pt-3 space-y-1.5 text-xs font-mono tabular-nums">
               <div className="flex justify-between text-[var(--text-muted)]">
-                <span>Taxable Value</span>
+                <span>{isHindi ? 'कर योग्य मूल्य (Taxable Value)' : 'Taxable Value'}</span>
                 <span>₹{displayedInvoice.subtotal.toLocaleString('en-IN')}</span>
               </div>
               {displayedInvoice.igstAmount > 0 ? (
@@ -1190,7 +1406,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                 </>
               )}
               <div className="flex justify-between pt-2 border-t border-[var(--border-color)] text-sm font-bold text-[var(--text-main)]">
-                <span>Grand Total ({displayedInvoice.currency})</span>
+                <span>{isHindi ? `कुल योग (${displayedInvoice.currency})` : `Grand Total (${displayedInvoice.currency})`}</span>
                 <span className="text-emerald-600 dark:text-emerald-400">
                   ₹{displayedInvoice.grandTotal.toLocaleString('en-IN')}
                 </span>
@@ -1203,9 +1419,9 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] overflow-x-auto no-scrollbar max-w-full">
                 {[
-                  { id: 'table' as const, label: 'Accounting Table' },
+                  { id: 'table' as const, label: isHindi ? 'अकाउंटिंग तालिका' : 'Accounting Table' },
                   { id: 'tally_xml' as const, label: 'TallyPrime XML' },
-                  { id: 'gstr2b' as const, label: 'GSTR-2B Check' },
+                  { id: 'gstr2b' as const, label: isHindi ? 'GSTR-2B जांच' : 'GSTR-2B Check' },
                   { id: 'json' as const, label: 'Raw JSON API' },
                 ].map((tab) => (
                   <button
@@ -1230,19 +1446,19 @@ export const LedgerSutraHomepageSections: React.FC<{
               <div className="space-y-4 flex-1 flex flex-col justify-between min-w-0">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
                   <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)]">Supplier PAN</div>
+                    <div className="text-[11px] text-[var(--text-muted)]">{isHindi ? 'सप्लायर PAN' : 'Supplier PAN'}</div>
                     <div className="font-mono font-semibold text-[var(--text-main)] mt-0.5">
                       {displayedInvoice.supplierPan}
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)]">PO / Payment Terms</div>
+                    <div className="text-[11px] text-[var(--text-muted)]">{isHindi ? 'PO / भुगतान शर्तें' : 'PO / Payment Terms'}</div>
                     <div className="font-semibold text-[var(--text-main)] mt-0.5 truncate">
                       {displayedInvoice.poNumber} · {displayedInvoice.paymentTerms}
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)]">Bank &amp; IFSC</div>
+                    <div className="text-[11px] text-[var(--text-muted)]">{isHindi ? 'बैंक और IFSC' : 'Bank & IFSC'}</div>
                     <div className="font-mono font-semibold text-[var(--text-main)] mt-0.5 truncate">
                       {displayedInvoice.bankName} ({displayedInvoice.bankIfsc})
                     </div>
@@ -1295,10 +1511,12 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs font-semibold text-[var(--text-main)]">
-                      Books vs GSTR-2B Portal Match Simulation
+                      {isHindi ? 'बुक्स बनाम GSTR-2B पोर्टल मिलान सिमुलेशन' : 'Books vs GSTR-2B Portal Match Simulation'}
                     </div>
                     <div className="text-[11px] text-[var(--text-muted)]">
-                      Normalized match key: GSTIN + stripped invoice number
+                      {isHindi
+                        ? 'नॉर्मलाइज़्ड मिलान कुंजी: GSTIN + इनवॉइस नंबर'
+                        : 'Normalized match key: GSTIN + stripped invoice number'}
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -1307,19 +1525,25 @@ export const LedgerSutraHomepageSections: React.FC<{
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono tabular-nums">
                   <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Books Tax Claim</div>
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">
+                      {isHindi ? 'बुक्स टैक्स दावा (Books Tax)' : 'Books Tax Claim'}
+                    </div>
                     <div className="text-sm font-bold text-[var(--text-main)] mt-1">
                       ₹{(displayedInvoice.cgstAmount + displayedInvoice.sgstAmount + displayedInvoice.igstAmount).toLocaleString('en-IN')}
                     </div>
                   </div>
                   <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Portal 2B Eligible ITC</div>
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">
+                      {isHindi ? 'पोर्टल 2B पात्र ITC' : 'Portal 2B Eligible ITC'}
+                    </div>
                     <div className="text-sm font-bold text-[var(--text-main)] mt-1">
                       ₹{(displayedInvoice.cgstAmount + displayedInvoice.sgstAmount + displayedInvoice.igstAmount).toLocaleString('en-IN')}
                     </div>
                   </div>
                   <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
-                    <div className="text-[11px] text-[var(--text-muted)] font-sans">Tax Variance</div>
+                    <div className="text-[11px] text-[var(--text-muted)] font-sans">
+                      {isHindi ? 'टैक्स अंतर (Variance)' : 'Tax Variance'}
+                    </div>
                     <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                       ₹0.00
                     </div>
@@ -1350,19 +1574,25 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="space-y-1">
               <div className="text-xs font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Interactive Practice Workload Estimator</span>
+                <span>
+                  {isHindi ? 'इंटरैक्टिव प्रैक्टिस कार्यभार कैलकुलेटर' : 'Interactive Practice Workload Estimator'}
+                </span>
               </div>
               <h2 className="font-display text-xl font-bold text-[var(--text-main)]">
-                Estimate Monthly Voucher &amp; 2B Hours Saved
+                {isHindi
+                  ? 'मासिक वाउचर एंट्री और GSTR-2B समय की बचत का अनुमान लगाएं'
+                  : 'Estimate Monthly Voucher & 2B Hours Saved'}
               </h2>
             </div>
 
             <div className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <div className="flex justify-between font-semibold">
-                  <label htmlFor="roi-invoices">Monthly Purchase Invoices</label>
+                  <label htmlFor="roi-invoices">
+                    {isHindi ? 'मासिक खरीद इनवॉइस (Purchase Invoices)' : 'Monthly Purchase Invoices'}
+                  </label>
                   <span className="font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
-                    {monthlyInvoices.toLocaleString('en-IN')} bills
+                    {monthlyInvoices.toLocaleString('en-IN')} {isHindi ? 'बिल' : 'bills'}
                   </span>
                 </div>
                 <input
@@ -1379,9 +1609,11 @@ export const LedgerSutraHomepageSections: React.FC<{
 
               <div className="space-y-1.5">
                 <div className="flex justify-between font-semibold">
-                  <label htmlFor="roi-clients">Active GST Clients</label>
+                  <label htmlFor="roi-clients">
+                    {isHindi ? 'सक्रिय GST क्लाइंट्स' : 'Active GST Clients'}
+                  </label>
                   <span className="font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
-                    {clientCount} clients
+                    {clientCount} {isHindi ? 'क्लाइंट्स' : 'clients'}
                   </span>
                 </div>
                 <input
@@ -1403,25 +1635,35 @@ export const LedgerSutraHomepageSections: React.FC<{
                   onChange={(e) => setInclude2bReconciliation(e.target.checked)}
                   className="rounded border-[var(--border-color)] accent-indigo-600"
                 />
-                <span>Include monthly GSTR-2B Excel reconciliation time</span>
+                <span>
+                  {isHindi
+                    ? 'मासिक GSTR-2B Excel रिकन्सिलिएशन समय शामिल करें'
+                    : 'Include monthly GSTR-2B Excel reconciliation time'}
+                </span>
               </label>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--border-color)] font-mono tabular-nums">
               <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
-                <div className="text-[10px] font-sans text-[var(--text-muted)]">Manual Entry</div>
+                <div className="text-[10px] font-sans text-[var(--text-muted)]">
+                  {isHindi ? 'मैनुअल एंट्री' : 'Manual Entry'}
+                </div>
                 <div className="text-base font-bold text-[var(--text-main)] mt-0.5">
                   {estimatedTimeStats.manualHours}h
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)]">
-                <div className="text-[10px] font-sans text-[var(--text-muted)]">With Review</div>
+                <div className="text-[10px] font-sans text-[var(--text-muted)]">
+                  {isHindi ? 'समीक्षा सहित' : 'With Review'}
+                </div>
                 <div className="text-base font-bold text-[var(--text-main)] mt-0.5">
                   {estimatedTimeStats.withLedgerSutraHours}h
                 </div>
               </div>
               <div className="p-3 rounded-lg bg-indigo-600 text-white">
-                <div className="text-[10px] font-sans text-indigo-100">Hours Saved</div>
+                <div className="text-[10px] font-sans text-indigo-100">
+                  {isHindi ? 'बचाया गया समय' : 'Hours Saved'}
+                </div>
                 <div className="text-base font-bold mt-0.5">
                   ~{estimatedTimeStats.hoursSaved}h/mo
                 </div>
@@ -1429,7 +1671,9 @@ export const LedgerSutraHomepageSections: React.FC<{
             </div>
 
             <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-              Illustrative workflow calculation assuming ~3.5 min manual voucher &amp; ledger entry per invoice vs ~0.6 min review &amp; export.
+              {isHindi
+                ? 'उदाहरणात्मक गणना: प्रति इनवॉइस लगभग 3.5 मिनट मैनुअल वाउचर व लेजर एंट्री बनाम लगभग 0.6 मिनट समीक्षा और एक्सपोर्ट।'
+                : 'Illustrative workflow calculation assuming ~3.5 min manual voucher & ledger entry per invoice vs ~0.6 min review & export.'}
             </p>
           </div>
 
@@ -1437,10 +1681,12 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-7 space-y-5">
             <div>
               <div className="text-xs font-medium text-[var(--text-muted)]">
-                Problem vs Solution
+                {isHindi ? 'समस्या बनाम समाधान' : 'Problem vs Solution'}
               </div>
               <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-                Why Indian CA Firms Replace Manual Voucher Entry with {BRAND_NAME}
+                {isHindi
+                  ? `भारतीय CA फर्में मैनुअल वाउचर एंट्री के स्थान पर ${BRAND_NAME} क्यों अपनाती हैं`
+                  : `Why Indian CA Firms Replace Manual Voucher Entry with ${BRAND_NAME}`}
               </h2>
             </div>
 
@@ -1448,27 +1694,45 @@ export const LedgerSutraHomepageSections: React.FC<{
               <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-3">
                 <div className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>Manual Data Entry Bottlenecks</span>
+                  <span>{isHindi ? 'मैनुअल डेटा एंट्री की बाधाएं' : 'Manual Data Entry Bottlenecks'}</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
-                  <li>Typing 15-character GSTINs, invoice numbers, and HSN rows by hand before GSTR-3B deadlines.</li>
-                  <li>Transposing characters (`8` vs `B`, `0` vs `O`) causing avoidable GSTR-2B mismatches.</li>
-                  <li>Double-booking invoices when clients share both a WhatsApp photo and an email PDF.</li>
-                  <li>Manually creating Sundry Creditor ledgers and tax splits inside TallyPrime.</li>
-                </ul>
+                {isHindi ? (
+                  <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                    <li>GSTR-3B की समय-सीमा से पहले 15-अंकीय GSTIN, इनवॉइस नंबर और HSN पंक्तियों को हाथ से टाइप करना।</li>
+                    <li>अक्षरों की टाइपिंग त्रुटियों (`8` बनाम `B`, `0` बनाम `O`) के कारण अनावश्यक GSTR-2B मिसमैच होना।</li>
+                    <li>क्लाइंट द्वारा WhatsApp फोटो और ईमेल PDF दोनों भेजने पर एक ही इनवॉइस की दोबारा एंट्री हो जाना।</li>
+                    <li>TallyPrime के भीतर Sundry Creditor लेजर और टैक्स विभाजन को मैनुअल रूप से बनाना।</li>
+                  </ul>
+                ) : (
+                  <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                    <li>Typing 15-character GSTINs, invoice numbers, and HSN rows by hand before GSTR-3B deadlines.</li>
+                    <li>Transposing characters (`8` vs `B`, `0` vs `O`) causing avoidable GSTR-2B mismatches.</li>
+                    <li>Double-booking invoices when clients share both a WhatsApp photo and an email PDF.</li>
+                    <li>Manually creating Sundry Creditor ledgers and tax splits inside TallyPrime.</li>
+                  </ul>
+                )}
               </div>
 
               <div className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-3">
                 <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Structured {BRAND_NAME} Workflow</span>
+                  <span>{isHindi ? `संरचित ${BRAND_NAME} वर्कफ़्लो` : `Structured ${BRAND_NAME} Workflow`}</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
-                  <li>Batch upload PDFs &amp; photos simultaneously with real-time per-file queue progress bars.</li>
-                  <li>Deterministic 15-character GSTIN Mod-36 checksum and line-item tax math verification.</li>
-                  <li>Automatic duplicate invoice prompt (`Merge Items`, `Overwrite`, or `Save as Duplicate`).</li>
-                  <li>One-click TallyPrime XML vouchers + 6-status GSTR-2B Excel reconciliation report.</li>
-                </ul>
+                {isHindi ? (
+                  <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                    <li>रीयल-टाइम प्रति-फ़ाइल क्यू प्रोग्रेस बार के साथ एक साथ दर्जनों PDF और फोटो बैच अपलोड करें।</li>
+                    <li>15-अंकीय GSTIN Mod-36 चेकसम और लाइन-आइटम टैक्स गणित (Tax Math) की स्वचालित जांच।</li>
+                    <li>डुप्लिकेट इनवॉइस की स्वचालित पहचान (`Merge Items`, `Overwrite`, या `Save as Duplicate` विकल्प)।</li>
+                    <li>एक क्लिक में TallyPrime XML वाउचर और 6-स्टेटस GSTR-2B Excel रिकन्सिलिएशन रिपोर्ट।</li>
+                  </ul>
+                ) : (
+                  <ul className="space-y-2.5 text-xs text-[var(--text-muted)] leading-relaxed">
+                    <li>Batch upload PDFs &amp; photos simultaneously with real-time per-file queue progress bars.</li>
+                    <li>Deterministic 15-character GSTIN Mod-36 checksum and line-item tax math verification.</li>
+                    <li>Automatic duplicate invoice prompt (`Merge Items`, `Overwrite`, or `Save as Duplicate`).</li>
+                    <li>One-click TallyPrime XML vouchers + 6-status GSTR-2B Excel reconciliation report.</li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>
@@ -1485,10 +1749,12 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-[var(--text-muted)]">
-              Complete CA Practice Suite
+              {isHindi ? 'संपूर्ण CA प्रैक्टिस सुइट' : 'Complete CA Practice Suite'}
             </div>
             <h2 className="font-display text-2xl sm:text-3xl font-bold text-[var(--text-main)] mt-1">
-              Nine Capabilities Built for GST Practitioners &amp; Audit Teams
+              {isHindi
+                ? 'GST प्रैक्टिशनर्स और ऑडिट टीमों के लिए निर्मित 9 मुख्य क्षमताएं'
+                : 'Nine Capabilities Built for GST Practitioners & Audit Teams'}
             </h2>
           </div>
           <a
@@ -1501,7 +1767,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline text-left cursor-pointer whitespace-nowrap shrink-0"
           >
-            Launch Full Suite Workspace →
+            {isHindi ? 'पूर्ण वर्कस्पेस खोलें →' : 'Launch Full Suite Workspace →'}
           </a>
         </div>
 
@@ -1510,13 +1776,19 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-7 p-6 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                01. TallyPrime XML Export &amp; Pre-Export Validator
+                {isHindi
+                  ? '01. TallyPrime XML एक्सपोर्ट और प्री-एक्सपोर्ट वैलिडेटर'
+                  : '01. TallyPrime XML Export & Pre-Export Validator'}
               </div>
               <h3 className="text-lg font-bold text-[var(--text-main)]">
-                Direct Purchase Voucher XML Generation with Ledger Auto-Create
+                {isHindi
+                  ? 'ऑटोमैटिक पार्टी लेजर निर्माण के साथ सीधा परचेस वाउचर XML जनरेशन'
+                  : 'Direct Purchase Voucher XML Generation with Ledger Auto-Create'}
               </h3>
               <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed">
-                Generates TallyPrime-importable Purchase Vouchers (`ENVELOPE &gt; TALLYMESSAGE &gt; VOUCHER`) with Party credit, Purchase debit, CGST/SGST/IGST ledgers, round-off, and blocked-bill validation (`Fix Now` or skip).
+                {isHindi
+                  ? 'Party क्रेडिट, Purchase डेबिट, CGST/SGST/IGST लेजर, राउंड-ऑफ और ब्लॉक्ड-बिल वैलिडेशन (Fix Now या Skip विकल्प) के साथ TallyPrime-इम्पोर्ट योग्य परचेस वाउचर (ENVELOPE > TALLYMESSAGE > VOUCHER) जनरेट करता है।'
+                  : 'Generates TallyPrime-importable Purchase Vouchers (`ENVELOPE > TALLYMESSAGE > VOUCHER`) with Party credit, Purchase debit, CGST/SGST/IGST ledgers, round-off, and blocked-bill validation (`Fix Now` or skip).'}
               </p>
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
@@ -1524,16 +1796,16 @@ export const LedgerSutraHomepageSections: React.FC<{
                 Tally XML · Zoho Books CSV · Busy Excel
               </span>
               <a
-                href="/gst-invoice-to-tally"
+                href={isHindi ? '/hi/gst-invoice-to-tally' : '/gst-invoice-to-tally'}
                 onClick={(e) => {
                   if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
                     e.preventDefault();
-                    onNavigate('/gst-invoice-to-tally');
+                    onNavigate(isHindi ? '/hi/gst-invoice-to-tally' : '/gst-invoice-to-tally');
                   }
                 }}
                 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
               >
-                Read Tally Guide →
+                {isHindi ? 'Tally XML गाइड पढ़ें →' : 'Read Tally Guide →'}
               </a>
             </div>
           </div>
@@ -1541,9 +1813,13 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-5 rounded-xl border border-[var(--border-color)] bg-slate-900 overflow-hidden relative min-h-[220px] flex flex-col justify-end">
             <EditorialVisual
               src={invoiceAuditImg}
-              alt="GST purchase register with GSTR-2B reconciliation statuses"
-              fallbackTitle="02. GSTR-2B Reconciliation"
-              fallbackSubtitle="Match Books vs Portal JSON & Excel"
+              alt={
+                isHindi
+                  ? 'GSTR-2B रिकन्सिलिएशन स्टेटस के साथ GST परचेस रजिस्टर'
+                  : 'GST purchase register with GSTR-2B reconciliation statuses'
+              }
+              fallbackTitle={isHindi ? '02. GSTR-2B रिकन्सिलिएशन' : '02. GSTR-2B Reconciliation'}
+              fallbackSubtitle={isHindi ? 'बुक्स बनाम पोर्टल JSON और Excel मिलान' : 'Match Books vs Portal JSON & Excel'}
               width={900}
               height={600}
               loading="lazy"
@@ -1553,22 +1829,24 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/20" />
             <div className="relative z-10 p-5 space-y-2 text-slate-100">
               <div className="text-xs font-semibold text-indigo-300">
-                02. GSTR-2B Reconciliation
+                {isHindi ? '02. GSTR-2B रिकन्सिलिएशन' : '02. GSTR-2B Reconciliation'}
               </div>
               <h3 className="text-base font-bold">
-                Upload Portal JSON/Excel &amp; Flag ITC at Risk Across 6 Statuses
+                {isHindi
+                  ? 'पोर्टल JSON/Excel अपलोड करें और 6 स्थितियों में जोखिम वाले ITC की पहचान करें'
+                  : 'Upload Portal JSON/Excel & Flag ITC at Risk Across 6 Statuses'}
               </h3>
               <a
-                href="/gstr-2b-reconciliation-excel"
+                href={isHindi ? '/hi/gstr-2b-reconciliation-excel' : '/gstr-2b-reconciliation-excel'}
                 onClick={(e) => {
                   if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
                     e.preventDefault();
-                    onNavigate('/gstr-2b-reconciliation-excel');
+                    onNavigate(isHindi ? '/hi/gstr-2b-reconciliation-excel' : '/gstr-2b-reconciliation-excel');
                   }
                 }}
                 className="text-xs font-semibold text-white hover:underline cursor-pointer inline-block"
               >
-                Explore 2B Matcher →
+                {isHindi ? '2B रिकन्सिलिएशन देखें →' : 'Explore 2B Matcher →'}
               </a>
             </div>
           </div>
@@ -1576,50 +1854,96 @@ export const LedgerSutraHomepageSections: React.FC<{
 
         {/* Remaining 7 Capabilities in Clean Hairline Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            {
-              title: '03. Duplicate Invoice Detection',
-              desc: 'Checks every bill against saved records by Supplier Name and Invoice Number, prompting you to Merge Items, Overwrite, or Save as Duplicate.',
-              link: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
-              linkLabel: 'Learn more about Duplicate Invoice Detection →',
-            },
-            {
-              title: '04. GSTIN Validation & Tax Audit',
-              desc: 'Validates 15-character GSTIN format, state code, and official Mod-36 checksum digit while verifying line-item taxable sums against printed tax splits.',
-              link: '/gst-invoice-data-extraction',
-              linkLabel: 'Learn more about GSTIN & Tax Extraction →',
-            },
-            {
-              title: '05. Batch Processing Queue',
-              desc: 'Upload dozens of multi-page PDFs and bill photos simultaneously with an interactive file queue and per-file progress bars.',
-              link: '/bulk-invoice-processing-for-ca',
-              linkLabel: 'Learn more about Bulk Invoice Processing →',
-            },
-            {
-              title: '06. Client-Wise Workspace',
-              desc: 'Organize bills, documents, GSTR-2B reconciliations, and Tally ledger settings under dedicated CA client profiles in Firestore.',
-              link: '/features',
-              linkLabel: 'Learn more about Client-Wise Workspaces →',
-            },
-            {
-              title: '07. Team Access & Approval Workflow',
-              desc: 'Assign Owner/CA, Reviewer, and Staff roles. Staff upload Draft/Pending bills; Reviewers approve or reject with an audit trail.',
-              link: '/security',
-              linkLabel: 'Learn more about Team RBAC & Security →',
-            },
-            {
-              title: '08. Multi-Format Accounting Export',
-              desc: 'Export validated purchase registers to TallyPrime XML, multi-sheet Excel (.xlsx), Zoho Books CSV, Busy Excel, JSON, SQL, and verbatim TXT.',
-              link: '/pdf-invoice-to-excel',
-              linkLabel: 'Learn more about PDF to Excel Exports →',
-            },
-            {
-              title: '09. Developer REST API (v1)',
-              desc: 'Integrate POST /api/v1/extract into your custom ERP or firm portal using SHA-256 hashed API keys with built-in rate limiting.',
-              link: '/api-docs',
-              linkLabel: 'Learn more about REST API v1 →',
-            },
-          ].map((feat) => (
+          {(isHindi
+            ? [
+                {
+                  title: '03. डुप्लिकेट इनवॉइस की पहचान',
+                  desc: 'सप्लायर के नाम और इनवॉइस नंबर के आधार पर सहेजे गए रिकॉर्ड्स से प्रत्येक बिल की जांच करता है और Merge Items, Overwrite या Save as Duplicate का विकल्प देता है।',
+                  link: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
+                  linkLabel: 'डुप्लिकेट इनवॉइस पहचान के बारे में जानें →',
+                },
+                {
+                  title: '04. GSTIN सत्यापन और टैक्स ऑडिट',
+                  desc: '15-अंकीय GSTIN फ़ॉर्मेट, राज्य कोड और आधिकारिक Mod-36 चेकसम अंक को सत्यापित करता है तथा प्रिंटेड टैक्स विभाजन के विरुद्ध लाइन-आइटम योग की जांच करता है।',
+                  link: '/gst-invoice-data-extraction',
+                  linkLabel: 'GSTIN और टैक्स एक्सट्रैक्शन के बारे में जानें →',
+                },
+                {
+                  title: '05. बैच प्रोसेसिंग क्यू (Batch Queue)',
+                  desc: 'इंटरैक्टिव फ़ाइल क्यू और प्रति-फ़ाइल प्रोग्रेस बार के साथ दर्जनों मल्टी-पेज PDF और बिल फोटो एक साथ अपलोड और प्रोसेस करें।',
+                  link: '/bulk-invoice-processing-for-ca',
+                  linkLabel: 'बल्क इनवॉइस प्रोसेसिंग के बारे में जानें →',
+                },
+                {
+                  title: '06. क्लाइंट-वाइज़ वर्कस्पेस',
+                  desc: 'Firestore में समर्पित CA क्लाइंट प्रोफ़ाइल के तहत बिल, दस्तावेज़, GSTR-2B रिकन्सिलिएशन और Tally लेजर सेटिंग्स को अलग-अलग व्यवस्थित करें।',
+                  link: '/hi/features',
+                  linkLabel: 'क्लाइंट-वाइज़ वर्कस्पेस के बारे में जानें →',
+                },
+                {
+                  title: '07. टीम एक्सेस और अप्रूवल वर्कफ़्लो',
+                  desc: 'Owner/CA, Reviewer और Staff भूमिकाएं असाइन करें। स्टाफ Draft/Pending बिल अपलोड करता है; Reviewers ऑडिट ट्रेल के साथ स्वीकृत या अस्वीकृत करते हैं।',
+                  link: '/security',
+                  linkLabel: 'टीम RBAC और सुरक्षा के बारे में जानें →',
+                },
+                {
+                  title: '08. मल्टी-फ़ॉर्मेट अकाउंटिंग एक्सपोर्ट',
+                  desc: 'सत्यापित परचेस रजिस्टर को TallyPrime XML, मल्टी-शीट Excel (.xlsx), Zoho Books CSV, Busy Excel, JSON, SQL और TXT में एक्सपोर्ट करें।',
+                  link: '/hi/pdf-invoice-to-excel',
+                  linkLabel: 'PDF से Excel एक्सपोर्ट के बारे में जानें →',
+                },
+                {
+                  title: '09. डेवलपर REST API (v1)',
+                  desc: 'इन-बिल्ट रेट लिमिटिंग और SHA-256 हैश्ड API कुंजियों का उपयोग करके अपने कस्टम ERP या फर्म पोर्टल में POST /api/v1/extract को इंटीग्रेट करें।',
+                  link: '/api-docs',
+                  linkLabel: 'REST API v1 के बारे में जानें →',
+                },
+              ]
+            : [
+                {
+                  title: '03. Duplicate Invoice Detection',
+                  desc: 'Checks every bill against saved records by Supplier Name and Invoice Number, prompting you to Merge Items, Overwrite, or Save as Duplicate.',
+                  link: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
+                  linkLabel: 'Learn more about Duplicate Invoice Detection →',
+                },
+                {
+                  title: '04. GSTIN Validation & Tax Audit',
+                  desc: 'Validates 15-character GSTIN format, state code, and official Mod-36 checksum digit while verifying line-item taxable sums against printed tax splits.',
+                  link: '/gst-invoice-data-extraction',
+                  linkLabel: 'Learn more about GSTIN & Tax Extraction →',
+                },
+                {
+                  title: '05. Batch Processing Queue',
+                  desc: 'Upload dozens of multi-page PDFs and bill photos simultaneously with an interactive file queue and per-file progress bars.',
+                  link: '/bulk-invoice-processing-for-ca',
+                  linkLabel: 'Learn more about Bulk Invoice Processing →',
+                },
+                {
+                  title: '06. Client-Wise Workspace',
+                  desc: 'Organize bills, documents, GSTR-2B reconciliations, and Tally ledger settings under dedicated CA client profiles in Firestore.',
+                  link: '/features',
+                  linkLabel: 'Learn more about Client-Wise Workspaces →',
+                },
+                {
+                  title: '07. Team Access & Approval Workflow',
+                  desc: 'Assign Owner/CA, Reviewer, and Staff roles. Staff upload Draft/Pending bills; Reviewers approve or reject with an audit trail.',
+                  link: '/security',
+                  linkLabel: 'Learn more about Team RBAC & Security →',
+                },
+                {
+                  title: '08. Multi-Format Accounting Export',
+                  desc: 'Export validated purchase registers to TallyPrime XML, multi-sheet Excel (.xlsx), Zoho Books CSV, Busy Excel, JSON, SQL, and verbatim TXT.',
+                  link: '/pdf-invoice-to-excel',
+                  linkLabel: 'Learn more about PDF to Excel Exports →',
+                },
+                {
+                  title: '09. Developer REST API (v1)',
+                  desc: 'Integrate POST /api/v1/extract into your custom ERP or firm portal using SHA-256 hashed API keys with built-in rate limiting.',
+                  link: '/api-docs',
+                  linkLabel: 'Learn more about REST API v1 →',
+                },
+              ]
+          ).map((feat) => (
             <div
               key={feat.title}
               className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex flex-col justify-between space-y-3"
@@ -1655,10 +1979,14 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4">
           <div>
             <div className="text-xs font-medium text-[var(--text-muted)]">
-              Comprehensive Schema Coverage · Filterable Column Directory
+              {isHindi
+                ? 'व्यापक स्कीमा कवरेज · फ़िल्टर करने योग्य कॉलम निर्देशिका'
+                : 'Comprehensive Schema Coverage · Filterable Column Directory'}
             </div>
             <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-main)] mt-1">
-              30+ Invoice, E-Invoice &amp; Bill of Entry Fields Extracted Automatically
+              {isHindi
+                ? '30+ इनवॉइस, E-Invoice और Bill of Entry फ़ील्ड्स का स्वचालित एक्सट्रैक्शन'
+                : '30+ Invoice, E-Invoice & Bill of Entry Fields Extracted Automatically'}
             </h2>
           </div>
 
@@ -1669,7 +1997,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                 type="text"
                 value={fieldSearch}
                 onChange={(e) => setFieldSearch(e.target.value)}
-                placeholder="Filter fields (e.g. IRN, IFSC, HSN)"
+                placeholder={isHindi ? 'फ़ील्ड्स खोजें (जैसे IRN, IFSC, HSN)' : 'Filter fields (e.g. IRN, IFSC, HSN)'}
                 className="w-full pl-8 pr-3 py-2 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-main)]"
               />
             </div>
@@ -1679,11 +2007,16 @@ export const LedgerSutraHomepageSections: React.FC<{
         {/* Interactive Category Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {[
-            { id: 'all' as const, label: `All Fields (${ALL_EXTRACTED_FIELDS.length})` },
-            { id: 'party' as const, label: 'Party & GSTIN' },
-            { id: 'einvoice' as const, label: 'E-Invoice & Logistics' },
-            { id: 'tax' as const, label: 'Tax & Bank Math' },
-            { id: 'boe' as const, label: 'Import BOE' },
+            {
+              id: 'all' as const,
+              label: isHindi
+                ? `सभी फ़ील्ड्स (${activeFieldsSource.length})`
+                : `All Fields (${ALL_EXTRACTED_FIELDS.length})`,
+            },
+            { id: 'party' as const, label: isHindi ? 'पार्टी और GSTIN' : 'Party & GSTIN' },
+            { id: 'einvoice' as const, label: isHindi ? 'E-Invoice और लॉजिस्टिक्स' : 'E-Invoice & Logistics' },
+            { id: 'tax' as const, label: isHindi ? 'टैक्स और बैंक गणना' : 'Tax & Bank Math' },
+            { id: 'boe' as const, label: isHindi ? 'इम्पोर्ट BOE' : 'Import BOE' },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -1711,7 +2044,7 @@ export const LedgerSutraHomepageSections: React.FC<{
           ))}
           {filteredFields.length === 0 && (
             <div className="col-span-full py-6 text-center text-xs text-[var(--text-muted)]">
-              No extracted fields match "{fieldSearch}".{' '}
+              {isHindi ? `"${fieldSearch}" से मेल खाने वाला कोई फ़ील्ड नहीं मिला। ` : `No extracted fields match "${fieldSearch}". `}
               <button
                 onClick={() => {
                   setFieldSearch('');
@@ -1719,7 +2052,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                 }}
                 className="text-indigo-500 font-semibold hover:underline cursor-pointer"
               >
-                Reset Filter
+                {isHindi ? 'फ़िल्टर रीसेट करें' : 'Reset Filter'}
               </button>
             </div>
           )}
@@ -1734,31 +2067,52 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="lg:col-span-6 space-y-5 flex flex-col justify-between">
             <div>
               <div className="text-xs font-medium text-[var(--text-muted)]">
-                Three-Step Practice Workflow
+                {isHindi ? 'तीन-चरणीय प्रैक्टिस वर्कफ़्लो' : 'Three-Step Practice Workflow'}
               </div>
               <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-                From Client Invoice Folder to Tally &amp; 2B Sign-Off
+                {isHindi
+                  ? 'क्लाइंट इनवॉइस फ़ोल्डर से Tally और GSTR-2B साइन-ऑफ़ तक'
+                  : 'From Client Invoice Folder to Tally & 2B Sign-Off'}
               </h2>
             </div>
 
             <div className="space-y-4">
-              {[
-                {
-                  num: '01.',
-                  title: 'Select Client & Upload Invoices',
-                  desc: 'Pick your client workspace in the header and upload single or batch PDFs, multi-page statements, Bills of Entry, or mobile photos.',
-                },
-                 {
-                  num: '02.',
-                  title: 'Automated GST Audit & Review Queue',
-                  desc: 'CA Saarthi AI extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
-                },
-                {
-                  num: '03.',
-                  title: 'Reconcile GSTR-2B & Export to Tally',
-                  desc: 'Match approved bills against portal GSTR-2B JSON/Excel files and download TallyPrime XML vouchers, Excel registers, Zoho CSV, or Busy sheets.',
-                },
-              ].map((st) => (
+              {(isHindi
+                ? [
+                    {
+                      num: '01.',
+                      title: 'क्लाइंट चुनें और इनवॉइस अपलोड करें',
+                      desc: 'हेडर में अपना क्लाइंट वर्कस्पेस चुनें और सिंगल या बैच PDF, मल्टी-पेज स्टेटमेंट, Bill of Entry या मोबाइल फोटो अपलोड करें।',
+                    },
+                    {
+                      num: '02.',
+                      title: 'स्वचालित GST ऑडिट और समीक्षा क्यू (Review Queue)',
+                      desc: 'CA Saarthi AI हेडर और लाइन-आइटम फ़ील्ड्स निकालता है, GSTIN Mod-36 चेकसम सत्यापित करता है, डुप्लिकेट इनवॉइस चिह्नित करता है और CA Reviewer की स्वीकृति के लिए बिल भेजता है।',
+                    },
+                    {
+                      num: '03.',
+                      title: 'GSTR-2B मिलान करें और Tally में एक्सपोर्ट करें',
+                      desc: 'स्वीकृत बिलों का पोर्टल GSTR-2B JSON/Excel फ़ाइलों से मिलान करें और TallyPrime XML वाउचर, Excel रजिस्टर, Zoho CSV या Busy शीट डाउनलोड करें।',
+                    },
+                  ]
+                : [
+                    {
+                      num: '01.',
+                      title: 'Select Client & Upload Invoices',
+                      desc: 'Pick your client workspace in the header and upload single or batch PDFs, multi-page statements, Bills of Entry, or mobile photos.',
+                    },
+                    {
+                      num: '02.',
+                      title: 'Automated GST Audit & Review Queue',
+                      desc: 'CA Saarthi AI extracts header and line-item fields, validates GSTIN Mod-36 checksums, flags duplicate invoices, and routes bills for CA Reviewer approval.',
+                    },
+                    {
+                      num: '03.',
+                      title: 'Reconcile GSTR-2B & Export to Tally',
+                      desc: 'Match approved bills against portal GSTR-2B JSON/Excel files and download TallyPrime XML vouchers, Excel registers, Zoho CSV, or Busy sheets.',
+                    },
+                  ]
+              ).map((st) => (
                 <div
                   key={st.num}
                   className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1"
@@ -1778,9 +2132,17 @@ export const LedgerSutraHomepageSections: React.FC<{
             <div className="relative h-52 bg-slate-900">
               <EditorialVisual
                 src={caWorkspaceImg}
-                alt="CA reviewing flagged invoices in the CA Saarthi AI Tally validator"
-                fallbackTitle="CA Practice Dual-Monitor Workflow"
-                fallbackSubtitle="TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces"
+                alt={
+                  isHindi
+                    ? 'CA Saarthi AI Tally वैलिडेटर में चिह्नित इनवॉइस की समीक्षा करते हुए CA'
+                    : 'CA reviewing flagged invoices in the CA Saarthi AI Tally validator'
+                }
+                fallbackTitle={isHindi ? 'CA प्रैक्टिस डुअल-मॉनिटर वर्कफ़्लो' : 'CA Practice Dual-Monitor Workflow'}
+                fallbackSubtitle={
+                  isHindi
+                    ? 'TallyPrime XML, GSTR-2B रिकन्सिलिएशन और क्लाइंट वर्कस्पेस'
+                    : 'TallyPrime XML, GSTR-2B Reconciliation & Client Workspaces'
+                }
                 width={900}
                 height={520}
                 loading="lazy"
@@ -1790,13 +2152,13 @@ export const LedgerSutraHomepageSections: React.FC<{
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-white">
-                  Inside the {BRAND_NAME} CA Workspace
+                  {isHindi ? `${BRAND_NAME} CA वर्कस्पेस के भीतर` : `Inside the ${BRAND_NAME} CA Workspace`}
                 </span>
                 <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-950/85 border border-slate-700/70">
                   {[
-                    { id: 'tally' as const, label: 'Tally Validator' },
-                    { id: 'gstr2b' as const, label: '2B Matcher' },
-                    { id: 'queue' as const, label: 'Batch Queue' },
+                    { id: 'tally' as const, label: isHindi ? 'Tally वैलिडेटर' : 'Tally Validator' },
+                    { id: 'gstr2b' as const, label: isHindi ? '2B मिलान' : '2B Matcher' },
+                    { id: 'queue' as const, label: isHindi ? 'बैच क्यू' : 'Batch Queue' },
                   ].map((m) => (
                     <button
                       key={m.id}
@@ -1819,10 +2181,16 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
                     <FileCheck2 className="w-4 h-4 text-indigo-500" />
-                    <span>Pre-Export Validator &amp; Ledger Mapping</span>
+                    <span>
+                      {isHindi
+                        ? 'प्री-एक्सपोर्ट वैलिडेटर और लेजर मैपिंग'
+                        : 'Pre-Export Validator & Ledger Mapping'}
+                    </span>
                   </div>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    Flags blocked bills (missing invoice number, invalid GSTIN checksum, tax math variance) before XML generation, with one-click Fix Now or Skip &amp; Export Valid Bills actions.
+                    {isHindi
+                      ? 'XML जनरेशन से पहले ब्लॉक्ड बिलों (अनुपलब्ध इनवॉइस नंबर, अमान्य GSTIN चेकसम, टैक्स गणित अंतर) को चिह्नित करता है, जिसमें वन-क्लिक Fix Now या Skip & Export Valid Bills विकल्प होते हैं।'
+                      : 'Flags blocked bills (missing invoice number, invalid GSTIN checksum, tax math variance) before XML generation, with one-click Fix Now or Skip & Export Valid Bills actions.'}
                   </p>
                 </div>
               )}
@@ -1831,10 +2199,16 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-indigo-500" />
-                    <span>Side-by-Side Purchase Register vs Portal 2B</span>
+                    <span>
+                      {isHindi
+                        ? 'साइड-बाय-साइड परचेस रजिस्टर बनाम पोर्टल GSTR-2B'
+                        : 'Side-by-Side Purchase Register vs Portal 2B'}
+                    </span>
                   </div>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    Categorizes every invoice across 6 actionable statuses (Matched, Amount Mismatch, Date Mismatch, Probable Invoice Mismatch, In Books Only, In 2B Only) with ITC at Risk totals.
+                    {isHindi
+                      ? 'जोखिम वाले ITC (ITC at Risk) योग के साथ प्रत्येक इनवॉइस को 6 स्थितियों (Matched, Amount Mismatch, Date Mismatch, Probable Invoice Mismatch, In Books Only, In 2B Only) में वर्गीकृत करता है।'
+                      : 'Categorizes every invoice across 6 actionable statuses (Matched, Amount Mismatch, Date Mismatch, Probable Invoice Mismatch, In Books Only, In 2B Only) with ITC at Risk totals.'}
                   </p>
                 </div>
               )}
@@ -1843,17 +2217,21 @@ export const LedgerSutraHomepageSections: React.FC<{
                 <div className="space-y-2">
                   <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
                     <Clock className="w-4 h-4 text-indigo-500" />
-                    <span>Multi-File Batch Processing Queue</span>
+                    <span>
+                      {isHindi ? 'मल्टी-फ़ाइल बैच प्रोसेसिंग क्यू' : 'Multi-File Batch Processing Queue'}
+                    </span>
                   </div>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                    Upload PDFs and images together, track individual per-file progress bars, retry failed scans, and resolve duplicate bills interactively before saving.
+                    {isHindi
+                      ? 'PDF और इमेज एक साथ अपलोड करें, प्रति-फ़ाइल प्रोग्रेस बार ट्रैक करें, विफल स्कैन को रीट्राई करें और सहेजने से पहले डुप्लिकेट बिलों का समाधान करें।'
+                      : 'Upload PDFs and images together, track individual per-file progress bars, retry failed scans, and resolve duplicate bills interactively before saving.'}
                   </p>
                 </div>
               )}
 
               <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
                 <span className="text-[11px] text-[var(--text-muted)]">
-                  Available live above in workspace
+                  {isHindi ? 'ऊपर लाइव वर्कस्पेस में उपलब्ध' : 'Available live above in workspace'}
                 </span>
                 <a
                   href="/app"
@@ -1865,7 +2243,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                   }}
                   className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                 >
-                  Open this view live →
+                  {isHindi ? 'यह व्यू लाइव खोलें →' : 'Open this view live →'}
                 </a>
               </div>
             </div>
@@ -1880,10 +2258,12 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              Truthful Security Architecture
+              {isHindi ? 'पारदर्शी सुरक्षा आर्किटेक्चर' : 'Truthful Security Architecture'}
             </div>
             <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-              Security &amp; Data Isolation for Client Records
+              {isHindi
+                ? 'क्लाइंट रिकॉर्ड्स के लिए सुरक्षा और डेटा आइसोलेशन'
+                : 'Security & Data Isolation for Client Records'}
             </h2>
           </div>
           <a
@@ -1896,7 +2276,7 @@ export const LedgerSutraHomepageSections: React.FC<{
             }}
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
           >
-            Read Full Security Architecture →
+            {isHindi ? 'पूर्ण सुरक्षा आर्किटेक्चर पढ़ें →' : 'Read Full Security Architecture →'}
           </a>
         </div>
 
@@ -1904,29 +2284,60 @@ export const LedgerSutraHomepageSections: React.FC<{
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <Lock className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Hybrid OCR: Cloud AI &amp; Local Browser Fallback</span>
+              <span>
+                {isHindi
+                  ? 'हाइब्रिड OCR: क्लाउड AI और लोकल ब्राउज़र फ़ॉलबैक'
+                  : 'Hybrid OCR: Cloud AI & Local Browser Fallback'}
+              </span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              Primary OCR runs in memory via <code className="font-mono">/api/extract-document</code> without writing raw files to server disk. Offline or fallback OCR runs locally in the browser using PDF.js &amp; Tesseract.js (<code className="font-mono">eng+hin</code>).
+              {isHindi ? (
+                <>
+                  प्राथमिक OCR सर्वर डिस्क पर कच्ची फ़ाइलें लिखे बिना <code className="font-mono">/api/extract-document</code> के माध्यम से मेमोरी में चलता है। ऑफ़लाइन या फ़ॉलबैक OCR PDF.js और Tesseract.js (<code className="font-mono">eng+hin</code>) का उपयोग करके ब्राउज़र में स्थानीय रूप से चलता है।
+                </>
+              ) : (
+                <>
+                  Primary OCR runs in memory via <code className="font-mono">/api/extract-document</code> without writing raw files to server disk. Offline or fallback OCR runs locally in the browser using PDF.js &amp; Tesseract.js (<code className="font-mono">eng+hin</code>).
+                </>
+              )}
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Per-User &amp; Per-Client Firestore Isolation</span>
+              <span>
+                {isHindi
+                  ? 'प्रति-उपयोगकर्ता और प्रति-क्लाइंट Firestore आइसोलेशन'
+                  : 'Per-User & Per-Client Firestore Isolation'}
+              </span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              When signed in, saved clients, bills, and audit trails are persisted under{' '}
-              <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by <code className="font-mono">firestore.rules</code> ownership &amp; RBAC checks.
+              {isHindi ? (
+                <>
+                  साइन इन करने पर, सहेजे गए क्लाइंट, बिल और ऑडिट ट्रेल{' '}
+                  <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> के अंतर्गत संग्रहीत होते हैं और <code className="font-mono">firestore.rules</code> स्वामित्व एवं RBAC नियमों द्वारा सुरक्षित रहते हैं।
+                </>
+              ) : (
+                <>
+                  When signed in, saved clients, bills, and audit trails are persisted under{' '}
+                  <code className="font-mono">/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code> and enforced by <code className="font-mono">firestore.rules</code> ownership &amp; RBAC checks.
+                </>
+              )}
             </p>
           </div>
           <div className="p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5">
             <div className="font-bold text-[var(--text-main)] flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>HTTPS in Transit, SHA-256 Keys &amp; Instant Deletion</span>
+              <span>
+                {isHindi
+                  ? 'ट्रांज़िट में HTTPS, SHA-256 कुंजियां और तुरंत डिलीट'
+                  : 'HTTPS in Transit, SHA-256 Keys & Instant Deletion'}
+              </span>
             </div>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              All traffic uses HTTPS/TLS in transit, REST API keys are hashed with SHA-256 before storage, and users can delete individual bills, client workspaces, or all account records anytime.
+              {isHindi
+                ? 'सभी ट्रैफ़िक ट्रांज़िट में HTTPS/TLS का उपयोग करता है, REST API कुंजियों को स्टोरेज से पहले SHA-256 के साथ हैश किया जाता है, और उपयोगकर्ता किसी भी समय व्यक्तिगत बिल, क्लाइंट वर्कस्पेस या सभी खाता रिकॉर्ड हटा सकते हैं।'
+                : 'All traffic uses HTTPS/TLS in transit, REST API keys are hashed with SHA-256 before storage, and users can delete individual bills, client workspaces, or all account records anytime.'}
             </p>
           </div>
         </div>
@@ -1942,58 +2353,27 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
             <div className="text-xs font-medium text-[var(--text-muted)]">
-              Transparent Practice Plans · Custom CA-Firm Pilot Offers Available
+              {isHindi
+                ? 'पारदर्शी प्रैक्टिस प्लान · कस्टम CA-फर्म पायलट ऑफ़र उपलब्ध'
+                : 'Transparent Practice Plans · Custom CA-Firm Pilot Offers Available'}
             </div>
             <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-              Plans for Solo Practitioners &amp; Multi-Partner CA Firms
+              {isHindi
+                ? 'सोलो प्रैक्टिशनर्स और मल्टी-पार्टनर CA फर्मों के लिए प्लान'
+                : 'Plans for Solo Practitioners & Multi-Partner CA Firms'}
             </h2>
           </div>
           <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-            Early-access pricing — locked for pilot firms.
+            {isHindi
+              ? 'पायलट फर्मों के लिए अर्ली-एक्सेस प्राइसिंग।'
+              : 'Early-access pricing — locked for pilot firms.'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {[
-            {
-              tier: 'For Evaluating Workflows · Free Starter',
-              price: '₹0 / month',
-              subtitle: 'For testing OCR, GSTIN validation & Tally XML export structure',
-              highlighted: false,
-              features: [
-                '3 no-login demo scans/day + free workspace trial',
-                'Single & batch invoice upload queue',
-                'TallyPrime XML & Excel (.xlsx) export',
-                '1 Default Client workspace',
-              ],
-            },
-            {
-              tier: 'For Solo CAs & Tax Consultants · Pro Practitioner',
-              price: '₹1,499 / month',
-              subtitle: 'For independent CAs & GST practitioners filing monthly returns',
-              highlighted: true,
-              features: [
-                'Up to 25 Client-Wise Workspaces',
-                'Full GSTR-2B JSON & Excel Reconciliation',
-                'Zoho Books CSV & Busy Excel exports',
-                'Extended E-Invoice, IRN & Bank field extraction',
-              ],
-            },
-            {
-              tier: 'For Multi-Partner Audit Firms · CA Firm & Team',
-              price: '₹3,999 / month',
-              subtitle: 'For multi-partner CA firms with articles & reviewer workflows',
-              highlighted: false,
-              features: [
-                'Unlimited Client Workspaces',
-                'Team Access RBAC (Owner/CA, Reviewer, Staff)',
-                'Bill approval workflow & immutable audit trail',
-                'Developer REST API (POST /api/v1/extract)',
-              ],
-            },
-          ].map((plan) => (
+          {(isHindi ? PRACTICE_PRICING_PLANS_HI : PRACTICE_PRICING_PLANS).map((plan) => (
             <div
-              key={plan.tier}
+              key={plan.id}
               className={`p-6 rounded-xl border flex flex-col justify-between space-y-5 ${
                 plan.highlighted
                   ? 'border-indigo-500 bg-indigo-500/5'
@@ -2031,7 +2411,7 @@ export const LedgerSutraHomepageSections: React.FC<{
                     : 'bg-[var(--bg-card)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-color)]'
                 }`}
               >
-                Request CA-Firm Pilot Offer
+                {isHindi ? 'CA-फर्म पायलट ऑफ़र का अनुरोध करें' : 'Request CA-Firm Pilot Offer'}
               </a>
             </div>
           ))}
@@ -2045,28 +2425,40 @@ export const LedgerSutraHomepageSections: React.FC<{
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="text-xs font-medium text-[var(--text-muted)]">
-              Frequently Asked Questions · {HOMEPAGE_FAQS.length} Practitioner Answers
+              {isHindi
+                ? `अक्सर पूछे जाने वाले प्रश्न (FAQs) · ${activeFaqsSource.length} प्रैक्टिशनर उत्तर`
+                : `Frequently Asked Questions · ${HOMEPAGE_FAQS.length} Practitioner Answers`}
             </div>
             <h2 className="font-display text-2xl font-bold text-[var(--text-main)] mt-1">
-              Questions from Chartered Accountants &amp; Tax Teams
+              {isHindi
+                ? 'चार्टर्ड अकाउंटेंट्स और टैक्स टीमों के सामान्य प्रश्न'
+                : 'Questions from Chartered Accountants & Tax Teams'}
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            {(['All', 'Tally', 'GSTR-2B', 'Security', 'General'] as const).map((cat) => (
+            {(
+              [
+                { id: 'All' as const, label: isHindi ? 'सभी (All)' : 'All' },
+                { id: 'Tally' as const, label: 'Tally' },
+                { id: 'GSTR-2B' as const, label: 'GSTR-2B' },
+                { id: 'Security' as const, label: isHindi ? 'सुरक्षा (Security)' : 'Security' },
+                { id: 'General' as const, label: isHindi ? 'सामान्य (General)' : 'General' },
+              ]
+            ).map((cat) => (
               <button
-                key={cat}
+                key={cat.id}
                 onClick={() => {
-                  setFaqCategory(cat);
+                  setFaqCategory(cat.id);
                   setOpenFaqIdx(0);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  faqCategory === cat
+                  faqCategory === cat.id
                     ? 'bg-indigo-600 text-white'
                     : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-color)]'
                 }`}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
           </div>
@@ -3980,7 +4372,11 @@ export const LedgerSutraFooter: React.FC<{
     tab?: 'scanner' | 'master_sheet' | 'dashboard' | 'history',
     mode?: 'normal_user' | 'ca_mode'
   ) => void;
-}> = ({ onNavigate, onOpenWorkspaceTab }) => {
+  currentPath?: string;
+}> = ({ onNavigate, onOpenWorkspaceTab, currentPath = '/' }) => {
+  const cleanFooterPath = normalizePathname(currentPath);
+  const isHindi = cleanFooterPath === '/hi' || cleanFooterPath.startsWith('/hi/');
+
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
       e.preventDefault();
@@ -4006,8 +4402,8 @@ export const LedgerSutraFooter: React.FC<{
               </div>
               <div>
                 <a
-                  href="/"
-                  onClick={(e) => handleLinkClick(e, '/')}
+                  href={isHindi ? '/hi' : '/'}
+                  onClick={(e) => handleLinkClick(e, isHindi ? '/hi' : '/')}
                   className="font-display font-extrabold text-lg sm:text-xl tracking-tight flex items-center gap-1.5 group"
                 >
                   <span className="inline-flex items-baseline">
@@ -4028,11 +4424,11 @@ export const LedgerSutraFooter: React.FC<{
                   </span>
                 </a>
                 <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">
-                  Bill Scanning &amp; Data Automation
+                  {isHindi ? 'बिल स्कैनिंग और डेटा ऑटोमेशन' : 'Bill Scanning & Data Automation'}
                 </div>
                 <a
-                  href="/"
-                  onClick={(e) => handleLinkClick(e, '/')}
+                  href={isHindi ? '/hi' : '/'}
+                  onClick={(e) => handleLinkClick(e, isHindi ? '/hi' : '/')}
                   className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline block mt-0.5"
                 >
                   {SITE_DOMAIN}
@@ -4040,10 +4436,12 @@ export const LedgerSutraFooter: React.FC<{
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Built for Indian Chartered Accountants — automated GST invoice extraction, English &amp; Hindi bill OCR, TallyPrime XML export, and GSTR-2B reconciliation.
+              {isHindi
+                ? 'भारतीय चार्टर्ड अकाउंटेंट्स (CA) के लिए निर्मित — स्वचालित GST इनवॉइस एक्सट्रैक्शन, अंग्रेज़ी और हिंदी बिल OCR, TallyPrime XML एक्सपोर्ट और GSTR-2B रिकन्सिलिएशन।'
+                : 'Built for Indian Chartered Accountants — automated GST invoice extraction, English & Hindi bill OCR, TallyPrime XML export, and GSTR-2B reconciliation.'}
             </p>
             <div className="text-xs text-[var(--text-main)] font-medium">
-              Support:{' '}
+              {isHindi ? 'सहायता (Support): ' : 'Support: '}
               <a
                 href="mailto:support@casaarthiai.in"
                 className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
@@ -4062,28 +4460,30 @@ export const LedgerSutraFooter: React.FC<{
                 }}
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
               >
-                Start Free Trial
+                {isHindi ? 'मुफ़्त ट्रायल शुरू करें' : 'Start Free Trial'}
               </a>
               <a
                 href="/api-docs"
                 onClick={(e) => handleLinkClick(e, '/api-docs')}
                 className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
               >
-                REST API Docs
+                {isHindi ? 'REST API डॉक्स' : 'REST API Docs'}
               </a>
               <a
-                href="/hi"
-                onClick={(e) => handleLinkClick(e, '/hi')}
+                href={isHindi ? '/' : '/hi'}
+                onClick={(e) => handleLinkClick(e, isHindi ? '/' : '/hi')}
                 className="px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold text-indigo-600 dark:text-indigo-400 cursor-pointer"
               >
-                हिंदी (/hi)
+                {isHindi ? 'English (/)' : 'हिंदी (/hi)'}
               </a>
             </div>
           </div>
 
           {/* Col 2: Public Website & Legal Links (Crucial for B2B Trust) */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-[var(--text-main)]">Platform &amp; Legal Trust</h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">
+              {isHindi ? 'प्लेटफ़ॉर्म और कानूनी विश्वास' : 'Platform & Legal Trust'}
+            </h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <a
@@ -4091,7 +4491,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/privacy')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
-                  Privacy Policy
+                  {isHindi ? 'प्राइवेसी पॉलिसी (Privacy Policy)' : 'Privacy Policy'}
                 </a>
               </li>
               <li>
@@ -4100,7 +4500,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/terms')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
-                  Terms of Service
+                  {isHindi ? 'सेवा की शर्तें (Terms of Service)' : 'Terms of Service'}
                 </a>
               </li>
               <li>
@@ -4109,7 +4509,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/data-deletion')}
                   className="font-semibold text-[var(--text-main)] hover:text-indigo-500 cursor-pointer"
                 >
-                  Data Deletion Policy
+                  {isHindi ? 'डेटा विलोपन नीति (Data Deletion)' : 'Data Deletion Policy'}
                 </a>
               </li>
               <li>
@@ -4118,16 +4518,16 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/security')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  Security &amp; Data Isolation
+                  {isHindi ? 'सुरक्षा और डेटा आइसोलेशन' : 'Security & Data Isolation'}
                 </a>
               </li>
               <li>
                 <a
-                  href="/pricing"
-                  onClick={(e) => handleLinkClick(e, '/pricing')}
+                  href={isHindi ? '/hi/pricing' : '/pricing'}
+                  onClick={(e) => handleLinkClick(e, isHindi ? '/hi/pricing' : '/pricing')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  Pricing &amp; CA Firm Pilots
+                  {isHindi ? 'प्राइसिंग और CA फर्म पायलट' : 'Pricing & CA Firm Pilots'}
                 </a>
               </li>
               <li>
@@ -4136,7 +4536,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/faq')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  FAQ ({HOMEPAGE_FAQS.length} Questions)
+                  {isHindi ? `सामान्य प्रश्न (FAQ — ${HOMEPAGE_FAQS.length} प्रश्न)` : `FAQ (${HOMEPAGE_FAQS.length} Questions)`}
                 </a>
               </li>
               <li>
@@ -4145,7 +4545,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/contact')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  Contact &amp; Book a Demo
+                  {isHindi ? 'संपर्क करें और डेमो बुक करें' : 'Contact & Book a Demo'}
                 </a>
               </li>
               <li>
@@ -4154,7 +4554,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/about')}
                   className="hover:text-indigo-500 cursor-pointer"
                 >
-                  About CA Saarthi AI
+                  {isHindi ? 'CA Saarthi AI के बारे में' : 'About CA Saarthi AI'}
                 </a>
               </li>
             </ul>
@@ -4162,24 +4562,28 @@ export const LedgerSutraFooter: React.FC<{
 
           {/* Col 3: High-Intent CA SEO Solutions */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-[var(--text-main)]">CA &amp; GST Workflows</h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">
+              {isHindi ? 'CA और GST वर्कफ़्लो' : 'CA & GST Workflows'}
+            </h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <a
-                  href="/gst-invoice-to-tally"
-                  onClick={(e) => handleLinkClick(e, '/gst-invoice-to-tally')}
+                  href={isHindi ? '/hi/gst-invoice-to-tally' : '/gst-invoice-to-tally'}
+                  onClick={(e) => handleLinkClick(e, isHindi ? '/hi/gst-invoice-to-tally' : '/gst-invoice-to-tally')}
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
-                  GST Invoice to TallyPrime XML
+                  {isHindi ? 'GST इनवॉइस से TallyPrime XML' : 'GST Invoice to TallyPrime XML'}
                 </a>
               </li>
               <li>
                 <a
-                  href="/gstr-2b-reconciliation-excel"
-                  onClick={(e) => handleLinkClick(e, '/gstr-2b-reconciliation-excel')}
+                  href={isHindi ? '/hi/gstr-2b-reconciliation-excel' : '/gstr-2b-reconciliation-excel'}
+                  onClick={(e) =>
+                    handleLinkClick(e, isHindi ? '/hi/gstr-2b-reconciliation-excel' : '/gstr-2b-reconciliation-excel')
+                  }
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
-                  GSTR-2B Reconciliation in Excel
+                  {isHindi ? 'Excel में GSTR-2B रिकन्सिलिएशन' : 'GSTR-2B Reconciliation in Excel'}
                 </a>
               </li>
               <li>
@@ -4188,7 +4592,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/bulk-invoice-processing-for-ca')}
                   className="hover:text-indigo-500 cursor-pointer text-left font-medium text-indigo-600 dark:text-indigo-400"
                 >
-                  Bulk Invoice Processing for CA
+                  {isHindi ? 'CA के लिए बल्क इनवॉइस प्रोसेसिंग' : 'Bulk Invoice Processing for CA'}
                 </a>
               </li>
               <li>
@@ -4197,7 +4601,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/invoice-ocr-for-ca')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
-                  Invoice OCR for CA Firms
+                  {isHindi ? 'CA फर्मों के लिए इनवॉइस OCR' : 'Invoice OCR for CA Firms'}
                 </a>
               </li>
               <li>
@@ -4206,16 +4610,16 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/gst-invoice-data-extraction')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
-                  GST Invoice Data Extraction
+                  {isHindi ? 'GST इनवॉइस डेटा एक्सट्रैक्शन' : 'GST Invoice Data Extraction'}
                 </a>
               </li>
               <li>
                 <a
-                  href="/pdf-invoice-to-excel"
-                  onClick={(e) => handleLinkClick(e, '/pdf-invoice-to-excel')}
+                  href={isHindi ? '/hi/pdf-invoice-to-excel' : '/pdf-invoice-to-excel'}
+                  onClick={(e) => handleLinkClick(e, isHindi ? '/hi/pdf-invoice-to-excel' : '/pdf-invoice-to-excel')}
                   className="hover:text-indigo-500 cursor-pointer text-left"
                 >
-                  PDF Invoice to Excel (.XLSX)
+                  {isHindi ? 'PDF इनवॉइस से Excel (.XLSX)' : 'PDF Invoice to Excel (.XLSX)'}
                 </a>
               </li>
             </ul>
@@ -4223,7 +4627,9 @@ export const LedgerSutraFooter: React.FC<{
 
           {/* Col 4: Blog Articles */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-[var(--text-main)]">CA Blog &amp; Guides</h3>
+            <h3 className="text-xs font-bold text-[var(--text-main)]">
+              {isHindi ? 'CA ब्लॉग और गाइड्स' : 'CA Blog & Guides'}
+            </h3>
             <ul className="space-y-2 text-xs text-[var(--text-muted)]">
               <li>
                 <a
@@ -4231,7 +4637,7 @@ export const LedgerSutraFooter: React.FC<{
                   onClick={(e) => handleLinkClick(e, '/blog')}
                   className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer text-left"
                 >
-                  All Blog Articles &amp; Tutorials →
+                  {isHindi ? 'सभी ब्लॉग लेख और ट्यूटोरियल →' : 'All Blog Articles & Tutorials →'}
                 </a>
               </li>
               {RESOURCE_ARTICLES.map((art) => (
@@ -4251,19 +4657,35 @@ export const LedgerSutraFooter: React.FC<{
 
         <div className="pt-6 border-t border-[var(--border-color)] space-y-3 text-xs text-[var(--text-muted)]">
           <div className="p-3.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] leading-relaxed">
-            <strong className="text-[var(--text-main)]">Professional Compliance Disclaimer:</strong> {BRAND_NAME} is a
-            document-processing and accounting workflow support tool. Chartered Accountants and users should review and
-            verify extracted data before importing into TallyPrime or filing official GST returns.
+            {isHindi ? (
+              <>
+                <strong className="text-[var(--text-main)]">पेशेवर अनुपालन अस्वीकरण (Disclaimer):</strong> {BRAND_NAME} एक दस्तावेज़-प्रोसेसिंग और अकाउंटिंग वर्कफ़्लो सहायता टूल है। चार्टर्ड अकाउंटेंट्स और उपयोगकर्ताओं को TallyPrime में इम्पोर्ट करने या आधिकारिक GST रिटर्न दाखिल करने से पहले निकाले गए डेटा की समीक्षा और सत्यापन करना चाहिए।
+              </>
+            ) : (
+              <>
+                <strong className="text-[var(--text-main)]">Professional Compliance Disclaimer:</strong> {BRAND_NAME} is a
+                document-processing and accounting workflow support tool. Chartered Accountants and users should review and
+                verify extracted data before importing into TallyPrime or filing official GST returns.
+              </>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
             <span>
               © {new Date().getFullYear()} {BRAND_NAME} (
-              <a href="/" onClick={(e) => handleLinkClick(e, '/')} className="hover:underline">
+              <a
+                href={isHindi ? '/hi' : '/'}
+                onClick={(e) => handleLinkClick(e, isHindi ? '/hi' : '/')}
+                className="hover:underline"
+              >
                 casaarthiai.in
               </a>
-              ). Contact: support@casaarthiai.in
+              ). {isHindi ? 'संपर्क: support@casaarthiai.in' : 'Contact: support@casaarthiai.in'}
             </span>
-            <span>🔒 Hybrid Cloud &amp; Local OCR · Client-Scoped Isolation · TallyPrime XML · GSTR-2B · SQL &amp; XLSX</span>
+            <span>
+              {isHindi
+                ? '🔒 हाइब्रिड क्लाउड और लोकल OCR · क्लाइंट-स्कोप्ड आइसोलेशन · TallyPrime XML · GSTR-2B · SQL और XLSX'
+                : '🔒 Hybrid Cloud & Local OCR · Client-Scoped Isolation · TallyPrime XML · GSTR-2B · SQL & XLSX'}
+            </span>
           </div>
         </div>
       </div>

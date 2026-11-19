@@ -3980,12 +3980,12 @@ export function App() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
           {/* Zone 1: Brand Logo & Wordmark */}
           <a
-            href="/"
+            href={currentPath === '/hi' || currentPath.startsWith('/hi/') ? '/hi' : '/'}
             onClick={(e) => {
               if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
                 e.preventDefault();
                 setIsMobileMenuOpen(false);
-                navigateTo('/');
+                navigateTo(currentPath === '/hi' || currentPath.startsWith('/hi/') ? '/hi' : '/');
               }
             }}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group whitespace-nowrap shrink-0 text-left min-w-0"
@@ -4019,7 +4019,9 @@ export function App() {
                 </span>
               </span>
               <span className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] mt-0.5">
-                Bill Scanning &amp; Data Automation
+                {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                  ? 'बिल स्कैनिंग और डेटा ऑटोमेशन'
+                  : 'Bill Scanning & Data Automation'}
               </span>
             </div>
           </a>
@@ -4052,18 +4054,28 @@ export function App() {
                 title="Add or Manage Clients"
                 className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 cursor-pointer whitespace-nowrap shrink-0"
               >
-                +Client
+                {currentPath === '/hi' || currentPath.startsWith('/hi/') ? '+क्लाइंट' : '+Client'}
               </button>
             </div>
 
             <nav aria-label="Primary site navigation" className="flex items-center gap-5 text-xs font-medium">
-              {[
-                { path: '/', label: 'Home', active: currentPath === '/' },
-                { path: '/app', label: 'Workspace', active: currentPath === '/app' },
-                { path: '/pricing', label: 'Pricing', active: currentPath === '/pricing' },
-                { path: '/blog', label: 'Blog', active: currentPath.startsWith('/blog') },
-                { path: '/api-docs', label: 'API', active: currentPath === '/api-docs' },
-              ].map((navItem) => (
+              {(currentPath === '/hi' || currentPath.startsWith('/hi/')
+                ? [
+                    { path: '/hi', label: 'होम', active: currentPath === '/hi' },
+                    { path: '/app', label: 'वर्कस्पेस', active: currentPath === '/app' },
+                    { path: '/hi/features', label: 'फीचर्स', active: currentPath === '/hi/features' },
+                    { path: '/hi/pricing', label: 'प्राइसिंग', active: currentPath === '/hi/pricing' },
+                    { path: '/blog', label: 'CA ब्लॉग', active: currentPath.startsWith('/blog') },
+                    { path: '/api-docs', label: 'API', active: currentPath === '/api-docs' },
+                  ]
+                : [
+                    { path: '/', label: 'Home', active: currentPath === '/' },
+                    { path: '/app', label: 'Workspace', active: currentPath === '/app' },
+                    { path: '/pricing', label: 'Pricing', active: currentPath === '/pricing' },
+                    { path: '/blog', label: 'Blog', active: currentPath.startsWith('/blog') },
+                    { path: '/api-docs', label: 'API', active: currentPath === '/api-docs' },
+                  ]
+              ).map((navItem) => (
                 <a
                   key={navItem.path}
                   href={navItem.path}
@@ -4128,8 +4140,22 @@ export function App() {
                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 <LogIn className="w-3.5 h-3.5 shrink-0" />
-                <span className="sm:hidden">{isSigningIn ? '...' : 'Sign in'}</span>
-                <span className="hidden sm:inline">{isSigningIn ? 'Signing in...' : 'Sign in'}</span>
+                <span className="sm:hidden">
+                  {isSigningIn
+                    ? '...'
+                    : currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'साइन इन'
+                    : 'Sign in'}
+                </span>
+                <span className="hidden sm:inline">
+                  {isSigningIn
+                    ? currentPath === '/hi' || currentPath.startsWith('/hi/')
+                      ? 'साइन इन हो रहा है...'
+                      : 'Signing in...'
+                    : currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'साइन इन'
+                    : 'Sign in'}
+                </span>
               </button>
             )}
 
@@ -4300,17 +4326,27 @@ export function App() {
             {/* Site Navigation Links */}
             <div className="space-y-1.5">
               <span className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Pages &amp; Resources
+                {currentPath === '/hi' || currentPath.startsWith('/hi/') ? 'पेज और संसाधन' : 'Pages & Resources'}
               </span>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  { path: '/', label: 'Home' },
-                  { path: '/app', label: 'Workspace' },
-                  { path: '/pricing', label: 'Pricing' },
-                  { path: '/blog', label: 'CA Blog' },
-                  { path: '/api-docs', label: 'REST API' },
-                  { path: '/contact', label: 'Book Demo' },
-                ].map((navItem) => {
+                {(currentPath === '/hi' || currentPath.startsWith('/hi/')
+                  ? [
+                      { path: '/hi', label: 'होम' },
+                      { path: '/app', label: 'वर्कस्पेस' },
+                      { path: '/hi/pricing', label: 'प्राइसिंग' },
+                      { path: '/blog', label: 'CA ब्लॉग' },
+                      { path: '/api-docs', label: 'REST API' },
+                      { path: '/contact', label: 'डेमो बुक करें' },
+                    ]
+                  : [
+                      { path: '/', label: 'Home' },
+                      { path: '/app', label: 'Workspace' },
+                      { path: '/pricing', label: 'Pricing' },
+                      { path: '/blog', label: 'CA Blog' },
+                      { path: '/api-docs', label: 'REST API' },
+                      { path: '/contact', label: 'Book Demo' },
+                    ]
+                ).map((navItem) => {
                   const isActive =
                     navItem.path === '/blog'
                       ? currentPath.startsWith('/blog')
@@ -4399,8 +4435,9 @@ export function App() {
           />
         )}
 
-        {/* On standalone informational, pricing, trust, legal, and blog routes, defer the heavy live workspace behind a lightweight CTA so page-specific content stays primary */}
-        {(currentPath.startsWith('/blog') ||
+        {/* On standalone informational, pricing, trust, legal, blog, and /hi routes, defer the heavy live workspace behind a lightweight CTA so page-specific or localized Hindi content stays primary */}
+        {(currentPath === '/hi' ||
+          currentPath.startsWith('/blog') ||
           currentPath.startsWith('/resources') ||
           currentPath === '/pricing' ||
           currentPath === '/hi/pricing' ||
@@ -4416,16 +4453,25 @@ export function App() {
           currentPath === '/faq' ||
           currentPath === '/contact') &&
           !mountWorkspaceOnBlog && (
-            <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <section
+              id="live-ocr-workspace"
+              className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 scroll-mt-20"
+            >
               <div className="space-y-1.5 max-w-2xl">
                 <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                  Interactive CA Invoice OCR &amp; TallyPrime Sandbox
+                  {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'इंटरैक्टिव CA इनवॉइस OCR और TallyPrime सैंडबॉक्स'
+                    : 'Interactive CA Invoice OCR & TallyPrime Sandbox'}
                 </div>
                 <h2 className="font-display text-lg sm:text-xl font-bold text-[var(--text-main)]">
-                  Ready to test GSTIN validation, Tally XML export, or GSTR-2B matching?
+                  {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'क्या आप GSTIN सत्यापन, TallyPrime XML एक्सपोर्ट या GSTR-2B मिलान का परीक्षण करना चाहते हैं?'
+                    : 'Ready to test GSTIN validation, Tally XML export, or GSTR-2B matching?'}
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--text-muted)]">
-                  Upload a purchase PDF or image bill in our live workspace to verify 15-digit GSTIN Mod-36 checksums and export TallyPrime XML vouchers.
+                  {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? '15-अंकीय GSTIN Mod-36 चेकसम सत्यापित करने और TallyPrime XML वाउचर एक्सपोर्ट करने के लिए हमारे लाइव वर्कस्पेस में परचेस PDF या फोटो बिल अपलोड करें।'
+                    : 'Upload a purchase PDF or image bill in our live workspace to verify 15-digit GSTIN Mod-36 checksums and export TallyPrime XML vouchers.'}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -4434,7 +4480,9 @@ export function App() {
                   onClick={() => setMountWorkspaceOnBlog(true)}
                   className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs cursor-pointer"
                 >
-                  Try the live workspace
+                  {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'लाइव वर्कस्पेस आज़माएं'
+                    : 'Try the live workspace'}
                 </button>
                 <a
                   href="/app"
@@ -4446,16 +4494,19 @@ export function App() {
                   }}
                   className="px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-elevated)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-main)] cursor-pointer"
                 >
-                  Open Full Workspace (/app) →
+                  {currentPath === '/hi' || currentPath.startsWith('/hi/')
+                    ? 'पूर्ण वर्कस्पेस खोलें (/app) →'
+                    : 'Open Full Workspace (/app) →'}
                 </a>
               </div>
             </section>
           )}
 
-        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes, and deferred on standalone informational/blog routes until requested) */}
+        {/* LIVE INTERACTIVE OCR, GST VALIDATION & EXCEL WORKSPACE (hidden on 404 / 410 routes, and deferred on standalone informational/blog/hi routes until requested) */}
         {currentRouteAudit.routeKind !== 'obsolete_gone' &&
           currentRouteAudit.routeKind !== 'not_found' &&
           (!(
+            currentPath === '/hi' ||
             currentPath.startsWith('/blog') ||
             currentPath.startsWith('/resources') ||
             currentPath === '/pricing' ||
@@ -6828,6 +6879,7 @@ export function App() {
             onTriggerUpload={() => fileInputRef.current?.click()}
             savedBillsCount={savedBills.length}
             onSignInRequest={() => setIsSignInModalOpen(true)}
+            currentPath={currentPath}
           />
         )}
       </main>
@@ -6939,6 +6991,7 @@ export function App() {
       <LedgerSutraFooter
         onNavigate={navigateTo}
         onOpenWorkspaceTab={handleOpenWorkspaceTab}
+        currentPath={currentPath}
       />
 
       {/* Mobile Fixed Thumb-Zone Bottom Navigation Bar */}
@@ -6947,22 +7000,24 @@ export function App() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-header)] backdrop-blur-md border-t border-[var(--border-color)] grid grid-cols-5 items-center h-14 px-1"
       >
         <a
-          href="/"
+          href={currentPath === '/hi' || currentPath.startsWith('/hi/') ? '/hi' : '/'}
           onClick={(e) => {
             if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
               e.preventDefault();
               setIsMobileMenuOpen(false);
-              navigateTo('/');
+              navigateTo(currentPath === '/hi' || currentPath.startsWith('/hi/') ? '/hi' : '/');
             }
           }}
           className={`flex flex-col items-center justify-center h-full gap-0.5 cursor-pointer ${
-            currentPath === '/' && activeTab === 'scanner' && !isMobileMenuOpen
+            (currentPath === '/' || currentPath === '/hi') && activeTab === 'scanner' && !isMobileMenuOpen
               ? 'text-indigo-600 dark:text-indigo-400 font-bold'
               : 'text-[var(--text-muted)]'
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          <span className="text-[10px] leading-none">Home</span>
+          <span className="text-[10px] leading-none">
+            {currentPath === '/hi' || currentPath.startsWith('/hi/') ? 'होम' : 'Home'}
+          </span>
         </a>
 
         <a
@@ -6981,7 +7036,9 @@ export function App() {
           }`}
         >
           <ScanLine className="w-4 h-4" />
-          <span className="text-[10px] leading-none">Scan Bill</span>
+          <span className="text-[10px] leading-none">
+            {currentPath === '/hi' || currentPath.startsWith('/hi/') ? 'बिल स्कैन' : 'Scan Bill'}
+          </span>
         </a>
 
         <a
@@ -7000,11 +7057,15 @@ export function App() {
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
-          <span className="text-[10px] leading-none tabular-nums">Sheet ({savedBills.length})</span>
+          <span className="text-[10px] leading-none tabular-nums">
+            {currentPath === '/hi' || currentPath.startsWith('/hi/')
+              ? `शीट (${savedBills.length})`
+              : `Sheet (${savedBills.length})`}
+          </span>
         </a>
 
         <a
-          href="/gstr-2b-reconciliation-excel"
+          href={currentPath === '/hi' || currentPath.startsWith('/hi/') ? '/hi/gstr-2b-reconciliation-excel' : '/gstr-2b-reconciliation-excel'}
           onClick={(e) => {
             if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
               e.preventDefault();
@@ -7035,7 +7096,9 @@ export function App() {
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span className="text-[10px] leading-none">Menu</span>
+          <span className="text-[10px] leading-none">
+            {currentPath === '/hi' || currentPath.startsWith('/hi/') ? 'मेनू' : 'Menu'}
+          </span>
         </button>
       </nav>
     </div>

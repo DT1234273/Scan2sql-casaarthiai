@@ -107,6 +107,69 @@ export const HOMEPAGE_FAQS: FaqItem[] = [
   },
 ];
 
+export const HOMEPAGE_FAQS_HI: FaqItem[] = [
+  {
+    question: 'भारतीय GST इनवॉइस पर डेटा एक्सट्रैक्शन की सटीकता (accuracy) क्या है?',
+    answer:
+      'एक्सट्रैक्शन की सटीकता इनवॉइस के प्रिंट और स्कैन की गुणवत्ता (डिजिटल PDF बनाम कम रोशनी वाला WhatsApp फोटो) पर निर्भर करती है। काल्पनिक मार्केटिंग प्रतिशत का दावा करने के बजाय, CA Saarthi AI में एक इन-बिल्ट Accuracy Test टूल दिया गया है जहाँ आप अपने क्लाइंट इनवॉइस और ग्राउंड-ट्रूथ Excel शीट अपलोड करके वास्तविक दस्तावेज़ों पर फ़ील्ड-स्तरीय सटीकता माप सकते हैं।',
+  },
+  {
+    question: 'कौन-कौन से दस्तावेज़ फ़ॉर्मेट समर्थित हैं?',
+    answer:
+      'CA Saarthi AI सिंगल-पेज और मल्टी-पेज PDF (डिजिटल ERP PDF और स्कैन किए गए PDF दोनों), मोबाइल कैमरा फोटो (JPG, JPEG, PNG, WEBP), Bill of Entry इम्पोर्ट दस्तावेज़ और ई-इनवॉइस QR इमेज को सपोर्ट करता है।',
+  },
+  {
+    question: 'क्या CA Saarthi AI हस्तलिखित (handwritten) या हल्के थर्मल बिलों पर काम करता है?',
+    answer:
+      'सटीकता लिखावट की स्पष्टता और स्याही के कंट्रास्ट पर निर्भर करती है। प्रिंटेड, कंप्यूटर-जनित और स्पष्ट थर्मल GST इनवॉइस से डेटा विश्वसनीय रूप से निकलता है, जबकि हस्तलिखित या धुंधले बिलों को स्वचालित रूप से "Needs Review" (समीक्षा आवश्यक) स्थिति में चिह्नित किया जाता है ताकि आपका स्टाफ साइड-बाय-साइड फ़ील्ड्स की जांच कर सके।',
+  },
+  {
+    question: 'क्या XML एक्सपोर्ट सीधे TallyPrime के साथ संगत (compatible) है?',
+    answer:
+      'हाँ। CA Saarthi AI मानक ENVELOPE > IMPORTDATA > Vouchers स्कीमा का उपयोग करके TallyPrime-इम्पोर्ट योग्य XML तैयार करता है, जिसमें Purchase, CGST, SGST, IGST और Round-Off लेजर नाम कॉन्फ़िगर किए जा सकते हैं और नए सप्लायर लेजर ऑटो-क्रिएट करने का विकल्प भी शामिल है।',
+  },
+  {
+    question: 'GSTR-2B रिकन्सिलिएशन इंजन कैसे काम करता है?',
+    answer:
+      'GST पोर्टल से डाउनलोड की गई GSTR-2B JSON या Excel फ़ाइल अपलोड करें। CA Saarthi AI पोर्टल के B2B इनवॉइस का आपके स्कैन किए गए परचेस रजिस्टर से Supplier GSTIN और नॉर्मलाइज़्ड इनवॉइस नंबर के आधार पर मिलान करता है, और इसके बाद कॉन्फ़िगर करने योग्य टॉलरेंस (डिफ़ॉल्ट ₹1) के साथ राशि + तिथि मिलान (fuzzy matching) का उपयोग करता है।',
+  },
+  {
+    question: 'क्लाइंट का वित्तीय डेटा कैसे सुरक्षित और संग्रहीत किया जाता है?',
+    answer:
+      'प्रमाणीकरण (Authentication) के लिए Firebase Authentication के माध्यम से Google Sign-In का उपयोग होता है। सभी क्लाइंट वर्कस्पेस, बिल और ऑडिट लॉग HTTPS एन्क्रिप्शन के साथ Firestore में प्रत्येक प्रमाणित उपयोगकर्ता के लिए अलग-अलग (isolated) रखे जाते हैं। आप किसी भी समय कोई भी क्लाइंट वर्कस्पेस या अपना पूरा खाता डेटा हटा सकते हैं।',
+  },
+  {
+    question: 'प्राइसिंग प्लान क्या हैं और क्या CA फर्मों के लिए पायलट उपलब्ध है?',
+    answer:
+      'हम तीन संरचित प्रैक्टिस प्लान प्रदान करते हैं: Starter / Trial (₹0 / माह), CA Practice Pro (₹1,499 / माह), और Firm / Enterprise (₹3,999 / माह)। पायलट फर्मों के लिए अर्ली-एक्सेस प्राइसिंग उपलब्ध है।',
+  },
+  {
+    question: 'एक बैच में मैं कितने इनवॉइस अपलोड कर सकता हूँ?',
+    answer:
+      'बैच प्रोसेसिंग क्यू (queue) के माध्यम से आप दर्जनों PDF और इमेज बिल एक साथ चुन सकते हैं और बिना ब्राउज़र रीलोड किए प्रति-फ़ाइल प्रोग्रेस बार, रीट्राई कंट्रोल और ऑटोमैटिक Master Sheet इंसर्शन के साथ उन्हें क्रमवार प्रोसेस कर सकते हैं।',
+  },
+  {
+    question: 'क्या मैं अपनी CA प्रैक्टिस के लिए कई क्लाइंट्स को अलग-अलग मैनेज कर सकता हूँ?',
+    answer:
+      'हाँ। आप अलग-अलग क्लाइंट प्रोफ़ाइल (नाम, GSTIN, PAN, वित्तीय वर्ष, नोट्स) बना सकते हैं और हेडर से क्लाइंट्स के बीच स्विच कर सकते हैं। सभी स्कैनिंग, Master Sheet व्यू, GSTR-2B रिकन्सिलिएशन और TallyPrime XML एक्सपोर्ट सक्रिय क्लाइंट तक ही सीमित रहते हैं।',
+  },
+  {
+    question: 'क्या आप टीम एक्सेस और मेकर-चेकर (maker-checker) अप्रूवल वर्कफ़्लो सपोर्ट करते हैं?',
+    answer:
+      'हाँ। फर्म ओनर्स Owner/CA, Reviewer और Staff (केवल अपलोड) भूमिकाएं निर्धारित कर सकते हैं। स्टाफ बिल स्कैन करके समीक्षा के लिए सबमिट कर सकता है, जबकि केवल Owners और Reviewers ही प्रति-बिल ऑडिट ट्रेल के साथ बिलों को Approved या Rejected मार्क कर सकते हैं।',
+  },
+  {
+    question: 'क्या हमारे अपने ERP या प्रैक्टिस टूल में इनवॉइस एक्सट्रैक्शन जोड़ने के लिए API उपलब्ध है?',
+    answer:
+      'हाँ। आप Settings > API में SHA-256 हैश्ड API कुंजी (keys) जनरेट कर सकते हैं और मल्टीपार्ट इनवॉइस फ़ाइल के साथ POST /api/v1/extract को कॉल करके संरचित JSON प्राप्त कर सकते हैं।',
+  },
+  {
+    question: 'कौन-कौन सी भाषाएं और सहायता (support) चैनल उपलब्ध हैं?',
+    answer:
+      'हमारा हाइब्रिड OCR पाइपलाइन क्षेत्रीय बिलों के लिए अंग्रेज़ी और देवनागरी हिंदी (eng+hin) का समर्थन करता है। सहायता और CA ऑनबोर्डिंग के लिए आप Contact पेज के माध्यम से हमसे संपर्क कर सकते हैं।',
+  },
+];
+
 export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
   '/invoice-ocr-for-ca': {
     slug: 'invoice-ocr-for-ca',
@@ -1941,7 +2004,7 @@ export function resolvePageSeoMetadata(rawUrlOrPath: string): {
     description = hindiSpec.description;
     breadcrumbName = hindiSpec.breadcrumbName;
     if (hindiSpec.enPath === '/') {
-      pageFaqs = HOMEPAGE_FAQS;
+      pageFaqs = HOMEPAGE_FAQS_HI;
     } else if (DEDICATED_SEO_PAGES[hindiSpec.enPath]) {
       seoSpec = DEDICATED_SEO_PAGES[hindiSpec.enPath];
       pageFaqs = seoSpec.faqs;
@@ -2050,14 +2113,17 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
     Boolean(hindiSpec);
 
   if (qualifiesForSoftwareApp) {
+    const isHindiPage = cleanPath === '/hi' || cleanPath.startsWith('/hi/') || Boolean(hindiSpec);
     graph.push({
       '@type': 'SoftwareApplication',
       name: BRAND_NAME,
       operatingSystem: 'Web',
       applicationCategory: 'BusinessApplication',
-      description:
-        'AI-powered bilingual GST invoice OCR, TallyPrime XML export, and GSTR-2B reconciliation software designed specifically for Indian Chartered Accountants.',
-      url: `${SITE_DOMAIN}/`,
+      inLanguage: isHindiPage ? 'hi-IN' : 'en-IN',
+      description: isHindiPage
+        ? 'भारतीय चार्टर्ड अकाउंटेंट्स (CA) और टैक्स प्रैक्टिशनर्स के लिए निर्मित द्विभाषी (अंग्रेज़ी + हिंदी) GST इनवॉइस OCR, 15-अंकीय GSTIN सत्यापन, TallyPrime XML एक्सपोर्ट और GSTR-2B रिकन्सिलिएशन सॉफ्टवेयर।'
+        : 'AI-powered bilingual GST invoice OCR, TallyPrime XML export, and GSTR-2B reconciliation software designed specifically for Indian Chartered Accountants.',
+      url: isHindiPage ? `${SITE_DOMAIN}/hi` : `${SITE_DOMAIN}/`,
       screenshot: DEFAULT_OG_IMAGE,
       featureList: [
         'Invoice OCR',
@@ -2338,6 +2404,60 @@ export const PRACTICE_PRICING_PLANS: PracticePricingPlanSpec[] = [
       'Team Access RBAC (Owner/CA, Reviewer, Staff)',
       'Bill approval workflow & immutable audit trail',
       'Developer REST API (POST /api/v1/extract)',
+    ],
+  },
+];
+
+export const PRACTICE_PRICING_PLANS_HI: PracticePricingPlanSpec[] = [
+  {
+    id: 'starter',
+    tier: 'वर्कफ़्लो मूल्यांकन के लिए · Starter / Trial',
+    name: 'Starter / Trial',
+    price: '₹0 / माह',
+    subtitle: 'OCR, GSTIN सत्यापन और TallyPrime XML एक्सपोर्ट संरचना के परीक्षण के लिए',
+    audience: 'सैंपल या वास्तविक बिलों पर इनवॉइस OCR का परीक्षण करने वाले अकाउंटेंट्स और CA प्रैक्टिशनर्स',
+    highlighted: false,
+    ctaLabel: 'वर्कस्पेस में मुफ़्त ट्रायल शुरू करें',
+    ctaHref: '/app',
+    features: [
+      'प्रतिदिन 3 बिना-लॉगिन डेमो स्कैन + मुफ़्त वर्कस्पेस ट्रायल',
+      'सिंगल और बैच इनवॉइस अपलोड क्यू (Queue)',
+      'TallyPrime XML और Excel (.xlsx) एक्सपोर्ट',
+      '1 डिफ़ॉल्ट क्लाइंट वर्कस्पेस',
+    ],
+  },
+  {
+    id: 'pro',
+    tier: 'सोलो CA और टैक्स कंसल्टेंट्स के लिए · CA Practice Pro',
+    name: 'CA Practice Pro',
+    price: '₹1,499 / माह',
+    subtitle: 'मासिक रिटर्न फाइल करने वाले स्वतंत्र CA और GST प्रैक्टिशनर्स के लिए',
+    audience: 'कई मासिक रिटेनर क्लाइंट्स को संभालने वाले स्वतंत्र चार्टर्ड अकाउंटेंट्स और GST प्रैक्टिशनर्स',
+    highlighted: true,
+    ctaLabel: 'CA-फर्म पायलट ऑफ़र का अनुरोध करें',
+    ctaHref: '/contact',
+    features: [
+      '25 तक क्लाइंट-वाइज़ वर्कस्पेस',
+      'पूर्ण GSTR-2B JSON और Excel रिकन्सिलिएशन',
+      'Zoho Books CSV और Busy Excel एक्सपोर्ट',
+      'विस्तृत E-Invoice, IRN और बैंक फ़ील्ड एक्सट्रैक्शन',
+    ],
+  },
+  {
+    id: 'enterprise',
+    tier: 'मल्टी-पार्टनर ऑडिट फर्मों के लिए · Firm / Enterprise',
+    name: 'Firm / Enterprise',
+    price: '₹3,999 / माह',
+    subtitle: 'आर्टिकल्स और रिव्यूअर वर्कफ़्लो वाली मल्टी-पार्टनर CA फर्मों के लिए',
+    audience: 'मेकर-चेकर रिव्यू क्यू, रोल अनुमतियों (RBAC) और API एक्सेस की आवश्यकता वाली मल्टी-पार्टनर CA फर्में',
+    highlighted: false,
+    ctaLabel: 'CA-फर्म पायलट ऑफ़र का अनुरोध करें',
+    ctaHref: '/contact',
+    features: [
+      'असीमित (Unlimited) क्लाइंट वर्कस्पेस',
+      'टीम एक्सेस RBAC (Owner/CA, Reviewer, Staff)',
+      'बिल अप्रूवल वर्कफ़्लो और ऑडिट ट्रेल',
+      'डेवलपर REST API (POST /api/v1/extract)',
     ],
   },
 ];
@@ -2851,7 +2971,23 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
     ? `<link rel="alternate" hreflang="en-IN" href="${escapeHtmlAttr(alternates.enUrl)}" />\n    <link rel="alternate" hreflang="hi-IN" href="${escapeHtmlAttr(alternates.hiUrl)}" />\n    <link rel="alternate" hreflang="x-default" href="${escapeHtmlAttr(alternates.enUrl)}" />`
     : '';
 
-  const sharedNavHtml = `<header>
+  const isHindiRoute = cleanPath === '/hi' || cleanPath.startsWith('/hi/');
+
+  const sharedNavHtml = isHindiRoute
+    ? `<header>
+    <nav aria-label="मुख्य साइट नेविगेशन">
+      <a href="/hi">${escapeHtmlAttr(BRAND_NAME)}</a>
+      <a href="/hi">होम</a>
+      <a href="/app">वर्कस्पेस</a>
+      <a href="/hi/features">फीचर्स</a>
+      <a href="/how-it-works">कार्यप्रणाली</a>
+      <a href="/hi/pricing">प्राइसिंग</a>
+      <a href="/blog">CA ब्लॉग</a>
+      <a href="/api-docs">REST API</a>
+      <a href="/">English (/)</a>
+    </nav>
+  </header>`
+    : `<header>
     <nav aria-label="Primary site navigation">
       <a href="/">${escapeHtmlAttr(BRAND_NAME)}</a>
       <a href="/">Home</a>
@@ -2866,8 +3002,16 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   </header>`;
 
   const breadcrumbNavHtml =
-    cleanPath !== '/'
-      ? `<nav aria-label="Breadcrumb">
+    cleanPath !== '/' && cleanPath !== '/hi'
+      ? isHindiRoute
+        ? `<nav aria-label="ब्रेडक्रम्ब">
+          <a href="/hi">होम</a> &gt; ${
+            seoSpec
+              ? `<a href="/hi/features">फीचर्स</a> &gt; <span aria-current="page">${escapeHtmlAttr(breadcrumbName)}</span>`
+              : `<span aria-current="page">${escapeHtmlAttr(breadcrumbName)}</span>`
+          }
+        </nav>`
+        : `<nav aria-label="Breadcrumb">
           <a href="/">Home</a> &gt; ${
             articleSpec
               ? `<a href="/blog">Blog</a> &gt; <span aria-current="page">${escapeHtmlAttr(articleSpec.title)}</span>`
@@ -2878,7 +3022,35 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
         </nav>`
       : '';
 
-  const sharedFooterHtml = `<footer>
+  const sharedFooterHtml = isHindiRoute
+    ? `<footer>
+    <p>भारतीय चार्टर्ड अकाउंटेंट्स, GST प्रैक्टिशनर्स और टैक्स कंसल्टेंट्स के लिए निर्मित। किसी भी बिल को स्कैन करें, 15-अंकीय GSTIN और टैक्स गणित की जांच करें, पोर्टल JSON/Excel से GSTR-2B का मिलान करें और TallyPrime XML, Excel, CSV, JSON या SQL में एक्सपोर्ट करें।</p>
+    <nav aria-label="फ़ुटर नेविगेशन">
+      <a href="/hi">https://www.casaarthiai.in/hi</a>
+      <a href="/invoice-ocr-for-ca">CA फर्मों के लिए इनवॉइस OCR</a>
+      <a href="/hi/gst-invoice-to-tally">GST इनवॉइस से TallyPrime XML</a>
+      <a href="/hi/gstr-2b-reconciliation-excel">Excel में GSTR-2B रिकन्सिलिएशन</a>
+      <a href="/bulk-invoice-processing-for-ca">CA के लिए बल्क इनवॉइस प्रोसेसिंग</a>
+      <a href="/gst-invoice-data-extraction">GST इनवॉइस डेटा एक्सट्रैक्शन</a>
+      <a href="/hi/pdf-invoice-to-excel">PDF इनवॉइस से Excel कन्वर्टर</a>
+      <a href="/bulk-invoice-processing">बैच इनवॉइस प्रोसेसिंग</a>
+      <a href="/invoice-automation-for-accountants">अकाउंटेंट्स के लिए इनवॉइस ऑटोमेशन</a>
+      <a href="/document-scanning-software">डॉक्यूमेंट स्कैनिंग सॉफ्टवेयर</a>
+      <a href="/hi/features">सभी GST प्रैक्टिस फीचर्स</a>
+      <a href="/how-it-works">यह कैसे काम करता है</a>
+      <a href="/hi/pricing">प्राइसिंग और CA फर्म पायलट</a>
+      <a href="/faq">अक्सर पूछे जाने वाले प्रश्न (FAQ)</a>
+      <a href="/security">सुरक्षा और डेटा आइसोलेशन</a>
+      <a href="/privacy">प्राइवेसी पॉलिसी</a>
+      <a href="/terms">सेवा की शर्तें</a>
+      <a href="/data-deletion">डेटा विलोपन नीति</a>
+      <a href="/about">CA Saarthi AI के बारे में</a>
+      <a href="/contact">संपर्क करें और डेमो बुक करें</a>
+      <a href="/blog">सभी ब्लॉग गाइड्स और ट्यूटोरियल</a>
+      <a href="/">English Homepage (/)</a>
+    </nav>
+  </footer>`
+    : `<footer>
     <nav aria-label="Footer navigation">
       <a href="/">https://www.casaarthiai.in</a>
       <a href="/invoice-ocr-for-ca">Invoice OCR for CA Firms</a>
@@ -2925,7 +3097,32 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
       </main>
       ${sharedFooterHtml}
     </div>`;
-  } else if (cleanPath === '/pricing' || cleanPath === '/hi/pricing') {
+  } else if (cleanPath === '/hi/pricing') {
+    ssrBodyHtml = `<div id="prerendered-route-shell">
+      ${sharedNavHtml}
+      ${breadcrumbNavHtml}
+      <main>
+        <h1>${escapeHtmlAttr(h1)}</h1>
+        <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
+        <p>पायलट CA फर्मों के लिए अर्ली-एक्सेस प्राइसिंग। हमारे तीन संरचित प्रैक्टिस प्लान की तुलना नीचे करें:</p>
+        <section>
+          <h2>CA Saarthi AI प्रैक्टिस प्राइसिंग प्लान</h2>
+          ${PRACTICE_PRICING_PLANS_HI.map(
+            (plan) => `<article>
+            <h3>${escapeHtmlAttr(plan.name)} — ${escapeHtmlAttr(plan.price)}</h3>
+            <p>${escapeHtmlAttr(plan.tier)} · ${escapeHtmlAttr(plan.subtitle)}</p>
+            <p><strong>किसके लिए उपयुक्त:</strong> ${escapeHtmlAttr(plan.audience)}</p>
+            <ul>
+              ${plan.features.map((f) => `<li>${escapeHtmlAttr(f)}</li>`).join('')}
+            </ul>
+            <p><a href="${escapeHtmlAttr(plan.ctaHref)}">${escapeHtmlAttr(plan.ctaLabel)}</a></p>
+          </article>`
+          ).join('\n          ')}
+        </section>
+      </main>
+      ${sharedFooterHtml}
+    </div>`;
+  } else if (cleanPath === '/pricing') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
       ${breadcrumbNavHtml}
@@ -3256,6 +3453,70 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
           ).join('\n          ')}
         </section>
         <p>Explore <a href="/features">all 9 GST practice capabilities</a>, compare <a href="/pricing">CA Practice Pricing Plans</a>, or <a href="/contact">Contact us to book a demo</a>.</p>
+      </main>
+      ${sharedFooterHtml}
+    </div>`;
+  } else if (cleanPath === '/hi') {
+    ssrBodyHtml = `<div id="prerendered-route-shell">
+      ${sharedNavHtml}
+      <main>
+        <h1>${escapeHtmlAttr(h1)}</h1>
+        <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
+        <p>भारतीय CA फर्मों के लिए इनवॉइस OCR सॉफ्टवेयर — <a href="/hi/gst-invoice-to-tally">TallyPrime XML एक्सपोर्ट</a>, <a href="/hi/gstr-2b-reconciliation-excel">Excel में GSTR-2B रिकन्सिलिएशन</a>, <a href="/bulk-invoice-processing-for-ca">CA के लिए बल्क इनवॉइस प्रोसेसिंग</a>, <a href="/hi/features">15-अंकीय GSTIN सत्यापन और द्विभाषी OCR फीचर्स</a> तथा <a href="/hi/pricing">पारदर्शी CA प्रैक्टिस प्लान</a> देखें।</p>
+        <p><a href="/app">मुफ़्त ट्रायल शुरू करें</a> · <a href="/contact">डेमो बुक करें</a></p>
+        <section>
+          <h2>भारतीय चार्टर्ड अकाउंटेंट्स के लिए निर्मित चार प्रमुख स्तंभ</h2>
+          <ul>
+            <li><strong>01. 15-अंकीय GSTIN सत्यापन:</strong> GSTR फाइलिंग से पहले 15-अंकीय GSTIN फ़ॉर्मेट, राज्य कोड (01–38), PAN संरचना और Mod-36 चेकसम को स्वचालित रूप से निकालता और सत्यापित करता है।</li>
+            <li><strong>02. द्विभाषी बिल स्कैनर (अंग्रेज़ी + हिंदी):</strong> प्रिंटेड अंग्रेज़ी और देवनागरी हिंदी इनवॉइस से हेडर फ़ील्ड्स, लाइन आइटम और विक्रेता विवरण निकालता है।</li>
+            <li><strong>03. क्लाइंट-स्कोप्ड डेटा आइसोलेशन:</strong> अपलोड की गई फ़ाइलों को OCR के दौरान मेमोरी में प्रोसेस किया जाता है, जबकि सहेजे गए क्लाइंट वर्कस्पेस और बिल प्रति-उपयोगकर्ता Firestore नियमों और वन-क्लिक डिलीट सुविधा से सुरक्षित रहते हैं।</li>
+            <li><strong>04. डेवलपर-फ्रेंडली एक्सपोर्ट्स:</strong> निकाले गए डेटा को सीधे TallyPrime XML, Zoho Books CSV, Busy Excel, SQL, JSON या फ़ॉर्मेटेड XLSX फ़ाइलों के माध्यम से अपने मौजूदा अकाउंटिंग सिस्टम में भेजें।</li>
+          </ul>
+        </section>
+        <section>
+          <h2>भारतीय GST प्रैक्टिस के लिए 9 मुख्य क्षमताएं</h2>
+          <ul>
+            <li><strong>01. द्विभाषी अंग्रेज़ी + हिंदी OCR (eng+hin):</strong> क्षेत्रीय किराना बिलों, मंडी रसीदों और द्विभाषी टैक्स इनवॉइस से सटीक डेटा निकालता है। <a href="/invoice-ocr-for-ca">CA फर्मों के लिए इनवॉइस OCR देखें</a>।</li>
+            <li><strong>02. 15-अंकीय GSTIN Mod-36 चेकसम सत्यापन:</strong> सप्लायर और खरीदार के GSTIN, 37 राज्य कोड और Mod-36 चेकसम की स्वचालित जांच करता है। <a href="/hi/features">GSTIN सत्यापन नियम देखें</a>।</li>
+            <li><strong>03. HSN/SAC और टैक्स गणित (Tax Math) जांच:</strong> सत्यापित करता है कि Taxable Value + CGST + SGST + IGST का योग Grand Total से मेल खाता है और इंटर-स्टेट बनाम इंट्रा-स्टेट टैक्स विरोधाभास पकड़ता है। <a href="/gst-invoice-data-extraction">30+ निकाले गए फ़ील्ड्स देखें</a>।</li>
+            <li><strong>04. TallyPrime XML वाउचर जनरेशन:</strong> कस्टम लेजर मैपिंग और प्री-एक्सपोर्ट वैलिडेशन के साथ मानक TallyPrime XML परचेस वाउचर जनरेट करता है। <a href="/hi/gst-invoice-to-tally">GST से TallyPrime XML कन्वर्टर देखें</a>।</li>
+            <li><strong>05. 6-स्टेटस GSTR-2B रिकन्सिलिएशन इंजन:</strong> आपके परचेस रजिस्टर का पोर्टल GSTR-2B JSON या Excel फ़ाइल से मिलान करके Matched, Mismatch, In Books Only और In 2B Only बिलों की पहचान करता है। <a href="/hi/gstr-2b-reconciliation-excel">Excel में GSTR-2B रिकन्सिलिएशन देखें</a>।</li>
+            <li><strong>06. मल्टी-फ़ाइल बैच प्रोसेसिंग क्यू (Queue):</strong> प्रति-फ़ाइल प्रोग्रेस ट्रैकिंग और डुप्लिकेट बिल पहचान के साथ दर्जनों PDF और इमेज बिल एक साथ प्रोसेस करें। <a href="/bulk-invoice-processing-for-ca">बल्क इनवॉइस प्रोसेसिंग देखें</a>।</li>
+            <li><strong>07. क्लाइंट-वाइज़ GSTIN वर्कस्पेस:</strong> प्रत्येक क्लाइंट के लिए अलग वर्कस्पेस (नाम, GSTIN, PAN, वित्तीय वर्ष) बनाएं ताकि बिल, GSTR-2B मिलान और Tally XML एक्सपोर्ट अलग रहें।</li>
+            <li><strong>08. मेकर-चेकर टीम एक्सेस (RBAC):</strong> फर्म के भीतर Owner/CA, Reviewer और Staff भूमिकाएं असाइन करें और ऑडिट ट्रेल के साथ बिल अप्रूवल वर्कफ़्लो चलाएं।</li>
+            <li><strong>09. मल्टी-फ़ॉर्मेट एक्सपोर्ट और REST API:</strong> <a href="/hi/pdf-invoice-to-excel">Excel (.xlsx)</a>, Zoho Books CSV, Busy Excel, SQL, JSON या <a href="/api-docs">POST /api/v1/extract REST API</a> के माध्यम से एक्सपोर्ट करें।</li>
+          </ul>
+        </section>
+        <section>
+          <h2>तीन-चरणीय प्रैक्टिस वर्कफ़्लो</h2>
+          <ol>
+            <li><strong>01. क्लाइंट चुनें और इनवॉइस अपलोड करें:</strong> हेडर में अपना क्लाइंट वर्कस्पेस चुनें और सिंगल या बैच PDF, मल्टी-पेज स्टेटमेंट, Bill of Entry या मोबाइल फोटो अपलोड करें।</li>
+            <li><strong>02. स्वचालित GST ऑडिट और समीक्षा क्यू (Review Queue):</strong> CA Saarthi AI हेडर और लाइन-आइटम फ़ील्ड्स निकालता है, GSTIN Mod-36 चेकसम सत्यापित करता है, डुप्लिकेट इनवॉइस चिह्नित करता है और CA Reviewer की स्वीकृति के लिए बिल भेजता है।</li>
+            <li><strong>03. GSTR-2B मिलान करें और Tally में एक्सपोर्ट करें:</strong> स्वीकृत बिलों का पोर्टल GSTR-2B JSON/Excel फ़ाइलों से मिलान करें और TallyPrime XML वाउचर, Excel रजिस्टर, Zoho CSV या Busy शीट डाउनलोड करें।</li>
+          </ol>
+        </section>
+        <section>
+          <h2>क्लाइंट रिकॉर्ड्स के लिए सुरक्षा और डेटा आइसोलेशन</h2>
+          <p>प्राथमिक OCR सर्वर डिस्क पर कच्ची फ़ाइलें लिखे बिना <code>/api/extract-document</code> के माध्यम से मेमोरी में चलता है। लॉग इन करने पर सहेजे गए क्लाइंट, बिल और ऑडिट ट्रेल प्रति-उपयोगकर्ता Firestore नियमों (<code>/users/&#123;uid&#125;/clients/&#123;clientId&#125;</code>) और HTTPS एन्क्रिप्शन के तहत सुरक्षित रहते हैं। <a href="/security">सुरक्षा आर्किटेक्चर पढ़ें</a>।</p>
+        </section>
+        <section>
+          <h2>सोलो प्रैक्टिशनर्स और मल्टी-पार्टनर CA फर्मों के लिए प्लान</h2>
+          ${PRACTICE_PRICING_PLANS_HI.map(
+            (plan) => `<article>
+            <h3>${escapeHtmlAttr(plan.name)} — ${escapeHtmlAttr(plan.price)}</h3>
+            <p>${escapeHtmlAttr(plan.audience)}</p>
+            <ul>${plan.features.map((f) => `<li>${escapeHtmlAttr(f)}</li>`).join('')}</ul>
+          </article>`
+          ).join('\n          ')}
+          <p><a href="/hi/pricing">सभी प्राइसिंग प्लान विवरणों की तुलना करें</a> या <a href="/hi/features">सभी 9 GST प्रैक्टिस फीचर्स देखें</a>।</p>
+        </section>
+        ${
+          pageFaqs.length > 0
+            ? `<section><h2>अक्सर पूछे जाने वाले प्रश्न (FAQs)</h2>${pageFaqs
+                .map((f) => `<div><h3>${escapeHtmlAttr(f.question)}</h3><p>${escapeHtmlAttr(f.answer)}</p></div>`)
+                .join('')}</section>`
+            : ''
+        }
       </main>
       ${sharedFooterHtml}
     </div>`;

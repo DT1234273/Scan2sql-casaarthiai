@@ -813,7 +813,7 @@ async function startServer() {
     const seo = getPrerenderedSeoHtml(rawUrl);
     let html = rawHtml;
     const isHindi = rawUrl.split('?')[0] === '/hi' || rawUrl.split('?')[0].startsWith('/hi/');
-    html = html.replace(/<html\s+lang="[^"]*"/i, `<html lang="${isHindi ? 'hi' : 'en'}"`);
+    html = html.replace(/<html\s+lang="[^"]*"/i, `<html lang="${isHindi ? 'hi-IN' : 'en-IN'}"`);
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${seo.title}</title>`);
     html = html.replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,

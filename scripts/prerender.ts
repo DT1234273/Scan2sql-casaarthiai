@@ -122,7 +122,7 @@ function injectRouteSeoIntoTemplate(rawHtml: string, routePath: string): string 
   const isHindi = routePath === '/hi' || routePath.startsWith('/hi/');
   let html = rawHtml;
 
-  html = html.replace(/<html\s+lang="[^"]*"/i, `<html lang="${isHindi ? 'hi' : 'en'}"`);
+  html = html.replace(/<html\s+lang="[^"]*"/i, `<html lang="${isHindi ? 'hi-IN' : 'en-IN'}"`);
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${seo.title}</title>`);
   html = html.replace(
     /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
