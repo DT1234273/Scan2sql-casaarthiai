@@ -19,9 +19,9 @@ service cloud.firestore {
 
     // Helper: Check active firmRole on user profile (defaults to 'owner' for workspace owner)
     function userFirmRole(userId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      return userDoc != null && userDoc.data != null && 'firmRole' in userDoc.data
-        ? userDoc.data.firmRole
+      return exists(/databases/$(database)/documents/users/$(userId))
+        && 'firmRole' in get(/databases/$(database)/documents/users/$(userId)).data
+        ? get(/databases/$(database)/documents/users/$(userId)).data.firmRole
         : 'owner';
     }
 

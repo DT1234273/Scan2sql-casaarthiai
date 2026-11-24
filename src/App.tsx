@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import jsQR from 'jsqr';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -37,9 +36,6 @@ import {
   Sun,
   Moon,
   ChevronRight,
-  QrCode,
-  Camera,
-  CameraOff,
   ChevronLeft,
   Columns,
   Layers,
@@ -783,70 +779,6 @@ function parseFallbackBillFromRawText(rawText: string, fileName: string) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// QR Code Payload Parser
-// ---------------------------------------------------------------------------
-function parseReceiptQrData(rawQrString: string): {
-  shopName?: string;
-  invoiceNumber?: string;
-  billDate?: string;
-  grandTotal?: number;
-  taxAmount?: number;
-  sellerGstin?: string;
-  summary: string;
-} {
-  const text = rawQrString.trim();
-
-  if (text.startsWith('{') && text.endsWith('}')) {
-    try {
-      const obj = JSON.parse(text);
-      const shopName = obj.shop || obj.shopName || obj.merchant || obj.seller || obj.vendor || obj.name;
-      const invoiceNumber = obj.inv || obj.invoice || obj.invoiceNumber || obj.billNo || obj.receiptNo;
-      const billDate = obj.date || obj.billDate || obj.dt;
-      const grandTotal =
-        obj.total || obj.grandTotal || obj.amount || obj.am
-          ? Number(obj.total || obj.grandTotal || obj.amount || obj.am)
-          : undefined;
-      const taxAmount = obj.tax || obj.gst || obj.taxAmount ? Number(obj.tax || obj.gst || obj.taxAmount) : undefined;
-      const sellerGstin = obj.gstin || obj.sellerGstin;
-      return {
-        shopName: shopName ? String(shopName) : undefined,
-        invoiceNumber: invoiceNumber ? String(invoiceNumber) : undefined,
-        billDate: billDate ? String(billDate).slice(0, 10) : undefined,
-        grandTotal: Number.isFinite(grandTotal) ? grandTotal : undefined,
-        taxAmount: Number.isFinite(taxAmount) ? taxAmount : undefined,
-        sellerGstin: sellerGstin ? String(sellerGstin) : undefined,
-        summary: `Parsed JSON QR (${shopName || 'Merchant'})`,
-      };
-    } catch {
-      // fall through
-    }
-  }
-
-  if (text.toLowerCase().startsWith('upi://pay')) {
-    try {
-      const url = new URL(text);
-      const p = url.searchParams;
-      const pn = p.get('pn') || undefined;
-      const tr = p.get('tr') || p.get('tid') || undefined;
-      const am = p.get('am') ? Number(p.get('am')) : undefined;
-      return {
-        shopName: pn ? decodeURIComponent(pn) : undefined,
-        invoiceNumber: tr ? decodeURIComponent(tr) : undefined,
-        grandTotal: Number.isFinite(am) ? am : undefined,
-        summary: `Parsed UPI QR (${pn || 'Merchant Payment'})`,
-      };
-    } catch {
-      // fall through
-    }
-  }
-
-  return {
-    shopName: text.length <= 60 ? text : undefined,
-    summary: `Scanned QR Code: "${text.slice(0, 60)}"`,
-  };
-}
-
 export function App() {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -1042,17 +974,6 @@ export function App() {
   const [newHeaderFieldKey, setNewHeaderFieldKey] = useState('');
   const [newHeaderFieldVal, setNewHeaderFieldVal] = useState('');
   const [showNoSqlJsonModal, setShowNoSqlJsonModal] = useState(false);
-
-  // QR Scanner State
-  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [qrScannedBanner, setQrScannedBanner] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const qrImageInputRef = useRef<HTMLInputElement | null>(null);
-  const qrScanLoopRef = useRef<number | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // Google Authentication & Live-Site Practice Account State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -1514,141 +1435,6 @@ export function App() {
       showToast(`Sign out failed: ${err?.message || 'Error'}`);
     }
   }, [showToast]);
-
-  // Webcam QR Code Scanner Lifecycle
-  const stopCameraStream = useCallback(() => {
-    if (qrScanLoopRef.current) {
-      cancelAnimationFrame(qrScanLoopRef.current);
-      qrScanLoopRef.current = null;
-    }
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
-    setIsCameraActive(false);
-  }, []);
-
-  const applyDecodedQrPayload = useCallback(
-    (rawQrText: string) => {
-      const parsed = parseReceiptQrData(rawQrText);
-      setDetectedType('SHOP_BILL');
-      if (parsed.shopName) setShopName(parsed.shopName);
-      if (parsed.invoiceNumber) setInvoiceNumber(parsed.invoiceNumber);
-      if (parsed.billDate) setBillDate(parsed.billDate);
-      if (parsed.sellerGstin) setSellerGstin(parsed.sellerGstin);
-      if (typeof parsed.taxAmount === 'number') setTaxAmount(parsed.taxAmount);
-
-      if (typeof parsed.grandTotal === 'number') {
-        const netSubtotal =
-          typeof parsed.taxAmount === 'number'
-            ? Number((parsed.grandTotal - parsed.taxAmount).toFixed(2))
-            : parsed.grandTotal;
-        setBillItems((prev) => {
-          if (prev.length === 0) {
-            return [
-              {
-                id: `qr-${Date.now()}`,
-                itemName: parsed.shopName ? `${parsed.shopName} — Bill` : 'QR Scanned Receipt',
-                hsnSac: '',
-                quantity: 1,
-                unit: 'NOS',
-                unitPrice: netSubtotal > 0 ? netSubtotal : parsed.grandTotal!,
-                discount: 0,
-                taxableValue: netSubtotal > 0 ? netSubtotal : parsed.grandTotal!,
-                gstRate: 0,
-                cgstAmount: 0,
-                sgstAmount: 0,
-                igstAmount: 0,
-                lineTotal: netSubtotal > 0 ? netSubtotal : parsed.grandTotal!,
-                extraColumns: {},
-              },
-            ];
-          }
-          return prev;
-        });
-      }
-
-      setQrScannedBanner(parsed.summary);
-      stopCameraStream();
-      setIsQrModalOpen(false);
-      showToast(`QR Code Applied: ${parsed.summary}`);
-    },
-    [showToast, stopCameraStream]
-  );
-
-  const scanVideoFrame = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = qrCanvasRef.current;
-    if (!video || !canvas) return;
-
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert',
-        });
-        if (code && code.data) {
-          applyDecodedQrPayload(code.data);
-          return;
-        }
-      }
-    }
-    qrScanLoopRef.current = requestAnimationFrame(scanVideoFrame);
-  }, [applyDecodedQrPayload]);
-
-  const startWebcamQrScanner = async () => {
-    setCameraError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
-      });
-      mediaStreamRef.current = stream;
-      setIsCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        qrScanLoopRef.current = requestAnimationFrame(scanVideoFrame);
-      }
-    } catch {
-      setCameraError('Could not access webcam. Please allow camera permissions or upload a QR image below.');
-      setIsCameraActive(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => stopCameraStream();
-  }, [stopCameraStream]);
-
-  const handleQrImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-        if (code && code.data) {
-          applyDecodedQrPayload(code.data);
-        } else {
-          setCameraError('No valid QR code found in the uploaded image.');
-        }
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const [recentlyAddedBillIds, setRecentlyAddedBillIds] = useState<string[]>([]);
 
@@ -6918,71 +6704,6 @@ export function App() {
                 2
               )}
             </pre>
-          </div>
-        </div>
-      )}
-
-      {/* QR Code Scanner Modal */}
-      {isQrModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-amber-500" />
-                Scan Receipt / Invoice QR Code
-              </h3>
-              <button
-                onClick={() => {
-                  stopCameraStream();
-                  setIsQrModalOpen(false);
-                }}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {cameraError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
-                {cameraError}
-              </div>
-            )}
-
-            <div className="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center relative">
-              <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
-              <canvas ref={qrCanvasRef} className="hidden" />
-              {!isCameraActive && (
-                <button
-                  onClick={startWebcamQrScanner}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-2 cursor-pointer"
-                >
-                  <Camera className="w-4 h-4" /> Start Camera
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-color)]">
-              <input
-                ref={qrImageInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleQrImageFileUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => qrImageInputRef.current?.click()}
-                className="text-xs font-semibold text-indigo-500 hover:underline cursor-pointer"
-              >
-                Or upload an image containing a QR code
-              </button>
-              {isCameraActive && (
-                <button
-                  onClick={stopCameraStream}
-                  className="text-xs font-semibold text-rose-500 flex items-center gap-1 cursor-pointer"
-                >
-                  <CameraOff className="w-3.5 h-3.5" /> Stop Camera
-                </button>
-              )}
-            </div>
           </div>
         </div>
       )}

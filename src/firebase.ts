@@ -337,6 +337,17 @@ function clampConfidence(val: unknown): number {
   return Math.min(100, Number(num.toFixed(2)));
 }
 
+function normalizeFirmRoleForFirestore(role?: string): 'owner' | 'reviewer' | 'staff' {
+  const lowered = String(role || '').trim().toLowerCase();
+  if (lowered === 'reviewer') return 'reviewer';
+  if (lowered === 'staff') return 'staff';
+  return 'owner';
+}
+
+function normalizeTeamStatusForFirestore(status?: string): 'active' | 'invited' {
+  return String(status || '').trim().toLowerCase() === 'active' ? 'active' : 'invited';
+}
+
 export async function sha256HexBrowser(raw: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(raw);
@@ -376,6 +387,8 @@ export async function saveUserProfileToFirestore(
     }
   }
 
+  const normalizedFirmRole = normalizeFirmRoleForFirestore(activeRole);
+
   // Always save profile to local account store
   writeLocalAccountData(uid, 'profile', {
     uid,
@@ -383,7 +396,7 @@ export async function saveUserProfileToFirestore(
     displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
     photoURL: clampString(user.photoURL, 1000, 0, ''),
     userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
-    firmRole: activeRole === 'reviewer' || activeRole === 'staff' ? activeRole : 'owner',
+    firmRole: normalizedFirmRole,
     selectedColumnsJson,
     tallySettingsJson,
   });
@@ -398,7 +411,7 @@ export async function saveUserProfileToFirestore(
     displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
     photoURL: clampString(user.photoURL, 1000, 0, ''),
     userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
-    firmRole: activeRole === 'reviewer' || activeRole === 'staff' ? activeRole : 'owner',
+    firmRole: normalizedFirmRole,
     selectedColumnsJson,
     tallySettingsJson,
     updatedAt: serverTimestamp(),
@@ -747,9 +760,9 @@ export async function saveTeamMemberToFirestore(
     ownerId: uid,
     email: normalizedMember.email,
     name: normalizedMember.name,
-    role: member.role === 'owner' || member.role === 'reviewer' ? member.role : 'staff',
+    role: normalizeFirmRoleForFirestore(member.role),
     assignedClientsJson: clampString(JSON.stringify(member.assignedClientIds || [DEFAULT_CLIENT_ID]), 4000, 2, '[]'),
-    status: member.status === 'active' ? 'active' : 'invited',
+    status: normalizeTeamStatusForFirestore(member.status),
     invitedAt: normalizedMember.invitedAt,
     updatedAt: serverTimestamp(),
   };
@@ -801,8 +814,16 @@ export async function saveTallySettingsToFirestore(
 
   const cur = auth.currentUser || getSavedLiveSessionUser();
   const prevProfile = readLocalAccountData<Record<string, any>>(uid, 'profile', {});
-  writeLocalAccountData(uid, 'profile', {
-    ...prevProfile,
+  const resolvedUserMode = prevProfile.userMode === 'normal_user' ? 'normal_user' : 'ca_mode';
+  const resolvedFirmRole = normalizeFirmRoleForFirestore(prevProfile.firmRole);
+  const resolvedSelectedColumnsJson =
+    typeof prevProfile.selectedColumnsJson === 'string' &&
+    prevProfile.selectedColumnsJson.length >= 2 &&
+    prevProfile.selectedColumnsJson.length <= 5000
+      ? prevProfile.selectedColumnsJson
+      : '["fileName","billDate","invoiceNumber","shopName","grandTotal"]';
+
+  const resolvedProfile = {
     uid,
     email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@casaarthiai.in'),
     displayName: clampString(
@@ -812,7 +833,15 @@ export async function saveTallySettingsToFirestore(
       'CA Saarthi AI User'
     ),
     photoURL: clampString(cur?.photoURL || prevProfile.photoURL, 1000, 0, ''),
+    userMode: resolvedUserMode,
+    firmRole: resolvedFirmRole,
+    selectedColumnsJson: resolvedSelectedColumnsJson,
     tallySettingsJson,
+  };
+
+  writeLocalAccountData(uid, 'profile', {
+    ...prevProfile,
+    ...resolvedProfile,
   });
   notifyLocalAccountUpdate(uid);
 
@@ -822,16 +851,7 @@ export async function saveTallySettingsToFirestore(
     await setDoc(
       doc(db, 'users', uid),
       {
-        uid,
-        email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@casaarthiai.in'),
-        displayName: clampString(
-          cur?.displayName || prevProfile.displayName || cur?.email?.split('@')[0],
-          150,
-          1,
-          'CA Saarthi AI User'
-        ),
-        photoURL: clampString(cur?.photoURL || prevProfile.photoURL, 1000, 0, ''),
-        tallySettingsJson,
+        ...resolvedProfile,
         updatedAt: serverTimestamp(),
       },
       { merge: true }
