@@ -251,13 +251,23 @@ service cloud.firestore {
       allow update: if isValidId(userId)
         && isOwner(userId)
         && isValidUserProfile(request.resource.data, userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'email',
+          'displayName',
+          'photoURL',
+          'userMode',
+          'firmRole',
+          'selectedColumnsJson',
+          'tallySettingsJson',
+          'updatedAt'
+        ])
         && request.resource.data.uid == resource.data.uid;
       allow delete: if isValidId(userId) && isOwner(userId);
 
       // Client-wise Workspace subcollection
       match /clients/{clientId} {
         allow get: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
-        allow list: if isValidId(userId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
         allow create: if isValidId(userId)
           && isValidId(clientId)
           && isOwner(userId)
@@ -266,13 +276,23 @@ service cloud.firestore {
           && isValidId(clientId)
           && isOwner(userId)
           && isValidClientProfile(request.resource.data, userId, clientId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name',
+            'gstin',
+            'pan',
+            'financialYear',
+            'notes',
+            'archived',
+            'updatedAt'
+          ])
           && request.resource.data.id == resource.data.id
-          && request.resource.data.ownerId == resource.data.ownerId;
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
 
         match /bills/{billId} {
           allow get: if isValidId(userId) && isValidId(clientId) && isValidId(billId) && isOwner(userId);
-          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
+          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
           allow create: if isValidId(userId)
             && isValidId(clientId)
             && isValidId(billId)
@@ -283,14 +303,41 @@ service cloud.firestore {
             && isValidId(billId)
             && isOwner(userId)
             && isValidClientBill(request.resource.data, userId, clientId, billId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'approvalStatus',
+              'fileName',
+              'shopName',
+              'sellerGstin',
+              'buyerName',
+              'buyerGstin',
+              'invoiceNumber',
+              'billDate',
+              'placeOfSupply',
+              'voucherType',
+              'paymentMode',
+              'subtotal',
+              'cgstAmount',
+              'sgstAmount',
+              'igstAmount',
+              'taxAmount',
+              'discountAmount',
+              'grandTotal',
+              'confidence',
+              'rawText',
+              'extraHeaderFieldsJson',
+              'itemsJson',
+              'syncedAt'
+            ])
             && request.resource.data.id == resource.data.id
-            && request.resource.data.ownerId == resource.data.ownerId;
+            && request.resource.data.ownerId == resource.data.ownerId
+            && request.resource.data.clientId == resource.data.clientId
+            && request.resource.data.createdAt == resource.data.createdAt;
           allow delete: if isValidId(userId) && isValidId(clientId) && isValidId(billId) && isOwner(userId);
         }
 
         match /documents/{docId} {
           allow get: if isValidId(userId) && isValidId(clientId) && isValidId(docId) && isOwner(userId);
-          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId);
+          allow list: if isValidId(userId) && isValidId(clientId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
           allow create: if isValidId(userId)
             && isValidId(clientId)
             && isValidId(docId)
@@ -301,8 +348,20 @@ service cloud.firestore {
             && isValidId(docId)
             && isOwner(userId)
             && isValidClientDocument(request.resource.data, userId, clientId, docId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'fileName',
+              'fileType',
+              'docType',
+              'pageCount',
+              'ocrLanguage',
+              'extractedText',
+              'confidence',
+              'syncedAt'
+            ])
             && request.resource.data.id == resource.data.id
-            && request.resource.data.ownerId == resource.data.ownerId;
+            && request.resource.data.ownerId == resource.data.ownerId
+            && request.resource.data.clientId == resource.data.clientId
+            && request.resource.data.createdAt == resource.data.createdAt;
           allow delete: if isValidId(userId) && isValidId(clientId) && isValidId(docId) && isOwner(userId);
         }
       }
@@ -310,7 +369,7 @@ service cloud.firestore {
       // Team Members subcollection (Owner Only)
       match /teamMembers/{memberId} {
         allow get: if isValidId(userId) && isValidId(memberId) && isOwner(userId);
-        allow list: if isValidId(userId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
         allow create: if isValidId(userId)
           && isValidId(memberId)
           && isOwner(userId)
@@ -321,15 +380,24 @@ service cloud.firestore {
           && isOwner(userId)
           && userFirmRole(userId) == 'owner'
           && isValidTeamMember(request.resource.data, userId, memberId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'email',
+            'name',
+            'role',
+            'assignedClientsJson',
+            'status',
+            'updatedAt'
+          ])
           && request.resource.data.id == resource.data.id
-          && request.resource.data.ownerId == resource.data.ownerId;
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.invitedAt == resource.data.invitedAt;
         allow delete: if isValidId(userId) && isValidId(memberId) && isOwner(userId) && userFirmRole(userId) == 'owner';
       }
 
       // Hashed API Keys subcollection (Owner Only)
       match /apiKeys/{keyId} {
         allow get: if isValidId(userId) && isValidId(keyId) && isOwner(userId);
-        allow list: if isValidId(userId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
         allow create: if isValidId(userId)
           && isValidId(keyId)
           && isOwner(userId)
@@ -340,17 +408,27 @@ service cloud.firestore {
           && isOwner(userId)
           && userFirmRole(userId) == 'owner'
           && isValidUserApiKey(request.resource.data, userId, keyId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'label',
+            'revoked',
+            'updatedAt'
+          ])
           && request.resource.data.id == resource.data.id
-          && request.resource.data.ownerId == resource.data.ownerId;
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.keyPrefix == resource.data.keyPrefix
+          && request.resource.data.keyHash == resource.data.keyHash
+          && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if isValidId(userId) && isValidId(keyId) && isOwner(userId) && userFirmRole(userId) == 'owner';
       }
 
       // Legacy root bills & documents (read & delete permitted for migration to /clients/client_default)
       match /bills/{billId} {
-        allow get, list, delete: if isValidId(userId) && isOwner(userId);
+        allow get, delete: if isValidId(userId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
       }
       match /documents/{docId} {
-        allow get, list, delete: if isValidId(userId) && isOwner(userId);
+        allow get, delete: if isValidId(userId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
       }
     }
   }

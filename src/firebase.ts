@@ -2,23 +2,28 @@ import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
+  browserLocalPersistence,
+  setPersistence,
   signInWithPopup,
-  signInWithCredential,
   signOut,
   onAuthStateChanged,
-  User,
+  type User,
 } from 'firebase/auth';
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   deleteDoc,
   collection,
+  query,
+  where,
   onSnapshot,
   getDocs,
   getDocFromServer,
   serverTimestamp,
 } from 'firebase/firestore';
+import firebaseAppletConfig from '../firebase-applet-config.json';
 import type { NoSQLBillRecord, SavedDocumentRecord } from './App';
 import {
   DEFAULT_CLIENT_ID,
@@ -32,35 +37,45 @@ import {
   type BillApprovalStatus,
 } from './caWorkspaceTypes';
 
-// Direct embedded Firebase configuration (works immediately without .env or external JSON files)
-const DIRECT_FIREBASE_CONFIG = {
-  projectId: 'gen-lang-client-0134509229',
-  appId: '1:794445351838:web:a64527ee4ad0f9c396a48f',
-  apiKey: 'AIzaSyDgv1tSvXsZ7hSEPEEGwHO-WzJ-Ux3ZslU',
-  authDomain: 'gen-lang-client-0134509229.firebaseapp.com',
-  firestoreDatabaseId: 'ai-studio-scan2sqlintellig-c69d733f-58f1-435a-92f7-1fb8ce0f7833',
-  storageBucket: 'gen-lang-client-0134509229.firebasestorage.app',
-  messagingSenderId: '794445351838',
-};
+const env = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env) || {};
 
-const env = (import.meta as any).env || {};
+function pickEnvOrConfig(envVal: string | undefined, configVal: string | undefined): string {
+  const trimmed = (envVal || '').trim();
+  return trimmed.length > 0 ? trimmed : (configVal || '');
+}
 
 const resolvedFirebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || DIRECT_FIREBASE_CONFIG.apiKey,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || DIRECT_FIREBASE_CONFIG.authDomain,
-  projectId: env.VITE_FIREBASE_PROJECT_ID || DIRECT_FIREBASE_CONFIG.projectId,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || DIRECT_FIREBASE_CONFIG.storageBucket,
-  messagingSenderId:
-    env.VITE_FIREBASE_MESSAGING_SENDER_ID || DIRECT_FIREBASE_CONFIG.messagingSenderId,
-  appId: env.VITE_FIREBASE_APP_ID || DIRECT_FIREBASE_CONFIG.appId,
+  apiKey: pickEnvOrConfig(env.VITE_FIREBASE_API_KEY, firebaseAppletConfig.apiKey),
+  authDomain: pickEnvOrConfig(env.VITE_FIREBASE_AUTH_DOMAIN, firebaseAppletConfig.authDomain),
+  projectId: pickEnvOrConfig(env.VITE_FIREBASE_PROJECT_ID, firebaseAppletConfig.projectId),
+  storageBucket: pickEnvOrConfig(
+    env.VITE_FIREBASE_STORAGE_BUCKET,
+    firebaseAppletConfig.storageBucket
+  ),
+  messagingSenderId: pickEnvOrConfig(
+    env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    firebaseAppletConfig.messagingSenderId
+  ),
+  appId: pickEnvOrConfig(env.VITE_FIREBASE_APP_ID, firebaseAppletConfig.appId),
 };
 
-const resolvedDatabaseId =
-  env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || DIRECT_FIREBASE_CONFIG.firestoreDatabaseId;
+const resolvedDatabaseId = pickEnvOrConfig(
+  env.VITE_FIREBASE_FIRESTORE_DATABASE_ID,
+  firebaseAppletConfig.firestoreDatabaseId
+);
+
+export const ACTIVE_FIREBASE_PROJECT_ID = resolvedFirebaseConfig.projectId;
+export const ACTIVE_FIREBASE_AUTH_DOMAIN = resolvedFirebaseConfig.authDomain;
 
 const app = initializeApp(resolvedFirebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, resolvedDatabaseId);
+export const db =
+  resolvedDatabaseId && resolvedDatabaseId !== '(default)'
+    ? getFirestore(app, resolvedDatabaseId)
+    : getFirestore(app);
+
+// Keep verified Google sessions signed in across reloads on both desktop & mobile browsers
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -97,7 +112,7 @@ export function handleFirestoreError(
   error: unknown,
   operationType: OperationType,
   path: string | null
-): FirestoreErrorInfo {
+): never {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -118,11 +133,11 @@ export function handleFirestoreError(
     path,
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  return errInfo;
+  throw new Error(JSON.stringify(errInfo));
 }
 
 // Validate connection to Firestore on boot
-async function testConnection() {
+async function testConnection(): Promise<void> {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
@@ -133,180 +148,37 @@ async function testConnection() {
 }
 testConnection();
 
-const LIVE_SESSION_STORAGE_KEY = 'ledgersutra_live_auth_user_v1';
-const authListeners = new Set<(user: User | null) => void>();
-
-function notifyAuthListeners(user: User | null) {
-  authListeners.forEach((cb) => {
-    try {
-      cb(user);
-    } catch {
-      // ignore listener errors
-    }
-  });
-}
-
-export function getSavedLiveSessionUser(): User | null {
-  if (typeof window === 'undefined') return null;
+// Clean up any legacy localStorage fake-login token left from older builds
+if (typeof window !== 'undefined') {
   try {
-    const raw = localStorage.getItem(LIVE_SESSION_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.uid === 'string' && typeof parsed.email === 'string') {
-      return parsed as User;
-    }
+    localStorage.removeItem('ledgersutra_live_auth_user_v1');
   } catch {
-    // ignore
+    // ignore storage access errors
   }
-  return null;
-}
-
-export function signInWithLivePracticeAccount(params: {
-  email: string;
-  displayName?: string;
-  firmName?: string;
-  photoURL?: string | null;
-}): User {
-  const cleanEmail = params.email.trim().toLowerCase();
-  const emailPrefix = cleanEmail.split('@')[0] || 'ca_user';
-  const cleanName =
-    (params.displayName || params.firmName || emailPrefix)
-      .trim()
-      .slice(0, 120) || 'CA Practitioner';
-  const deterministicUid = `USR_${cleanEmail.replace(/[^a-z0-9]/g, '_').slice(0, 64)}`;
-
-  const sessionUser: Partial<User> = {
-    uid: deterministicUid,
-    email: cleanEmail,
-    displayName: cleanName,
-    emailVerified: true,
-    isAnonymous: false,
-    photoURL: params.photoURL || null,
-    providerData: [
-      {
-        providerId: 'casaarthiai.live',
-        uid: cleanEmail,
-        displayName: cleanName,
-        email: cleanEmail,
-        phoneNumber: null,
-        photoURL: params.photoURL || null,
-      },
-    ],
-  };
-
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(LIVE_SESSION_STORAGE_KEY, JSON.stringify(sessionUser));
-    } catch {
-      // ignore storage errors
-    }
-  }
-  const userObj = sessionUser as User;
-  notifyAuthListeners(userObj);
-  return userObj;
-}
-
-export async function signInWithGooglePopupWithToken(): Promise<{
-  user: User;
-  idToken: string | null;
-}> {
-  const result = await signInWithPopup(auth, googleProvider);
-  const oauthCred = GoogleAuthProvider.credentialFromResult(result);
-  const idToken = oauthCred?.idToken || null;
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem(LIVE_SESSION_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }
-  notifyAuthListeners(result.user);
-  return { user: result.user, idToken };
-}
-
-export async function signInWithGoogleIdToken(idToken: string): Promise<User> {
-  const credential = GoogleAuthProvider.credential(idToken);
-  const result = await signInWithCredential(auth, credential);
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem(LIVE_SESSION_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }
-  notifyAuthListeners(result.user);
-  return result.user;
 }
 
 export async function signInWithGooglePopup(): Promise<User> {
-  const { user } = await signInWithGooglePopupWithToken();
-  return user;
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
 }
 
 export async function signOutGoogleUser(): Promise<void> {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem(LIVE_SESSION_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }
-  try {
-    if (auth.currentUser) {
-      await signOut(auth);
-    }
-  } finally {
-    notifyAuthListeners(null);
-  }
+  await signOut(auth);
 }
 
 export function subscribeToAuthChanges(callback: (user: User | null) => void): () => void {
-  authListeners.add(callback);
-  const unsubscribeFirebase = onAuthStateChanged(auth, (firebaseUser) => {
-    if (firebaseUser) {
-      callback(firebaseUser);
-    } else {
-      const fallbackUser = getSavedLiveSessionUser();
-      callback(fallbackUser);
-    }
-  });
-  return () => {
-    authListeners.delete(callback);
-    unsubscribeFirebase();
-  };
+  return onAuthStateChanged(auth, callback);
 }
 
 export { onAuthStateChanged };
 export type { User };
 
-// Local Per-User Account Backup Helpers (ensures live custom domains work even when Firebase Auth domain is restricted)
-function getLocalAccountKey(uid: string, collectionKey: string): string {
-  return `ledgersutra_acct_${sanitizeId(uid, 'USR')}_${collectionKey}`;
-}
-
-function readLocalAccountData<T>(uid: string, collectionKey: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const raw = localStorage.getItem(getLocalAccountKey(uid, collectionKey));
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeLocalAccountData<T>(uid: string, collectionKey: string, data: T): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(getLocalAccountKey(uid, collectionKey), JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('ledgersutra-local-account-sync', { detail: { uid } }));
-  } catch {
-    // ignore quota errors
-  }
-}
-
-function isFirebaseCloudSessionActive(uid: string): boolean {
-  return Boolean(auth.currentUser && sanitizeId(auth.currentUser.uid, 'USR') === sanitizeId(uid, 'USR'));
+function isAuthenticatedOwner(userId: string): boolean {
+  return Boolean(
+    auth.currentUser &&
+      auth.currentUser.uid === userId &&
+      auth.currentUser.emailVerified === true
+  );
 }
 
 // Helpers to sanitize strings, numbers, and IDs to strictly match firestore.rules
@@ -363,7 +235,9 @@ export async function saveUserProfileToFirestore(
   tallySettings?: TallySettings,
   activeRole?: FirmRole
 ): Promise<void> {
-  const uid = sanitizeId(user.uid, 'USR');
+  const uid = user.uid;
+  if (!isAuthenticatedOwner(uid)) return;
+
   const path = `users/${uid}`;
   let selectedColumnsJson = '["fileName","billDate","invoiceNumber","shopName","grandTotal"]';
   try {
@@ -383,32 +257,21 @@ export async function saveUserProfileToFirestore(
         tallySettingsJson = serialized;
       }
     } catch {
-      // ignore
+      // keep default
     }
   }
 
   const normalizedFirmRole = normalizeFirmRoleForFirestore(activeRole);
 
-  // Always save profile to local account store
-  writeLocalAccountData(uid, 'profile', {
-    uid,
-    email: clampString(user.email, 200, 3, 'user@casaarthiai.in'),
-    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
-    photoURL: clampString(user.photoURL, 1000, 0, ''),
-    userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
-    firmRole: normalizedFirmRole,
-    selectedColumnsJson,
-    tallySettingsJson,
-  });
-
-  if (!isFirebaseCloudSessionActive(uid)) {
-    return;
-  }
-
   const payload = {
     uid,
     email: clampString(user.email, 200, 3, 'user@casaarthiai.in'),
-    displayName: clampString(user.displayName || user.email?.split('@')[0], 150, 1, 'CA Saarthi AI User'),
+    displayName: clampString(
+      user.displayName || user.email?.split('@')[0],
+      150,
+      1,
+      'CA Saarthi AI User'
+    ),
     photoURL: clampString(user.photoURL, 1000, 0, ''),
     userMode: userMode === 'ca_mode' ? 'ca_mode' : 'normal_user',
     firmRole: normalizedFirmRole,
@@ -424,29 +287,20 @@ export async function saveUserProfileToFirestore(
   }
 }
 
-const localAccountListeners = new Set<(uid: string) => void>();
-function notifyLocalAccountUpdate(uid: string) {
-  localAccountListeners.forEach((cb) => {
-    try {
-      cb(uid);
-    } catch {
-      // ignore
-    }
-  });
-}
-
 // ---------------------------------------------------------------------------
-// PART 3: Client-Wise Workspace CRUD (/users/{uid}/clients/{clientId})
+// Client-Wise Workspace CRUD (/users/{uid}/clients/{clientId})
 // ---------------------------------------------------------------------------
 export async function saveClientToFirestore(
   userId: string,
   client: CAClientProfile
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const clientId = sanitizeId(client.id || DEFAULT_CLIENT_ID, 'CLI');
   const path = `users/${uid}/clients/${clientId}`;
 
-  const normalizedClient: CAClientProfile = {
+  const payload = {
     id: clientId,
     ownerId: uid,
     name: clampString(client.name, 200, 1, 'Default Client'),
@@ -455,18 +309,12 @@ export async function saveClientToFirestore(
     financialYear: clampString(client.financialYear, 20, 4, '2026-27'),
     notes: clampString(client.notes, 2000, 0, ''),
     archived: Boolean(client.archived),
-    createdAt: clampString(client.createdAt, 40, 1, new Date().toISOString().slice(0, 16).replace('T', ' ')),
-  };
-
-  const existingClients = readLocalAccountData<CAClientProfile[]>(uid, 'clients', []);
-  const nextClients = [normalizedClient, ...existingClients.filter((c) => c.id !== clientId)];
-  writeLocalAccountData(uid, 'clients', nextClients);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
-
-  const payload = {
-    ...normalizedClient,
+    createdAt: clampString(
+      client.createdAt,
+      40,
+      1,
+      new Date().toISOString().slice(0, 16).replace('T', ' ')
+    ),
     updatedAt: serverTimestamp(),
   };
 
@@ -477,29 +325,31 @@ export async function saveClientToFirestore(
   }
 }
 
-export async function deleteClientFromFirestore(userId: string, rawClientId: string): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+export async function deleteClientFromFirestore(
+  userId: string,
+  rawClientId: string
+): Promise<void> {
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const clientId = sanitizeId(rawClientId, 'CLI');
 
-  const existingClients = readLocalAccountData<CAClientProfile[]>(uid, 'clients', []);
-  writeLocalAccountData(
-    uid,
-    'clients',
-    existingClients.filter((c) => c.id !== clientId)
-  );
-  writeLocalAccountData(uid, `bills_${clientId}`, []);
-  writeLocalAccountData(uid, `docs_${clientId}`, []);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
-
   try {
-    // Delete all client-scoped bills and documents first
-    const billsSnap = await getDocs(collection(db, 'users', uid, 'clients', clientId, 'bills'));
+    const billsSnap = await getDocs(
+      query(
+        collection(db, 'users', uid, 'clients', clientId, 'bills'),
+        where('ownerId', '==', uid)
+      )
+    );
     for (const bDoc of billsSnap.docs) {
       await deleteDoc(bDoc.ref);
     }
-    const docsSnap = await getDocs(collection(db, 'users', uid, 'clients', clientId, 'documents'));
+    const docsSnap = await getDocs(
+      query(
+        collection(db, 'users', uid, 'clients', clientId, 'documents'),
+        where('ownerId', '==', uid)
+      )
+    );
     for (const dDoc of docsSnap.docs) {
       await deleteDoc(dDoc.ref);
     }
@@ -512,18 +362,22 @@ export async function deleteClientFromFirestore(userId: string, rawClientId: str
 // ---------------------------------------------------------------------------
 // Client-Scoped Bill & Document Persistence
 // Path: /users/{uid}/clients/{clientId}/bills/{billId}
-// Also writes to /users/{uid}/bills/{billId} for backward compatibility
 // ---------------------------------------------------------------------------
 function buildBillFirestorePayload(uid: string, clientId: string, bill: NoSQLBillRecord) {
   const billId = sanitizeId(bill.id, 'BILL');
+  const billAny = bill as unknown as Record<string, unknown>;
   const extraWithAudit = {
     ...(bill.extraHeaderFields || {}),
     clientId,
-    approvalStatus: String((bill as any).approvalStatus || bill.extraHeaderFields?.approvalStatus || 'approved'),
-    rejectionReason: String((bill as any).rejectionReason || bill.extraHeaderFields?.rejectionReason || ''),
+    approvalStatus: String(
+      billAny.approvalStatus || bill.extraHeaderFields?.approvalStatus || 'approved'
+    ),
+    rejectionReason: String(
+      billAny.rejectionReason || bill.extraHeaderFields?.rejectionReason || ''
+    ),
     auditTrailJson:
-      typeof (bill as any).auditTrail === 'object'
-        ? JSON.stringify((bill as any).auditTrail)
+      typeof billAny.auditTrail === 'object'
+        ? JSON.stringify(billAny.auditTrail)
         : bill.extraHeaderFields?.auditTrailJson || '[]',
   };
 
@@ -547,7 +401,9 @@ function buildBillFirestorePayload(uid: string, clientId: string, bill: NoSQLBil
     itemsJson = '[]';
   }
 
-  const approvalStatusRaw = String((bill as any).approvalStatus || extraWithAudit.approvalStatus || 'approved');
+  const approvalStatusRaw = String(
+    billAny.approvalStatus || extraWithAudit.approvalStatus || 'approved'
+  );
   const approvalStatus: BillApprovalStatus =
     approvalStatusRaw === 'draft' ||
     approvalStatusRaw === 'pending_review' ||
@@ -581,7 +437,12 @@ function buildBillFirestorePayload(uid: string, clientId: string, bill: NoSQLBil
       grandTotal: clampCurrency(bill.grandTotal),
       confidence: clampConfidence(bill.confidence),
       rawText: clampString(bill.rawText, 50000, 0, ''),
-      createdAt: clampString(bill.createdAt, 40, 1, new Date().toISOString().slice(0, 16).replace('T', ' ')),
+      createdAt: clampString(
+        bill.createdAt,
+        40,
+        1,
+        new Date().toISOString().slice(0, 16).replace('T', ' ')
+      ),
       extraHeaderFieldsJson,
       itemsJson,
       syncedAt: serverTimestamp(),
@@ -594,20 +455,16 @@ export async function saveBillToUserAccount(
   bill: NoSQLBillRecord,
   rawClientId = DEFAULT_CLIENT_ID
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
-  const clientId = sanitizeId((bill as any).clientId || bill.extraHeaderFields?.clientId || rawClientId, 'CLI');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
+  const billAny = bill as unknown as Record<string, unknown>;
+  const clientId = sanitizeId(
+    String(billAny.clientId || bill.extraHeaderFields?.clientId || rawClientId),
+    'CLI'
+  );
   const { billId, payload } = buildBillFirestorePayload(uid, clientId, bill);
   const clientPath = `users/${uid}/clients/${clientId}/bills/${billId}`;
-
-  const localRecord = parseBillSnapshotDoc(billId, payload);
-  const existingBills = readLocalAccountData<NoSQLBillRecord[]>(uid, `bills_${clientId}`, []);
-  writeLocalAccountData(uid, `bills_${clientId}`, [
-    localRecord,
-    ...existingBills.filter((b) => b.id !== billId),
-  ]);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   try {
     await setDoc(doc(db, 'users', uid, 'clients', clientId, 'bills', billId), payload);
@@ -621,26 +478,21 @@ export async function deleteBillFromUserAccount(
   rawBillId: string,
   rawClientId = DEFAULT_CLIENT_ID
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const billId = sanitizeId(rawBillId, 'BILL');
   const clientId = sanitizeId(rawClientId, 'CLI');
 
-  const existingBills = readLocalAccountData<NoSQLBillRecord[]>(uid, `bills_${clientId}`, []);
-  writeLocalAccountData(
-    uid,
-    `bills_${clientId}`,
-    existingBills.filter((b) => b.id !== billId)
-  );
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
-
   try {
     await deleteDoc(doc(db, 'users', uid, 'clients', clientId, 'bills', billId));
-    // Also clean up legacy root bill if it existed from before migration
     await deleteDoc(doc(db, 'users', uid, 'bills', billId)).catch(() => {});
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `users/${uid}/clients/${clientId}/bills/${billId}`);
+    handleFirestoreError(
+      error,
+      OperationType.DELETE,
+      `users/${uid}/clients/${clientId}/bills/${billId}`
+    );
   }
 }
 
@@ -649,16 +501,21 @@ export async function saveDocumentToUserAccount(
   docRecord: SavedDocumentRecord,
   rawClientId = DEFAULT_CLIENT_ID
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const docId = sanitizeId(docRecord.id, 'DOC');
-  const clientId = sanitizeId((docRecord as any).clientId || rawClientId, 'CLI');
+  const docAny = docRecord as unknown as Record<string, unknown>;
+  const clientId = sanitizeId(String(docAny.clientId || rawClientId), 'CLI');
   const path = `users/${uid}/clients/${clientId}/documents/${docId}`;
 
   const rawPageCount = Math.round(Number(docRecord.pageCount) || 1);
   const pageCount = Math.max(1, Math.min(500, rawPageCount));
 
-  const localDoc: SavedDocumentRecord = {
+  const payload = {
     id: docId,
+    ownerId: uid,
+    clientId,
     fileName: clampString(docRecord.fileName, 250, 1, 'Document.pdf'),
     fileType: clampString(docRecord.fileType, 40, 1, 'PDF'),
     docType: docRecord.docType === 'NORMAL_DOCUMENT' ? 'NORMAL_DOCUMENT' : 'SHOP_BILL',
@@ -666,22 +523,12 @@ export async function saveDocumentToUserAccount(
     ocrLanguage: clampString(docRecord.ocrLanguage, 30, 1, 'eng+hin'),
     extractedText: clampString(docRecord.extractedText, 50000, 0, ''),
     confidence: clampConfidence(docRecord.confidence),
-    createdAt: clampString(docRecord.createdAt, 40, 1, new Date().toISOString().slice(0, 16).replace('T', ' ')),
-  };
-
-  const existingDocs = readLocalAccountData<SavedDocumentRecord[]>(uid, `docs_${clientId}`, []);
-  writeLocalAccountData(uid, `docs_${clientId}`, [
-    localDoc,
-    ...existingDocs.filter((d) => d.id !== docId),
-  ]);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
-
-  const payload = {
-    ...localDoc,
-    ownerId: uid,
-    clientId,
+    createdAt: clampString(
+      docRecord.createdAt,
+      40,
+      1,
+      new Date().toISOString().slice(0, 16).replace('T', ' ')
+    ),
     syncedAt: serverTimestamp(),
   };
 
@@ -697,73 +544,56 @@ export async function deleteDocumentFromUserAccount(
   rawDocId: string,
   rawClientId = DEFAULT_CLIENT_ID
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const docId = sanitizeId(rawDocId, 'DOC');
   const clientId = sanitizeId(rawClientId, 'CLI');
-
-  const existingDocs = readLocalAccountData<SavedDocumentRecord[]>(uid, `docs_${clientId}`, []);
-  writeLocalAccountData(
-    uid,
-    `docs_${clientId}`,
-    existingDocs.filter((d) => d.id !== docId)
-  );
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   try {
     await deleteDoc(doc(db, 'users', uid, 'clients', clientId, 'documents', docId));
     await deleteDoc(doc(db, 'users', uid, 'documents', docId)).catch(() => {});
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `users/${uid}/clients/${clientId}/documents/${docId}`);
+    handleFirestoreError(
+      error,
+      OperationType.DELETE,
+      `users/${uid}/clients/${clientId}/documents/${docId}`
+    );
   }
 }
 
 // ---------------------------------------------------------------------------
-// PART 4: Team Members & PART 6: API Keys Persistence in Firestore
+// Team Members & API Keys Persistence in Firestore
 // ---------------------------------------------------------------------------
 export async function saveTeamMemberToFirestore(
   userId: string,
   member: TeamMemberRecord
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const memberId = sanitizeId(member.id, 'MEM');
   const path = `users/${uid}/teamMembers/${memberId}`;
-
-  const normalizedMember: TeamMemberRecord = {
-    id: memberId,
-    ownerId: uid,
-    email: clampString(member.email.toLowerCase(), 200, 3, 'staff@firm.in'),
-    name: clampString(member.name, 150, 1, 'Team Member'),
-    role:
-      member.role === 'owner' || member.role === 'Owner/CA'
-        ? 'Owner/CA'
-        : member.role === 'reviewer' || member.role === 'Reviewer'
-        ? 'Reviewer'
-        : 'Staff',
-    assignedClientIds: member.assignedClientIds || [DEFAULT_CLIENT_ID],
-    status: member.status === 'active' || member.status === 'Active' ? 'Active' : 'Invited',
-    invitedAt: clampString(member.invitedAt, 40, 1, new Date().toISOString().slice(0, 16).replace('T', ' ')),
-  };
-
-  const existingMembers = readLocalAccountData<TeamMemberRecord[]>(uid, 'teamMembers', []);
-  writeLocalAccountData(uid, 'teamMembers', [
-    normalizedMember,
-    ...existingMembers.filter((m) => m.id !== memberId),
-  ]);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   const payload = {
     id: memberId,
     ownerId: uid,
-    email: normalizedMember.email,
-    name: normalizedMember.name,
+    email: clampString(member.email.toLowerCase(), 200, 3, 'staff@firm.in'),
+    name: clampString(member.name, 150, 1, 'Team Member'),
     role: normalizeFirmRoleForFirestore(member.role),
-    assignedClientsJson: clampString(JSON.stringify(member.assignedClientIds || [DEFAULT_CLIENT_ID]), 4000, 2, '[]'),
+    assignedClientsJson: clampString(
+      JSON.stringify(member.assignedClientIds || [DEFAULT_CLIENT_ID]),
+      4000,
+      2,
+      '[]'
+    ),
     status: normalizeTeamStatusForFirestore(member.status),
-    invitedAt: normalizedMember.invitedAt,
+    invitedAt: clampString(
+      member.invitedAt,
+      40,
+      1,
+      new Date().toISOString().slice(0, 16).replace('T', ' ')
+    ),
     updatedAt: serverTimestamp(),
   };
 
@@ -774,19 +604,14 @@ export async function saveTeamMemberToFirestore(
   }
 }
 
-export async function deleteTeamMemberFromFirestore(userId: string, rawMemberId: string): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+export async function deleteTeamMemberFromFirestore(
+  userId: string,
+  rawMemberId: string
+): Promise<void> {
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const memberId = sanitizeId(rawMemberId, 'MEM');
-
-  const existingMembers = readLocalAccountData<TeamMemberRecord[]>(uid, 'teamMembers', []);
-  writeLocalAccountData(
-    uid,
-    'teamMembers',
-    existingMembers.filter((m) => m.id !== memberId)
-  );
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   try {
     await deleteDoc(doc(db, 'users', uid, 'teamMembers', memberId));
@@ -799,8 +624,9 @@ export async function saveTallySettingsToFirestore(
   userId: string,
   tallySettings: TallySettings
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
-  if (!uid) return;
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const path = `users/${uid}`;
   let tallySettingsJson = JSON.stringify(DEFAULT_TALLY_SETTINGS);
   try {
@@ -812,50 +638,45 @@ export async function saveTallySettingsToFirestore(
     // keep default
   }
 
-  const cur = auth.currentUser || getSavedLiveSessionUser();
-  const prevProfile = readLocalAccountData<Record<string, any>>(uid, 'profile', {});
-  const resolvedUserMode = prevProfile.userMode === 'normal_user' ? 'normal_user' : 'ca_mode';
-  const resolvedFirmRole = normalizeFirmRoleForFirestore(prevProfile.firmRole);
+  const cur = auth.currentUser;
+  let existing: Record<string, unknown> = {};
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (snap.exists()) {
+      existing = snap.data() as Record<string, unknown>;
+    }
+  } catch {
+    // proceed with safe defaults
+  }
+
+  const resolvedUserMode = existing.userMode === 'normal_user' ? 'normal_user' : 'ca_mode';
+  const resolvedFirmRole = normalizeFirmRoleForFirestore(String(existing.firmRole || 'owner'));
   const resolvedSelectedColumnsJson =
-    typeof prevProfile.selectedColumnsJson === 'string' &&
-    prevProfile.selectedColumnsJson.length >= 2 &&
-    prevProfile.selectedColumnsJson.length <= 5000
-      ? prevProfile.selectedColumnsJson
+    typeof existing.selectedColumnsJson === 'string' &&
+    existing.selectedColumnsJson.length >= 2 &&
+    existing.selectedColumnsJson.length <= 5000
+      ? existing.selectedColumnsJson
       : '["fileName","billDate","invoiceNumber","shopName","grandTotal"]';
 
-  const resolvedProfile = {
+  const payload = {
     uid,
-    email: clampString(cur?.email || prevProfile.email, 200, 3, 'user@casaarthiai.in'),
+    email: clampString(cur?.email || existing.email, 200, 3, 'user@casaarthiai.in'),
     displayName: clampString(
-      cur?.displayName || prevProfile.displayName || cur?.email?.split('@')[0],
+      cur?.displayName || existing.displayName || cur?.email?.split('@')[0],
       150,
       1,
       'CA Saarthi AI User'
     ),
-    photoURL: clampString(cur?.photoURL || prevProfile.photoURL, 1000, 0, ''),
+    photoURL: clampString(cur?.photoURL || existing.photoURL, 1000, 0, ''),
     userMode: resolvedUserMode,
     firmRole: resolvedFirmRole,
     selectedColumnsJson: resolvedSelectedColumnsJson,
     tallySettingsJson,
+    updatedAt: serverTimestamp(),
   };
 
-  writeLocalAccountData(uid, 'profile', {
-    ...prevProfile,
-    ...resolvedProfile,
-  });
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
-
   try {
-    await setDoc(
-      doc(db, 'users', uid),
-      {
-        ...resolvedProfile,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    await setDoc(doc(db, 'users', uid), payload);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -865,39 +686,25 @@ export async function saveApiKeyToFirestore(
   userId: string,
   apiKeyRecord: UserApiKeyRecord
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const keyId = sanitizeId(apiKeyRecord.id, 'KEY');
   const path = `users/${uid}/apiKeys/${keyId}`;
-
-  const normalizedKey: UserApiKeyRecord = {
-    id: keyId,
-    ownerId: uid,
-    label: clampString(apiKeyRecord.label || apiKeyRecord.name, 120, 1, 'API Key'),
-    name: clampString(apiKeyRecord.label || apiKeyRecord.name, 120, 1, 'API Key'),
-    keyPrefix: clampString(apiKeyRecord.keyPrefix, 24, 4, 'ls_live_'),
-    keyHash: clampString(apiKeyRecord.keyHash, 128, 32, ''),
-    revoked: Boolean(apiKeyRecord.revoked),
-    status: apiKeyRecord.revoked ? 'revoked' : 'active',
-    createdAt: clampString(apiKeyRecord.createdAt, 40, 1, new Date().toISOString().slice(0, 16).replace('T', ' ')),
-  };
-
-  const existingKeys = readLocalAccountData<UserApiKeyRecord[]>(uid, 'apiKeys', []);
-  writeLocalAccountData(uid, 'apiKeys', [
-    normalizedKey,
-    ...existingKeys.filter((k) => k.id !== keyId),
-  ]);
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   const payload = {
     id: keyId,
     ownerId: uid,
-    label: normalizedKey.label,
-    keyPrefix: normalizedKey.keyPrefix,
-    keyHash: normalizedKey.keyHash,
+    label: clampString(apiKeyRecord.label || apiKeyRecord.name, 120, 1, 'API Key'),
+    keyPrefix: clampString(apiKeyRecord.keyPrefix, 24, 4, 'ls_live_'),
+    keyHash: clampString(apiKeyRecord.keyHash, 128, 32, ''),
     revoked: Boolean(apiKeyRecord.revoked),
-    createdAt: normalizedKey.createdAt,
+    createdAt: clampString(
+      apiKeyRecord.createdAt,
+      40,
+      1,
+      new Date().toISOString().slice(0, 16).replace('T', ' ')
+    ),
     updatedAt: serverTimestamp(),
   };
 
@@ -912,7 +719,7 @@ export async function createAndSaveApiKeyToFirestore(
   userId: string,
   label: string
 ): Promise<{ rawKey: string; record: UserApiKeyRecord }> {
-  const uid = sanitizeId(userId, 'USR');
+  const uid = userId;
   const randomBytes = new Uint8Array(18);
   crypto.getRandomValues(randomBytes);
   const tokenHex = Array.from(randomBytes)
@@ -954,7 +761,6 @@ export async function revokeApiKeyInFirestore(
   rawKeyId: string,
   keyHash?: string
 ): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
   const keyId = sanitizeId(rawKeyId, 'KEY');
   if (keyHash) {
     fetch('/api/v1/keys/revoke', {
@@ -963,22 +769,17 @@ export async function revokeApiKeyInFirestore(
       body: JSON.stringify({ keyHash }),
     }).catch(() => {});
   }
-  await deleteApiKeyFromFirestore(uid, keyId);
+  await deleteApiKeyFromFirestore(userId, keyId);
 }
 
-export async function deleteApiKeyFromFirestore(userId: string, rawKeyId: string): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
+export async function deleteApiKeyFromFirestore(
+  userId: string,
+  rawKeyId: string
+): Promise<void> {
+  if (!isAuthenticatedOwner(userId)) return;
+
+  const uid = userId;
   const keyId = sanitizeId(rawKeyId, 'KEY');
-
-  const existingKeys = readLocalAccountData<UserApiKeyRecord[]>(uid, 'apiKeys', []);
-  writeLocalAccountData(
-    uid,
-    'apiKeys',
-    existingKeys.filter((k) => k.id !== keyId)
-  );
-  notifyLocalAccountUpdate(uid);
-
-  if (!isFirebaseCloudSessionActive(uid)) return;
 
   try {
     await deleteDoc(doc(db, 'users', uid, 'apiKeys', keyId));
@@ -988,50 +789,44 @@ export async function deleteApiKeyFromFirestore(userId: string, rawKeyId: string
 }
 
 // ---------------------------------------------------------------------------
-// PART 9.3: Delete All User Account Data ("Delete my data")
+// Delete All User Account Data ("Delete my data")
 // ---------------------------------------------------------------------------
 export async function deleteEntireUserAccountDataFromFirestore(userId: string): Promise<void> {
-  const uid = sanitizeId(userId, 'USR');
-  try {
-    const localClients = readLocalAccountData<CAClientProfile[]>(uid, 'clients', []);
-    for (const c of localClients) {
-      localStorage.removeItem(getLocalAccountKey(uid, `bills_${c.id}`));
-      localStorage.removeItem(getLocalAccountKey(uid, `docs_${c.id}`));
-    }
-    localStorage.removeItem(getLocalAccountKey(uid, `bills_${DEFAULT_CLIENT_ID}`));
-    localStorage.removeItem(getLocalAccountKey(uid, `docs_${DEFAULT_CLIENT_ID}`));
-    localStorage.removeItem(getLocalAccountKey(uid, 'clients'));
-    localStorage.removeItem(getLocalAccountKey(uid, 'teamMembers'));
-    localStorage.removeItem(getLocalAccountKey(uid, 'apiKeys'));
-    localStorage.removeItem(getLocalAccountKey(uid, 'profile'));
-    notifyLocalAccountUpdate(uid);
-  } catch {
-    // ignore local cleanup errors
-  }
+  if (!isAuthenticatedOwner(userId)) return;
 
-  if (!isFirebaseCloudSessionActive(uid)) return;
+  const uid = userId;
 
   try {
     // 1. Delete all clients and nested bills/documents
-    const clientsSnap = await getDocs(collection(db, 'users', uid, 'clients'));
+    const clientsSnap = await getDocs(
+      query(collection(db, 'users', uid, 'clients'), where('ownerId', '==', uid))
+    );
     for (const cDoc of clientsSnap.docs) {
       await deleteClientFromFirestore(uid, cDoc.id);
     }
     // 2. Delete legacy root bills & documents
-    const legacyBills = await getDocs(collection(db, 'users', uid, 'bills'));
+    const legacyBills = await getDocs(
+      query(collection(db, 'users', uid, 'bills'), where('ownerId', '==', uid))
+    );
     for (const bDoc of legacyBills.docs) {
       await deleteDoc(bDoc.ref);
     }
-    const legacyDocs = await getDocs(collection(db, 'users', uid, 'documents'));
+    const legacyDocs = await getDocs(
+      query(collection(db, 'users', uid, 'documents'), where('ownerId', '==', uid))
+    );
     for (const dDoc of legacyDocs.docs) {
       await deleteDoc(dDoc.ref);
     }
     // 3. Delete team members & API keys
-    const teamSnap = await getDocs(collection(db, 'users', uid, 'teamMembers'));
+    const teamSnap = await getDocs(
+      query(collection(db, 'users', uid, 'teamMembers'), where('ownerId', '==', uid))
+    );
     for (const mDoc of teamSnap.docs) {
       await deleteDoc(mDoc.ref);
     }
-    const keysSnap = await getDocs(collection(db, 'users', uid, 'apiKeys'));
+    const keysSnap = await getDocs(
+      query(collection(db, 'users', uid, 'apiKeys'), where('ownerId', '==', uid))
+    );
     for (const kDoc of keysSnap.docs) {
       await deleteDoc(kDoc.ref);
     }
@@ -1042,19 +837,19 @@ export async function deleteEntireUserAccountDataFromFirestore(userId: string): 
   }
 }
 
-function parseBillSnapshotDoc(docId: string, d: Record<string, any>): NoSQLBillRecord {
+function parseBillSnapshotDoc(docId: string, d: Record<string, unknown>): NoSQLBillRecord {
   let extraHeaderFields: Record<string, string> = {};
   if (typeof d.extraHeaderFieldsJson === 'string') {
     try {
       const parsed = JSON.parse(d.extraHeaderFieldsJson);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        extraHeaderFields = parsed;
+        extraHeaderFields = parsed as Record<string, string>;
       }
     } catch {
       // ignore
     }
   } else if (d.extraHeaderFields && typeof d.extraHeaderFields === 'object') {
-    extraHeaderFields = { ...d.extraHeaderFields };
+    extraHeaderFields = { ...(d.extraHeaderFields as Record<string, string>) };
   }
   if (d.clientId && !extraHeaderFields.clientId) {
     extraHeaderFields.clientId = String(d.clientId);
@@ -1068,14 +863,15 @@ function parseBillSnapshotDoc(docId: string, d: Record<string, any>): NoSQLBillR
     try {
       const parsed = JSON.parse(d.itemsJson);
       if (Array.isArray(parsed)) {
-        items = parsed;
+        items = parsed as NoSQLBillRecord['items'];
       }
     } catch {
       // ignore
     }
   } else if (Array.isArray(d.items)) {
-    items = d.items;
+    items = d.items as NoSQLBillRecord['items'];
   }
+
   return {
     id: String(d.id || docId),
     fileName: String(d.fileName || 'Uploaded_Bill.pdf'),
@@ -1121,104 +917,24 @@ export function subscribeToUserAccountHistory(
     }) => void;
   }
 ): () => void {
-  const uid = sanitizeId(userId, 'USR');
-  const clientId = sanitizeId(activeClientId || DEFAULT_CLIENT_ID, 'CLI');
-
-  // Helper to sync from local account storage (used immediately and in Live-Site Session mode)
-  const syncFromLocalAccount = () => {
-    const profileData = readLocalAccountData<Record<string, any> | null>(uid, 'profile', null);
-    if (profileData) {
-      let parsedCols: string[] | undefined;
-      if (typeof profileData.selectedColumnsJson === 'string') {
-        try {
-          const arr = JSON.parse(profileData.selectedColumnsJson);
-          if (Array.isArray(arr) && arr.length > 0) parsedCols = arr.map(String);
-        } catch {
-          // ignore
-        }
-      }
-      let parsedTally: TallySettings | undefined;
-      if (typeof profileData.tallySettingsJson === 'string') {
-        try {
-          const obj = JSON.parse(profileData.tallySettingsJson);
-          if (obj && typeof obj === 'object') parsedTally = { ...DEFAULT_TALLY_SETTINGS, ...obj };
-        } catch {
-          // ignore
-        }
-      }
-      if (parsedTally && callbacks.onTallySettingsUpdate) {
-        callbacks.onTallySettingsUpdate(parsedTally);
-      }
-      if (callbacks.onProfileUpdate) {
-        callbacks.onProfileUpdate({
-          userMode:
-            profileData.userMode === 'ca_mode'
-              ? 'ca_mode'
-              : profileData.userMode === 'normal_user'
-              ? 'normal_user'
-              : undefined,
-          firmRole:
-            profileData.firmRole === 'reviewer'
-              ? 'Reviewer'
-              : profileData.firmRole === 'staff'
-              ? 'Staff'
-              : 'Owner/CA',
-          selectedColumnKeys: parsedCols,
-          tallySettings: parsedTally,
-        });
-      }
-    }
-
-    if (callbacks.onClientsUpdate) {
-      const localClients = readLocalAccountData<CAClientProfile[]>(uid, 'clients', []);
-      if (localClients.length === 0) {
-        const defaultClient = { ...DEFAULT_CA_CLIENT, ownerId: uid };
-        writeLocalAccountData(uid, 'clients', [defaultClient]);
-        callbacks.onClientsUpdate([defaultClient]);
-      } else {
-        callbacks.onClientsUpdate(localClients);
-      }
-    }
-
-    const localBills = readLocalAccountData<NoSQLBillRecord[]>(uid, `bills_${clientId}`, []);
-    localBills.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
-    callbacks.onBillsUpdate(localBills);
-
-    const localDocs = readLocalAccountData<SavedDocumentRecord[]>(uid, `docs_${clientId}`, []);
-    localDocs.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
-    callbacks.onDocumentsUpdate(localDocs);
-
-    if (callbacks.onTeamMembersUpdate) {
-      const localTeam = readLocalAccountData<TeamMemberRecord[]>(uid, 'teamMembers', []);
-      callbacks.onTeamMembersUpdate(localTeam);
-    }
-
-    if (callbacks.onApiKeysUpdate) {
-      const localKeys = readLocalAccountData<UserApiKeyRecord[]>(uid, 'apiKeys', []);
-      callbacks.onApiKeysUpdate(localKeys);
-    }
-  };
-
-  // If running in Live-Site Session mode (without Firebase Cloud popup token), use local storage + listener
-  if (!isFirebaseCloudSessionActive(uid)) {
-    syncFromLocalAccount();
-    const listener = (updatedUid: string) => {
-      if (updatedUid === uid) syncFromLocalAccount();
-    };
-    localAccountListeners.add(listener);
-    return () => {
-      localAccountListeners.delete(listener);
-    };
+  if (!isAuthenticatedOwner(userId)) {
+    return () => {};
   }
+
+  const uid = userId;
+  const clientId = sanitizeId(activeClientId || DEFAULT_CLIENT_ID, 'CLI');
 
   // Auto-migrate legacy root /users/{uid}/bills into /users/{uid}/clients/client_default/bills once
   if (clientId === DEFAULT_CLIENT_ID) {
-    getDocs(collection(db, 'users', uid, 'bills'))
+    getDocs(query(collection(db, 'users', uid, 'bills'), where('ownerId', '==', uid)))
       .then(async (legacySnap) => {
         if (!legacySnap.empty) {
           await saveClientToFirestore(uid, { ...DEFAULT_CA_CLIENT, ownerId: uid });
           for (const docSnap of legacySnap.docs) {
-            const billObj = parseBillSnapshotDoc(docSnap.id, docSnap.data());
+            const billObj = parseBillSnapshotDoc(
+              docSnap.id,
+              docSnap.data() as Record<string, unknown>
+            );
             await saveBillToUserAccount(uid, billObj, DEFAULT_CLIENT_ID);
           }
         }
@@ -1236,7 +952,7 @@ export function subscribeToUserAccountHistory(
         try {
           const arr = JSON.parse(data.selectedColumnsJson);
           if (Array.isArray(arr) && arr.length > 0) {
-            parsedCols = arr.map((k) => String(k));
+            parsedCols = arr.map((k: unknown) => String(k));
           }
         } catch {
           // ignore
@@ -1281,7 +997,7 @@ export function subscribeToUserAccountHistory(
   );
 
   const unsubClients = onSnapshot(
-    collection(db, 'users', uid, 'clients'),
+    query(collection(db, 'users', uid, 'clients'), where('ownerId', '==', uid)),
     (snap) => {
       if (!callbacks.onClientsUpdate) return;
       const list: CAClientProfile[] = [];
@@ -1312,11 +1028,14 @@ export function subscribeToUserAccountHistory(
   );
 
   const unsubBills = onSnapshot(
-    collection(db, 'users', uid, 'clients', clientId, 'bills'),
+    query(
+      collection(db, 'users', uid, 'clients', clientId, 'bills'),
+      where('ownerId', '==', uid)
+    ),
     (snap) => {
       const bills: NoSQLBillRecord[] = [];
       snap.forEach((docSnap) => {
-        bills.push(parseBillSnapshotDoc(docSnap.id, docSnap.data()));
+        bills.push(parseBillSnapshotDoc(docSnap.id, docSnap.data() as Record<string, unknown>));
       });
       bills.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
       callbacks.onBillsUpdate(bills);
@@ -1327,7 +1046,10 @@ export function subscribeToUserAccountHistory(
   );
 
   const unsubDocs = onSnapshot(
-    collection(db, 'users', uid, 'clients', clientId, 'documents'),
+    query(
+      collection(db, 'users', uid, 'clients', clientId, 'documents'),
+      where('ownerId', '==', uid)
+    ),
     (snap) => {
       const docs: SavedDocumentRecord[] = [];
       snap.forEach((docSnap) => {
@@ -1353,7 +1075,7 @@ export function subscribeToUserAccountHistory(
   );
 
   const unsubTeam = onSnapshot(
-    collection(db, 'users', uid, 'teamMembers'),
+    query(collection(db, 'users', uid, 'teamMembers'), where('ownerId', '==', uid)),
     (snap) => {
       if (!callbacks.onTeamMembersUpdate) return;
       const members: TeamMemberRecord[] = [];
@@ -1392,7 +1114,7 @@ export function subscribeToUserAccountHistory(
   );
 
   const unsubKeys = onSnapshot(
-    collection(db, 'users', uid, 'apiKeys'),
+    query(collection(db, 'users', uid, 'apiKeys'), where('ownerId', '==', uid)),
     (snap) => {
       if (!callbacks.onApiKeysUpdate) return;
       const keys: UserApiKeyRecord[] = [];

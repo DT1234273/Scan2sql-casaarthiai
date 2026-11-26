@@ -53,10 +53,9 @@ import {
 } from 'lucide-react';
 import {
   auth,
-  onAuthStateChanged,
+  ACTIVE_FIREBASE_PROJECT_ID,
   subscribeToAuthChanges,
   signInWithGooglePopup,
-  signInWithLivePracticeAccount,
   signOutGoogleUser,
   saveUserProfileToFirestore,
   saveBillToUserAccount,
@@ -975,14 +974,11 @@ export function App() {
   const [newHeaderFieldVal, setNewHeaderFieldVal] = useState('');
   const [showNoSqlJsonModal, setShowNoSqlJsonModal] = useState(false);
 
-  // Google Authentication & Live-Site Practice Account State
+  // Google Authentication & Cloud Database Session State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
-  const [signInEmailInput, setSignInEmailInput] = useState<string>('');
-  const [signInNameInput, setSignInNameInput] = useState<string>('');
-  const [signInFirmNameInput, setSignInFirmNameInput] = useState<string>('');
   const [signInAuthNotice, setSignInAuthNotice] = useState<string | null>(null);
   const [mountWorkspaceOnBlog, setMountWorkspaceOnBlog] = useState<boolean>(false);
 
@@ -1107,7 +1103,13 @@ export function App() {
       setSelectedColumnKeys(nextCols);
     }
     if (currentUser) {
-      saveUserProfileToFirestore(currentUser, mode, nextCols);
+      saveUserProfileToFirestore(
+        currentUser,
+        mode,
+        nextCols,
+        tallySettings,
+        currentFirmRole
+      ).catch(() => {});
     }
   };
 
@@ -1134,7 +1136,13 @@ export function App() {
     if (!isAuthReady) return;
     const timer = setTimeout(() => {
       if (currentUser) {
-        saveUserProfileToFirestore(currentUser, userMode, selectedColumnKeys);
+        saveUserProfileToFirestore(
+          currentUser,
+          userMode,
+          selectedColumnKeys,
+          tallySettings,
+          currentFirmRole
+        ).catch(() => {});
         return;
       }
       try {
@@ -1276,10 +1284,17 @@ export function App() {
   }, []);
 
   const completeUserSignInMigration = useCallback(
-    async (user: User, methodLabel: string) => {
+    async (user: User) => {
       const guestBillsToMigrate = [...savedBills];
       const guestDocsToMigrate = [...savedDocuments];
-      await saveUserProfileToFirestore(user, userMode, selectedColumnKeys);
+      await saveUserProfileToFirestore(
+        user,
+        userMode,
+        selectedColumnKeys,
+        tallySettings,
+        currentFirmRole
+      );
+      await saveClientToFirestore(user.uid, { ...DEFAULT_CLIENT_PROFILE, ownerId: user.uid });
 
       if (guestBillsToMigrate.length > 0 || guestDocsToMigrate.length > 0) {
         await Promise.all([
@@ -1293,70 +1308,29 @@ export function App() {
           // ignore
         }
         showToast(
-          `Signed in as ${user.displayName || user.email} — synced ${guestBillsToMigrate.length} bill(s) to your account!`
+          `Signed in with Google as ${user.displayName || user.email} — synced ${guestBillsToMigrate.length} bill(s) to your Cloud Database!`
         );
       } else {
-        showToast(`Signed in (${methodLabel}) as ${user.displayName || user.email}! Your workspace is active.`);
+        showToast(
+          `Signed in with Google as ${user.displayName || user.email}. Cloud Database sync is active.`
+        );
       }
       setIsSignInModalOpen(false);
       setSignInAuthNotice(null);
     },
-    [savedBills, savedDocuments, userMode, selectedColumnKeys, activeClientId, showToast]
+    [
+      savedBills,
+      savedDocuments,
+      userMode,
+      selectedColumnKeys,
+      tallySettings,
+      currentFirmRole,
+      activeClientId,
+      showToast,
+    ]
   );
 
-  // Instant Practice / Gmail / Work Email Sign-In (works 100% on www.casaarthiai.in & all custom domains)
-  const handlePracticeEmailSignIn = useCallback(
-    async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-      const rawInput = signInEmailInput.trim().toLowerCase();
-      const emailClean = rawInput
-        ? rawInput.includes('@')
-          ? rawInput
-          : `${rawInput}@gmail.com`
-        : 'ca.partner@casaarthiai.in';
-      setIsSigningIn(true);
-      try {
-        const displayLabel =
-          [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
-          (rawInput ? emailClean.split('@')[0] : 'CA Partner Workspace');
-        const user = signInWithLivePracticeAccount({
-          email: emailClean,
-          displayName: displayLabel,
-        });
-        await completeUserSignInMigration(user, 'CA Practice Session');
-      } catch (err: any) {
-        setSignInAuthNotice(err?.message || 'Could not complete sign in.');
-      } finally {
-        setIsSigningIn(false);
-      }
-    },
-    [signInEmailInput, signInNameInput, signInFirmNameInput, completeUserSignInMigration]
-  );
-
-  // 1-Click Instant Partner Sign-In (Zero typing required on mobile or desktop)
-  const handleQuickInstantPartnerSignIn = useCallback(async () => {
-    const rawInput = signInEmailInput.trim().toLowerCase();
-    const emailClean = rawInput
-      ? rawInput.includes('@')
-        ? rawInput
-        : `${rawInput}@gmail.com`
-      : 'partner@casaarthiai.in';
-    const displayLabel =
-      [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
-      (rawInput ? emailClean.split('@')[0] : 'CA Partner Workspace');
-    setIsSigningIn(true);
-    try {
-      const user = signInWithLivePracticeAccount({
-        email: emailClean,
-        displayName: displayLabel,
-      });
-      await completeUserSignInMigration(user, 'Instant Workspace');
-    } finally {
-      setIsSigningIn(false);
-    }
-  }, [signInEmailInput, signInNameInput, signInFirmNameInput, completeUserSignInMigration]);
-
-  // Google Sign-In & Sign-Out Handlers (with Instant In-Place Fallback on www.casaarthiai.in)
+  // Authentic Google Account Sign-In via Firebase Authentication
   const handleGoogleSignIn = useCallback(
     async (attemptPopupDirectly = false) => {
       if (!attemptPopupDirectly) {
@@ -1369,60 +1343,39 @@ export function App() {
       setSignInAuthNotice(null);
       try {
         const user = await signInWithGooglePopup();
-        await completeUserSignInMigration(user, 'Google');
-      } catch (err: any) {
-        const code = String(err?.code || '');
-        const rawInput = signInEmailInput.trim().toLowerCase();
-        const typedEmail = rawInput
-          ? rawInput.includes('@')
-            ? rawInput
-            : `${rawInput}@gmail.com`
-          : '';
+        await completeUserSignInMigration(user);
+      } catch (err: unknown) {
+        const errorObj = err as { code?: string; message?: string };
+        const code = String(errorObj?.code || '');
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'www.casaarthiai.in';
 
-        // If user already typed their Gmail/email in the box, sign them in immediately
-        if (typedEmail) {
-          const displayLabel =
-            [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
-            typedEmail.split('@')[0];
-          const fallbackUser = signInWithLivePracticeAccount({
-            email: typedEmail,
-            displayName: displayLabel,
-          });
-          await completeUserSignInMigration(fallbackUser, 'Google / Gmail');
-          return;
-        }
-
-        if (code === 'auth/popup-closed-by-user') {
+        if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
           setSignInAuthNotice(
-            'Google popup was closed. Enter your Gmail / Work Email below or tap "1-Click Instant Login" to enter immediately.'
+            'Google sign-in popup was closed before completing login. Click "Continue with Google" again to sign in.'
           );
-          setIsSignInModalOpen(true);
+        } else if (code === 'auth/popup-blocked') {
+          setSignInAuthNotice(
+            'Your browser blocked the Google Sign-In popup. Please allow popups for this site and click "Continue with Google" again.'
+          );
+        } else if (code === 'auth/unauthorized-domain') {
+          setSignInAuthNotice(
+            `Google Sign-In is blocked because "${currentHost}" is not listed in Firebase Authorized Domains yet. Open Firebase Console → Project "${ACTIVE_FIREBASE_PROJECT_ID}" → Authentication → Settings → Authorized domains → Add "${currentHost}" (and "casaarthiai.in"), then retry.`
+          );
+        } else if (code === 'auth/network-request-failed') {
+          setSignInAuthNotice(
+            'Network error while contacting Google Authentication. Please check your internet connection and try again.'
+          );
         } else {
-          // On custom domain (www.casaarthiai.in) when Firebase throws auth/unauthorized-domain,
-          // auth/popup-blocked, or auth/operation-not-supported-in-this-environment:
-          // Complete sign-in immediately in-place on www.casaarthiai.in without opening any external URL
-          const fallbackEmail = 'ca.google.workspace@casaarthiai.in';
-          const displayLabel =
-            [signInNameInput.trim(), signInFirmNameInput.trim()].filter(Boolean).join(' · ') ||
-            'CA Partner (Google Workspace)';
-          const fallbackUser = signInWithLivePracticeAccount({
-            email: fallbackEmail,
-            displayName: displayLabel,
-          });
-          await completeUserSignInMigration(fallbackUser, 'Google Workspace');
-          return;
+          setSignInAuthNotice(
+            `Google Sign-In could not be completed (${code || errorObj?.message || 'unexpected error'}). Please try again.`
+          );
         }
+        setIsSignInModalOpen(true);
       } finally {
         setIsSigningIn(false);
       }
     },
-    [
-      isSigningIn,
-      signInEmailInput,
-      signInNameInput,
-      signInFirmNameInput,
-      completeUserSignInMigration,
-    ]
+    [isSigningIn, completeUserSignInMigration]
   );
 
   const handleGoogleSignOut = useCallback(async () => {
@@ -1430,9 +1383,15 @@ export function App() {
       await signOutGoogleUser();
       setSavedBills([]);
       setSavedDocuments([]);
-      showToast('Signed out of your CA Saarthi AI workspace.');
-    } catch (err: any) {
-      showToast(`Sign out failed: ${err?.message || 'Error'}`);
+      setClients([DEFAULT_CLIENT_PROFILE]);
+      setActiveClientId(DEFAULT_CLIENT_ID);
+      setTeamMembers([]);
+      setApiKeys([]);
+      setTallySettings(DEFAULT_TALLY_SETTINGS);
+      showToast('Signed out of your Google account.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error';
+      showToast(`Sign out failed: ${msg}`);
     }
   }, [showToast]);
 
@@ -2673,6 +2632,7 @@ export function App() {
     const updatedRecord: NoSQLBillRecord = {
       ...newBill,
       id: existingBill.id,
+      createdAt: existingBill.createdAt,
     };
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? updatedRecord : b)));
     if (currentUser) {
@@ -3586,7 +3546,7 @@ export function App() {
         </div>
       )}
 
-      {/* Live-Site CA Practice Sign-In Modal (Works on casaarthiai.in + Google OAuth) */}
+      {/* Google Account Sign-In Modal (Firebase Auth + Cloud Firestore Workspace Sync) */}
       {isSignInModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-xs p-4 overflow-y-auto"
@@ -3623,10 +3583,10 @@ export function App() {
                         AI
                       </span>
                     </span>
-                    <span className="text-[var(--text-main)] font-bold text-sm">Workspace</span>
+                    <span className="text-[var(--text-main)] font-bold text-sm">Cloud Login</span>
                   </h3>
                   <p className="text-xs text-[var(--text-muted)]">
-                    Sync client GSTIN workspaces, Tally XML ledgers &amp; scanned invoices
+                    Sign in with your verified Google account to sync your CA database
                   </p>
                 </div>
               </div>
@@ -3640,121 +3600,67 @@ export function App() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               {signInAuthNotice && (
-                <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                  {signInAuthNotice}
+                <div
+                  role="alert"
+                  className="p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs text-amber-800 dark:text-amber-300 leading-relaxed flex items-start gap-2.5"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                  <span>{signInAuthNotice}</span>
                 </div>
               )}
 
-              {/* Primary Option: Instant Gmail / CA Practice Email Sign-In */}
-              <form onSubmit={handlePracticeEmailSignIn} className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label
-                      htmlFor="signin-work-email"
-                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]"
-                    >
-                      Gmail or CA Firm Email *
-                    </label>
-                    {!signInEmailInput.includes('@') && signInEmailInput.trim().length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setSignInEmailInput(`${signInEmailInput.trim()}@gmail.com`)}
-                        className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                      >
-                        + @gmail.com
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    id="signin-work-email"
-                    type="email"
-                    required
-                    value={signInEmailInput}
-                    onChange={(e) => setSignInEmailInput(e.target.value)}
-                    placeholder="yourname@gmail.com or partner@cafirm.in"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs sm:text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
+              <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] p-4 space-y-2.5">
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Included with your Cloud Database account
+                </p>
+                <ul className="space-y-2 text-xs text-[var(--text-main)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Private Firestore database isolated strictly to your Google UID</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Multi-client GSTIN workspaces, Tally XML settings &amp; bill history</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Automatic migration of any invoices already scanned in this session</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn(true)}
+                disabled={isSigningIn}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white hover:bg-slate-50 dark:bg-slate-100 dark:hover:bg-white text-slate-900 border border-slate-300 text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 cursor-pointer"
+              >
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#4285F4"
+                    d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
                   />
-                </div>
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"
+                  />
+                </svg>
+                <span>{isSigningIn ? 'Signing in with Google...' : 'Continue with Google'}</span>
+              </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      htmlFor="signin-ca-name"
-                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
-                    >
-                      Your Name (Optional)
-                    </label>
-                    <input
-                      id="signin-ca-name"
-                      type="text"
-                      value={signInNameInput}
-                      onChange={(e) => setSignInNameInput(e.target.value)}
-                      placeholder="CA Rajesh Sharma"
-                      className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="signin-firm-name"
-                      className="block text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1"
-                    >
-                      CA Firm (Optional)
-                    </label>
-                    <input
-                      id="signin-firm-name"
-                      type="text"
-                      value={signInFirmNameInput}
-                      onChange={(e) => setSignInFirmNameInput(e.target.value)}
-                      placeholder="Sharma & Associates"
-                      className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSigningIn}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors cursor-pointer"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>{isSigningIn ? 'Signing in...' : 'Sign In with Email / Gmail'}</span>
-                </button>
-              </form>
-
-              <div className="relative flex py-1 items-center">
-                <div className="grow border-t border-[var(--border-color)]" />
-                <span className="shrink-0 mx-3 text-[11px] uppercase tracking-wider text-[var(--text-muted)] font-semibold">
-                  or instant sign-in options
-                </span>
-                <div className="grow border-t border-[var(--border-color)]" />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleGoogleSignIn(true)}
-                  disabled={isSigningIn}
-                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-subtle)] hover:bg-indigo-500/10 hover:border-indigo-500/40 text-xs font-semibold text-[var(--text-main)] transition-colors cursor-pointer"
-                >
-                  <Cloud className="w-4 h-4 text-indigo-500 shrink-0" />
-                  <span>Google OAuth</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleQuickInstantPartnerSignIn}
-                  disabled={isSigningIn}
-                  className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-300 transition-colors cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>1-Click Instant Login</span>
-                </button>
-              </div>
-
-              <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed">
-                Works across <span className="font-semibold text-[var(--text-main)]">www.casaarthiai.in</span> and cloud workspaces. Existing scanned bills automatically attach to your account.
+              <p className="text-[11px] text-[var(--text-muted)] text-center leading-relaxed flex items-center justify-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span>Secured by Google OAuth 2.0 &amp; Firebase Cloud Firestore</span>
               </p>
             </div>
           </div>
