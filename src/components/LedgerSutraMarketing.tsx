@@ -3008,7 +3008,7 @@ export const LedgerSutraRouteView: React.FC<{
   );
   if (article) {
     const author = DEFAULT_CA_AUTHOR;
-    const updatedDate = article.publishedDate;
+    const updatedDate = article.modifiedDate || article.publishedDate;
     return (
       <article className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-8">
         {renderBreadcrumb(article.title, { name: 'Blog', path: '/blog' })}
@@ -3087,6 +3087,26 @@ export const LedgerSutraRouteView: React.FC<{
                     <li key={k}>✓ {c}</li>
                   ))}
                 </ul>
+              )}
+              {sec.externalSources && sec.externalSources.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs text-[var(--text-muted)] leading-relaxed space-y-1">
+                  <div className="font-semibold text-[var(--text-main)]">Official External Source</div>
+                  {sec.externalSources.map((src, idx) => (
+                    <p key={idx} className="break-words">
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 dark:text-indigo-400 font-semibold underline underline-offset-2 hover:text-indigo-500"
+                      >
+                        {src.label} ↗
+                      </a>
+                      {src.sourceName ? (
+                        <span className="text-[var(--text-muted)]"> — {src.sourceName}</span>
+                      ) : null}
+                    </p>
+                  ))}
+                </div>
               )}
             </section>
           ))}

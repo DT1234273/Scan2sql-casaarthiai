@@ -23,7 +23,6 @@ import {
   getDocFromServer,
   serverTimestamp,
 } from 'firebase/firestore';
-import firebaseAppletConfig from '../firebase-applet-config.json';
 import type { NoSQLBillRecord, SavedDocumentRecord } from './App';
 import {
   DEFAULT_CLIENT_ID,
@@ -36,6 +35,24 @@ import {
   type FirmRole,
   type BillApprovalStatus,
 } from './caWorkspaceTypes';
+
+interface FirebaseAppletConfigShape {
+  apiKey?: string;
+  authDomain?: string;
+  projectId?: string;
+  storageBucket?: string;
+  messagingSenderId?: string;
+  appId?: string;
+  firestoreDatabaseId?: string;
+}
+
+const appletConfigModules = import.meta.glob<{ default?: FirebaseAppletConfigShape }>(
+  '../firebase-applet-config.json',
+  { eager: true }
+);
+const rawAppletModule = Object.values(appletConfigModules)[0];
+const firebaseAppletConfig: FirebaseAppletConfigShape =
+  rawAppletModule?.default ?? (rawAppletModule as unknown as FirebaseAppletConfigShape) ?? {};
 
 const env = ((import.meta as unknown as { env?: Record<string, string | undefined> }).env) || {};
 

@@ -34,12 +34,18 @@ export interface ResourceArticleSpec {
   category: string;
   readTime: string;
   publishedDate: string;
+  modifiedDate?: string;
   summary: string;
   keyTakeaways: string[];
   sections: Array<{
     heading: string;
     paragraphs: string[];
     checklist?: string[];
+    externalSources?: Array<{
+      label: string;
+      url: string;
+      sourceName?: string;
+    }>;
   }>;
   faqs: FaqItem[];
 }
@@ -831,7 +837,7 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
       'Manual VLOOKUP reconciliation in Excel fails on real-world Indian GST data because suppliers frequently format invoice numbers differently when filing GSTR-1—for example, `INV/2026-27/0042` on the printed bill might appear as `INV2627-42` or `042` in GSTR-2B. Additionally, small rounding variances of ₹0.50 or ₹1.00 cause exact-match formulas to reject valid vouchers.',
       'CA Saarthi AI includes a dedicated GSTR-2B Reconciliation workspace designed specifically for Indian CA firms and GST practitioners. You can upload the official GSTR-2B JSON file or Excel workbook downloaded directly from the GST portal, and CA Saarthi AI parses the B2B supplier invoices (Supplier GSTIN, Trade Name, Invoice No, Date, Taxable Value, IGST, CGST, SGST, and ITC Availability).',
       'Our two-pass matching engine first pairs records by Supplier GSTIN + Normalized Invoice Number (stripping spaces, slashes, hyphens, and leading zeros, case-insensitively). For remaining unmatched bills from the same supplier, it runs a fuzzy fallback on Invoice Amount (with a configurable rupee tolerance, default ₹1) and Date to catch probable invoice number typos.',
-      'Every record is classified into one of 6 clear audit statuses: Matched, Amount Mismatch, Date Mismatch, Invoice Number Mismatch (Probable), In Books but Not in 2B, and In 2B but Not in Books. You can add per-row audit notes, manually override match statuses, filter by tax period, and export a complete multi-sheet Excel reconciliation workbook containing a Summary sheet plus one dedicated worksheet per status.',
+      'Every record is classified into one of 6 reconciliation statuses: Matched, Amount Mismatch, Date Mismatch, Invoice Number Mismatch (Probable), In Books but Not in GSTR-2B, and In GSTR-2B but Not in Books. You can add per-row audit notes, manually override match statuses, filter by tax period, and export a 7-sheet Excel reconciliation workbook containing a Summary sheet plus 6 status worksheets (Matched, Amount_Mismatch, Date_Mismatch, Inv_No_Mismatch, In_Books_Not_2B, and In_2B_Not_Books).',
     ],
     workflowSteps: [
       {
@@ -848,9 +854,9 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
           'Inspect Total ITC as per Books vs. GSTR-2B, ITC at Risk, and side-by-side differences with configurable rupee tolerance.',
       },
       {
-        title: '4. Export Multi-Sheet Reconciliation Excel',
+        title: '4. Export 7-Sheet Reconciliation Excel',
         detail:
-          'Download a structured `.xlsx` workbook with a Summary tab and separate tabs for Matched, Mismatched, Missing in 2B, and Missing in Books.',
+          'Download a 7-sheet `.xlsx` workbook with a Summary tab plus 6 status worksheets: Matched, Amount_Mismatch, Date_Mismatch, Inv_No_Mismatch, In_Books_Not_2B, and In_2B_Not_Books.',
       },
     ],
     keyCapabilities: [
@@ -870,9 +876,9 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
           'Adjust the rounding tolerance in rupees so minor paise differences do not trigger false mismatch alerts.',
       },
       {
-        title: 'Multi-Sheet Excel Working Paper Export',
+        title: '7-Sheet Excel Working Paper Export',
         description:
-          'Generates a client-ready Excel report with one sheet per reconciliation status plus an executive ITC summary.',
+          'Generates a 7-sheet Excel report containing a Summary sheet plus 6 status tabs: Matched, Amount_Mismatch, Date_Mismatch, Inv_No_Mismatch, In_Books_Not_2B, and In_2B_Not_Books.',
       },
     ],
     extractedFields: [
@@ -885,8 +891,8 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     ],
     caUseCases: [
       'Monthly GSTR-2B vs Purchase Register reconciliation before filing GSTR-3B',
-      'Identifying suppliers who have not filed GSTR-1 ("In Books but Not in 2B") for client follow-up',
-      'Catching unbooked purchase bills ("In 2B but Not in Books") to maximize legitimate ITC claims',
+      'Identifying suppliers who have not filed GSTR-1 ("In Books but Not in GSTR-2B") for client follow-up',
+      'Catching unbooked purchase bills ("In GSTR-2B but Not in Books") to maximize legitimate ITC claims',
       'Preparing annual GSTR-9 / 9C ITC reconciliation working papers',
     ],
     faqs: [
@@ -903,7 +909,7 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
       {
         question: 'How is the exported Excel reconciliation report structured?',
         answer:
-          'It includes a Summary sheet (Total ITC Books vs 2B, ITC at Risk, and status totals) followed by 6 dedicated worksheets—one for each reconciliation status.',
+          'It generates a 7-sheet Excel workbook containing a Summary sheet (Total ITC as per Books vs. GSTR-2B, Eligible ITC, ITC at Risk, and status totals) followed by 6 dedicated status worksheets: Matched, Amount_Mismatch, Date_Mismatch, Inv_No_Mismatch, In_Books_Not_2B, and In_2B_Not_Books.',
       },
     ],
   },
@@ -1060,43 +1066,51 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'gstr-2b-reconciliation-in-excel-step-by-step',
     path: '/blog/gstr-2b-reconciliation-in-excel-step-by-step',
     title: 'GSTR-2B Reconciliation in Excel: Step by Step',
-    metaTitle: 'GSTR-2B Reconciliation in Excel: Step by Step — CA Saarthi AI',
+    metaTitle: 'GSTR-2B Reconciliation in Excel: Step-by-Step',
     metaDescription:
       'Complete step-by-step guide to reconciling your purchase register with GST portal GSTR-2B JSON and Excel files to protect Input Tax Credit. Read guide.',
     category: 'GST Reconciliation',
     readTime: '8 min read',
     publishedDate: '2026-11-03',
+    modifiedDate: '2026-11-26',
     summary:
-      'A practical guide for CA firms on matching purchase books against GSTR-2B, handling invoice number formatting differences, and exporting multi-sheet audit reports.',
+      'A practical guide for CA firms on matching purchase books against GSTR-2B, handling invoice number formatting differences, and exporting a 7-sheet reconciliation workbook.',
     keyTakeaways: [
       'Normalize invoice numbers by stripping spaces, slashes, hyphens, and leading zeros before comparing Books vs GSTR-2B.',
       'Use a ₹1 to ₹2 rounding tolerance so paise differences do not hide genuine matches.',
-      'Separate discrepancies into actionable buckets: Missing in 2B (follow up with vendor) vs Missing in Books (record unbooked bill).',
+      'Separate discrepancies into actionable buckets: In Books but Not in GSTR-2B (follow up with vendor) vs In GSTR-2B but Not in Books (review unbooked bill).',
     ],
     sections: [
       {
         heading: '1. Why GSTR-2B Reconciliation Is Critical Before Filing GSTR-3B',
         paragraphs: [
           'Under Section 16(2)(aa) of the CGST Act read with Rule 36(4), Input Tax Credit (ITC) can only be availed when the supplier has furnished the invoice in their GSTR-1/IFF and the details are communicated in the recipient’s GSTR-2B statement.',
-          'Claiming excess ITC not reflected in GSTR-2B triggers automated DRC-01C intimations and potential interest liability. Conversely, failing to spot invoices present in GSTR-2B but missing from your client’s purchase books leaves legitimate ITC unclaimed.',
+          'On the GST Portal, a Form GST DRC-01C intimation is issued when the difference between ITC available as per GSTR-2B and ITC claimed in GSTR-3B/3BQ exceeds a predefined limit. When such an intimation is received, the taxpayer is required to submit the Part B response. As explained by the GST Portal, failure to submit the Part B response can prevent filing GSTR-1/IFF for the subsequent tax period. Conversely, failing to spot invoices present in GSTR-2B but missing from your client’s purchase books can leave eligible ITC unrecorded.',
+        ],
+        externalSources: [
+          {
+            label: 'GST Portal guide to DRC-01C return compliance',
+            url: 'https://tutorial.gst.gov.in/userguide/returns/Manual_Return_Compliance_ITC.htm',
+            sourceName: 'Official GST Portal (tutorial.gst.gov.in)',
+          },
         ],
       },
       {
         heading: '2. Why Standard Excel VLOOKUPs Fail on GSTR-2B Data',
         paragraphs: [
-          'When you run a naive VLOOKUP on `GSTIN + Invoice Number` in Excel, 15% to 30% of valid invoices often show up as unmatched. Why? Because the printed bill might say `Bill No: 00458/26-27`, whereas the supplier’s accountant uploaded `458` or `458-26/27` in GSTR-1.',
+          'When you run a simple VLOOKUP on `GSTIN + Invoice Number` in Excel, inconsistent invoice-number formats, punctuation, leading zeros, and supplier data differences can cause exact-match formulas to return unmatched results. For example, the printed bill might say `Bill No: 00458/26-27`, whereas the supplier’s accountant uploaded `458` or `458-26/27` in GSTR-1.',
         ],
         checklist: [
           'Step 1: Normalize both Books and 2B invoice numbers (uppercase, strip punctuation and leading zeros).',
           'Step 2: Match on Supplier GSTIN + Normalized Invoice Number and compare Taxable Value and Tax within a ₹1 tolerance.',
           'Step 3: Run a second pass on remaining unmatched items matching Supplier GSTIN + Invoice Date + Amount to catch probable invoice number typos.',
-          'Step 4: Classify remaining items into "In Books but Not in 2B" and "In 2B but Not in Books".',
+          'Step 4: Classify remaining items into "In Books but Not in GSTR-2B" and "In GSTR-2B but Not in Books".',
         ],
       },
       {
-        heading: '3. Generating the 6-Sheet Excel Working Paper in CA Saarthi AI',
+        heading: '3. Generating the 7-Sheet Excel Working Paper in CA Saarthi AI',
         paragraphs: [
-          'Instead of building complex macros every month, open the GSTR-2B Reconciliation tab in CA Saarthi AI, upload your portal GSTR-2B JSON or Excel file, review the side-by-side differences, add audit notes, and click "Export Reconciliation Excel" to download a workbook with a Summary sheet and one sheet per status.',
+          'Instead of building complex macros every month, open the GSTR-2B Reconciliation tab in CA Saarthi AI, upload your portal GSTR-2B JSON or Excel file, review the 6 status classifications (Matched, Amount Mismatch, Date Mismatch, Invoice Number Mismatch [Probable], In Books but Not in GSTR-2B, and In GSTR-2B but Not in Books), add audit notes, and click "Export Reconciliation Excel" to download a 7-sheet workbook containing Summary plus 6 status worksheets: Matched, Amount_Mismatch, Date_Mismatch, Inv_No_Mismatch, In_Books_Not_2B, and In_2B_Not_Books.',
         ],
       },
     ],
@@ -2244,7 +2258,7 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
       description: articleSpec.metaDescription,
       image: DEFAULT_OG_IMAGE,
       datePublished: articleSpec.publishedDate,
-      dateModified: articleSpec.publishedDate,
+      dateModified: articleSpec.modifiedDate || articleSpec.publishedDate,
       author: {
         '@type': 'Organization',
         '@id': `${SITE_DOMAIN}/#organization`,
@@ -3414,7 +3428,7 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
       ${sharedNavHtml}
       ${breadcrumbNavHtml}
       <article>
-        <p>Published ${escapeHtmlAttr(articleSpec.publishedDate)} · Updated ${escapeHtmlAttr(articleSpec.publishedDate)} · By <a href="/about">${escapeHtmlAttr(DEFAULT_CA_AUTHOR.name)} (${escapeHtmlAttr(DEFAULT_CA_AUTHOR.credentials)})</a> — ${escapeHtmlAttr(DEFAULT_CA_AUTHOR.bio)}</p>
+        <p>Published ${escapeHtmlAttr(articleSpec.publishedDate)} · Updated ${escapeHtmlAttr(articleSpec.modifiedDate || articleSpec.publishedDate)} · By <a href="/about">${escapeHtmlAttr(DEFAULT_CA_AUTHOR.name)} (${escapeHtmlAttr(DEFAULT_CA_AUTHOR.credentials)})</a> — ${escapeHtmlAttr(DEFAULT_CA_AUTHOR.bio)}</p>
         <h1>${escapeHtmlAttr(articleSpec.title)}</h1>
         <p>${escapeHtmlAttr(articleSpec.summary)}</p>
         ${articleSpec.sections
@@ -3422,6 +3436,21 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
             (sec) => `<section>
           <h2>${escapeHtmlAttr(sec.heading)}</h2>
           ${sec.paragraphs.map((p) => `<p>${escapeHtmlAttr(p)}</p>`).join('')}
+          ${
+            sec.checklist && sec.checklist.length > 0
+              ? `<ul>${sec.checklist.map((item) => `<li>${escapeHtmlAttr(item)}</li>`).join('')}</ul>`
+              : ''
+          }
+          ${
+            sec.externalSources && sec.externalSources.length > 0
+              ? sec.externalSources
+                  .map(
+                    (src) =>
+                      `<p>External official reference: <a href="${escapeHtmlAttr(src.url)}" target="_blank" rel="noopener noreferrer">${escapeHtmlAttr(src.label)}</a>${src.sourceName ? ` (${escapeHtmlAttr(src.sourceName)})` : ''}</p>`
+                  )
+                  .join('')
+              : ''
+          }
         </section>`
           )
           .join('')}

@@ -6,6 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
-firebase-applet-config.json
-src/firebase-applet-config.json
 nosql_store.json
