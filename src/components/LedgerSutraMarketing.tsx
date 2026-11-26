@@ -3755,6 +3755,7 @@ export const LedgerSutraRouteView: React.FC<{
 
   // 9. Contact / Demo Booking Interactive Form (/contact)
   if (cleanPath === '/contact') {
+    const isEmailInvalid = contactEmail.length > 0 && !contactEmail.includes('@');
     return (
       <section className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 sm:p-10 space-y-6 max-w-3xl">
         {renderBreadcrumb('Contact & Book a Demo')}
@@ -3799,73 +3800,100 @@ export const LedgerSutraRouteView: React.FC<{
           </p>
         </div>
 
-        {contactSubmitted ? (
-          <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-            <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Demo Request Recorded for {contactFirm || 'Your Practice'}</span>
+        <div className="min-h-[268px]">
+          {contactSubmitted ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2"
+            >
+              <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>Demo Request Recorded for {contactFirm || 'Your Practice'}</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)]">
+                We have noted {contactEmail}. You can also test Tally XML export and batch scanning immediately in our workspace below.
+              </p>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              We have noted {contactEmail}. You can also test Tally XML export and batch scanning immediately in our workspace below.
-            </p>
-          </div>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!contactEmail.includes('@')) return;
-              setContactSubmitted(true);
-            }}
-            className="space-y-4 max-w-lg"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-main)] mb-1">
-                CA Firm or Organization Name
-              </label>
-              <input
-                type="text"
-                required
-                value={contactFirm}
-                onChange={(e) => setContactFirm(e.target.value)}
-                placeholder="e.g. Sharma & Associates Chartered Accountants"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[var(--text-main)] mb-1">
-                Work Email Address
-              </label>
-              <input
-                type="email"
-                required
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="partner@cafirm.in"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm"
-              />
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer"
-              >
-                Request Demo Walkthrough
-              </button>
-              <a
-                href="/"
-                onClick={(e) => {
-                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
-                    e.preventDefault();
-                    onNavigate('/');
-                  }
-                }}
-                className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-xs font-semibold cursor-pointer"
-              >
-                Back to Homepage
-              </a>
-            </div>
-          </form>
-        )}
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!contactEmail.includes('@')) return;
+                setContactSubmitted(true);
+              }}
+              className="space-y-4 max-w-lg"
+            >
+              <div>
+                <label
+                  htmlFor="contact-firm-name"
+                  className="block text-xs font-semibold text-[var(--text-main)] mb-1"
+                >
+                  CA Firm or Organization Name
+                </label>
+                <input
+                  id="contact-firm-name"
+                  name="organization"
+                  type="text"
+                  autoComplete="organization"
+                  required
+                  value={contactFirm}
+                  onChange={(e) => setContactFirm(e.target.value)}
+                  placeholder="e.g. Sharma & Associates Chartered Accountants"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm text-[var(--text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="contact-work-email"
+                  className="block text-xs font-semibold text-[var(--text-main)] mb-1"
+                >
+                  Work Email Address
+                </label>
+                <input
+                  id="contact-work-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  aria-invalid={isEmailInvalid}
+                  aria-describedby="contact-email-feedback"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="partner@cafirm.in"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-sm text-[var(--text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                />
+                <p
+                  id="contact-email-feedback"
+                  role="alert"
+                  className="min-h-[20px] mt-1 text-xs font-medium text-rose-700 dark:text-rose-400"
+                >
+                  {isEmailInvalid ? 'Please enter a valid work email address containing @.' : ''}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                >
+                  Request Demo Walkthrough
+                </button>
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/');
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-[var(--text-main)] text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                >
+                  Back to Homepage
+                </a>
+              </div>
+            </form>
+          )}
+        </div>
       </section>
     );
   }

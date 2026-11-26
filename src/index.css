@@ -1,6 +1,24 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
+@font-face {
+  font-family: 'DM Sans Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Roboto');
+  size-adjust: 100%;
+  ascent-override: 94%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Roboto');
+  size-adjust: 103%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
 :root,
 [data-theme="light"],
 [data-accent="teal"] {
@@ -9,9 +27,9 @@
   --brand-200: #99f6e4;
   --brand-300: #5eead4;
   --brand-400: #2dd4bf;
-  --brand-500: #14b8a6;
-  --brand-600: #0d9488;
-  --brand-700: #0f766e;
+  --brand-500: #0f766e;
+  --brand-600: #0f766e;
+  --brand-700: #115e59;
   --brand-800: #115e59;
   --brand-900: #134e4a;
   --brand-950: #042f2e;
@@ -23,10 +41,10 @@
   --brand-200: #bfdbfe;
   --brand-300: #93c5fd;
   --brand-400: #60a5fa;
-  --brand-500: #3b82f6;
-  --brand-600: #2563eb;
-  --brand-700: #1d4ed8;
-  --brand-800: #1e40af;
+  --brand-500: #2563eb;
+  --brand-600: #1d4ed8;
+  --brand-700: #1e40af;
+  --brand-800: #1e3a8a;
   --brand-900: #1e3a8a;
   --brand-950: #172554;
 }
@@ -37,10 +55,10 @@
   --brand-200: #fde68a;
   --brand-300: #fcd34d;
   --brand-400: #fbbf24;
-  --brand-500: #f59e0b;
-  --brand-600: #d97706;
-  --brand-700: #b45309;
-  --brand-800: #92400e;
+  --brand-500: #b45309;
+  --brand-600: #b45309;
+  --brand-700: #92400e;
+  --brand-800: #78350f;
   --brand-900: #78350f;
   --brand-950: #451a03;
 }
@@ -72,7 +90,7 @@
   --text-primary: #091412;
   --text-main: #091412;
   --text-secondary: #1e332f;
-  --text-muted: #4b635e;
+  --text-muted: #435a55;
   --border-subtle: #d8e3e0;
   --border-color: #d8e3e0;
   --border-strong: #b8ccc7;
@@ -105,8 +123,8 @@
   --border-subtle: #1a2e2a;
   --border-color: #1a2e2a;
   --border-strong: #284740;
-  --accent-primary: var(--brand-500);
-  --accent-primary-hover: var(--brand-400);
+  --accent-primary: var(--brand-400);
+  --accent-primary-hover: var(--brand-300);
   --accent-soft-bg: rgba(20, 184, 166, 0.15);
   --accent-soft-text: var(--brand-300);
   --accent-soft-border: rgba(45, 212, 191, 0.38);
@@ -126,7 +144,7 @@
   }
 
   body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'DM Sans', 'DM Sans Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
@@ -135,7 +153,7 @@
   }
 
   h1, h2, h3, .font-display {
-    font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+    font-family: 'Bricolage Grotesque', 'Bricolage Grotesque Fallback', 'DM Sans', sans-serif;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
@@ -143,6 +161,15 @@
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
     font-variant-numeric: tabular-nums;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
   }
 }
 
@@ -409,4 +436,140 @@
     excelRowSlideIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both,
     excelRowHighlightPulse 2.2s ease-out forwards;
 }
+
+/* Prerendered static HTML geometry matching React layout to eliminate hydration CLS */
+#prerendered-route-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+#prerendered-route-shell > header {
+  height: 3.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-header);
+  display: flex;
+  align-items: center;
+}
+
+#prerendered-route-shell > header > nav {
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+#prerendered-route-shell > header > nav > a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+#prerendered-route-shell > header > nav > a:first-child {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-right: auto;
+}
+
+#prerendered-route-shell > nav[aria-label] {
+  width: 100%;
+  max-width: 80rem;
+  margin: 1rem auto 0;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+#prerendered-route-shell > main,
+#prerendered-route-shell > article {
+  width: calc(100% - 1.5rem);
+  max-width: calc(80rem - 3rem);
+  margin: 1rem auto 2rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  flex: 1;
+}
+
+#prerendered-route-shell > main h1,
+#prerendered-route-shell > article h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 0.75rem;
+}
+
+#prerendered-route-shell > main p,
+#prerendered-route-shell > article p {
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+}
+
+#prerendered-route-shell > footer {
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  padding: 2.5rem 1rem;
+  margin-top: 3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (min-width: 640px) {
+  #prerendered-route-shell > header {
+    height: 4rem;
+  }
+
+  #prerendered-route-shell > header > nav,
+  #prerendered-route-shell > nav[aria-label] {
+    padding: 0 1.5rem;
+  }
+
+  #prerendered-route-shell > main,
+  #prerendered-route-shell > article {
+    width: calc(100% - 3rem);
+    margin: 1.5rem auto 2.5rem;
+    padding: 2.5rem;
+  }
+}
+
+/* Light-mode WCAG AA contrast enforcement (>= 4.5:1 on white & subtle surfaces) without altering dark theme */
+:root:not([data-theme="dark"]) .text-emerald-500,
+:root:not([data-theme="dark"]) .text-emerald-600 {
+  color: #047857 !important;
+}
+
+:root:not([data-theme="dark"]) .bg-emerald-600 {
+  background-color: #047857 !important;
+}
+
+:root:not([data-theme="dark"]) .bg-emerald-600:hover {
+  background-color: #065f46 !important;
+}
+
+:root:not([data-theme="dark"]) .text-amber-500,
+:root:not([data-theme="dark"]) .text-amber-600 {
+  color: #92400e !important;
+}
+
+:root:not([data-theme="dark"]) .text-rose-500 {
+  color: #be123c !important;
+}
+
+:root:not([data-theme="dark"]) .text-indigo-500 {
+  color: var(--brand-600) !important;
+}
+
 

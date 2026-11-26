@@ -778,7 +778,12 @@ function parseFallbackBillFromRawText(rawText: string, fileName: string) {
   };
 }
 
-export function App() {
+export interface AppLaunchProps {
+  initialOpenSignIn?: boolean;
+  initialMountWorkspace?: boolean;
+}
+
+export function App({ initialOpenSignIn = false, initialMountWorkspace = false }: AppLaunchProps = {}) {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -978,9 +983,9 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(initialOpenSignIn);
   const [signInAuthNotice, setSignInAuthNotice] = useState<string | null>(null);
-  const [mountWorkspaceOnBlog, setMountWorkspaceOnBlog] = useState<boolean>(false);
+  const [mountWorkspaceOnBlog, setMountWorkspaceOnBlog] = useState<boolean>(initialMountWorkspace);
 
   // Check if live GSTIN verification API is configured on server (Part 5.3)
   useEffect(() => {
@@ -4420,6 +4425,8 @@ export function App() {
 
                 <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
                   <input
+                    id="workspace-bill-upload-input"
+                    aria-label="Upload PDF or image purchase bills"
                     ref={fileInputRef}
                     type="file"
                     multiple
@@ -4437,6 +4444,8 @@ export function App() {
                   </button>
 
                   <input
+                    id="workspace-excel-append-input"
+                    aria-label="Select an existing Excel or CSV file to append bills"
                     ref={excelImportInputRef}
                     type="file"
                     accept=".xlsx,.xls,.csv"
@@ -4445,7 +4454,7 @@ export function App() {
                   />
                   <button
                     onClick={() => excelImportInputRef.current?.click()}
-                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 border border-emerald-500/30 text-xs font-semibold transition-all cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-400 border border-emerald-600/30 text-xs font-semibold transition-all cursor-pointer"
                     title="Select an existing Excel sheet to append newly scanned bills into it"
                   >
                     <FilePlus2 className="w-4 h-4 shrink-0" />
@@ -4479,6 +4488,8 @@ export function App() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <input
+                    id="workspace-batch-upload-input"
+                    aria-label="Select multiple PDF, JPG, or PNG invoices for batch processing"
                     ref={batchFileInputRef}
                     type="file"
                     multiple
@@ -5794,23 +5805,43 @@ export function App() {
                   </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-initial">
-                    <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2.5 w-full sm:w-auto">
+                  <div className="flex-1 sm:flex-initial space-y-1">
+                    <label
+                      htmlFor="bulk-register-search"
+                      className="block text-[11px] font-semibold text-[var(--text-main)]"
+                    >
+                      Search invoices
+                    </label>
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+                      <input
+                        id="bulk-register-search"
+                        name="invoiceSearch"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search bill, shop, GSTIN, product..."
+                        className="w-full sm:w-56 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl pl-8 pr-3 py-2 sm:py-1.5 text-xs text-[var(--text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus:border-indigo-600"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full sm:w-auto space-y-1">
+                    <label
+                      htmlFor="bulk-register-date-filter"
+                      className="block text-[11px] font-semibold text-[var(--text-main)]"
+                    >
+                      Filter by invoice date
+                    </label>
                     <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search bill, shop, GSTIN, product..."
-                      className="w-full sm:w-56 bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl pl-8 pr-3 py-2 sm:py-1.5 text-xs focus:outline-none focus:border-indigo-500"
+                      id="bulk-register-date-filter"
+                      name="invoiceDateFilter"
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      className="w-full sm:w-auto bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-2.5 py-2 sm:py-1.5 text-xs text-[var(--text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus:border-indigo-600"
                     />
                   </div>
-                  <input
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full sm:w-auto bg-[var(--bg-subtle)] border border-[var(--border-color)] rounded-xl px-2.5 py-2 sm:py-1.5 text-xs focus:outline-none focus:border-indigo-500"
-                  />
                 </div>
               </div>
 
@@ -5818,7 +5849,7 @@ export function App() {
               {showSupplierSummary && (
                 <div className="border border-emerald-500/30 rounded-xl overflow-x-auto bg-emerald-500/5 p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-500">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
                       Supplier-Wise / GSTIN-Wise Summary for GSTR-2B Reconciliation
                     </span>
                     <span className="text-[11px] text-[var(--text-muted)]">
@@ -6786,10 +6817,10 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-export default function WrappedApp() {
+export default function WrappedApp(props: AppLaunchProps = {}) {
   return (
     <AppErrorBoundary>
-      <App />
+      <App {...props} />
     </AppErrorBoundary>
   );
 }
