@@ -3285,7 +3285,7 @@ export const LedgerSutraRouteView: React.FC<{
                 className="p-5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 font-mono text-xs font-bold">
+                  <span className="px-2 py-0.5 rounded bg-indigo-600/15 text-indigo-800 dark:text-indigo-300 font-mono text-xs font-bold">
                     {ep.method}
                   </span>
                   <code className="font-mono text-xs sm:text-sm font-bold text-[var(--text-main)]">
@@ -3989,19 +3989,32 @@ export const LedgerSutraRouteView: React.FC<{
             <div className="space-y-1.5">
               <div className="font-bold text-[var(--text-main)]">Starter / Trial (₹0 / month)</div>
               <p className="text-[var(--text-muted)] leading-relaxed">
-                Includes 3 built-in GST sample invoices plus up to 3 custom file scans per browser per day without login, or a 1-client workspace when signed in to test TallyPrime XML and Excel (.xlsx) output.
+                Includes 3 built-in GST sample invoices plus up to 3 custom file scans per browser per day without login, single and batch uploads (up to 5 pages rendered per visual scan pass), and live workspace evaluation of TallyPrime XML and Excel (.xlsx) output.
               </p>
             </div>
             <div className="space-y-1.5">
               <div className="font-bold text-[var(--text-main)]">CA Practice Pro (₹1,499 / month)</div>
               <p className="text-[var(--text-muted)] leading-relaxed">
-                Designed for solo CAs and GST practitioners managing up to 25 distinct client GSTIN workspaces, adding 6-status GSTR-2B JSON/Excel reconciliation, Zoho Books CSV, Busy Excel, and e-invoice IRN/bank field extraction.
+                Designed for solo CAs and GST practitioners managing multiple monthly retainer clients, adding client-wise GSTIN workspace separation, 6-status GSTR-2B JSON/Excel reconciliation (7-sheet workbook), Zoho Books CSV, Busy Excel, and e-invoice IRN/bank field extraction.
               </p>
             </div>
             <div className="space-y-1.5">
               <div className="font-bold text-[var(--text-main)]">Firm / Enterprise (₹3,999 / month)</div>
               <p className="text-[var(--text-muted)] leading-relaxed">
-                Designed for multi-partner CA firms needing unlimited client workspaces, role-based access control (Owner/CA, Reviewer, Staff), bill approval &amp; lock workflows, and programmatic REST API (<code className="font-mono">POST /api/v1/extract</code>) access.
+                Designed for multi-partner CA firms needing firm-wide multi-client workspaces, role-based access control (Owner/CA, Reviewer, Staff), bill approval &amp; audit trail workflows, and REST API (<code className="font-mono">POST /api/v1/extract</code> · enforced limit: 30 req/min per API key, 15 MB max payload). Pilot onboarding &amp; commercial terms are configured via{' '}
+                <a
+                  href="/contact"
+                  onClick={(e) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && e.button === 0) {
+                      e.preventDefault();
+                      onNavigate('/contact');
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  Contact
+                </a>
+                .
               </p>
             </div>
           </div>

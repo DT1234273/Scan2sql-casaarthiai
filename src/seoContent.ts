@@ -173,7 +173,7 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     badge: 'Chartered Accountant OCR Workflow',
     h1: 'Invoice OCR Built for Indian CA Firms',
     subtitle:
-      'Eliminate manual voucher typing during GST filing and tax audits. Extract supplier GSTIN, invoice numbers, HSN codes, and tax splits from scanned PDFs and mobile bill photos with built-in GSTIN checksum and tax math validation.',
+      'Eliminate manual voucher typing during GST filing and tax audits. Extract supplier GSTIN, invoice numbers, HSN codes, and tax splits from scanned PDFs and mobile bill photos with built-in GSTIN checksum and tax math validation. Extraction accuracy depends on document scan quality, so Chartered Accountants must review and verify fields before accounting entry or GST filing.',
     metaTitle: 'Invoice OCR Software for CA Firms in India | CA Saarthi AI',
     metaDescription:
       'Automate client purchase register creation with GST invoice OCR built for Indian CA firms. Extract GSTINs, HSN codes, and tax splits. Try OCR today.',
@@ -255,6 +255,11 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
         question: 'Does it support both summary-level and item-wise accounting sheets?',
         answer:
           'Yes. You can toggle instantaneously between "1 Bill = 1 Row" summary view and "CA Detailed Line-Item Rows" without rescanning.',
+      },
+      {
+        question: 'Does OCR require Chartered Accountant review before GST filing?',
+        answer:
+          'Yes. Extraction accuracy depends on document print clarity, scan resolution, and layout complexity. CA Saarthi AI flags GSTIN format, duplicate, and tax math exceptions for side-by-side human verification before exporting to TallyPrime or filing GST returns.',
       },
     ],
   },
@@ -812,7 +817,7 @@ export const DEDICATED_SEO_PAGES: Record<string, SeoLandingPageSpec> = {
     h1: 'GSTR-2B Reconciliation in Excel',
     subtitle:
       'Match your scanned purchase register against GST portal GSTR-2B JSON or Excel files in seconds. Identify Eligible ITC, ITC at Risk, Amount Mismatches, and Unbooked 2B bills automatically.',
-    metaTitle: 'GSTR-2B Reconciliation in Excel — 6-Status Match | CA Saarthi AI',
+    metaTitle: 'GSTR-2B Reconciliation in Excel | CA Saarthi AI',
     metaDescription:
       'Match your purchase register against GST portal GSTR-2B JSON or Excel files with 6-status classification and multi-sheet Excel export. Reconcile now.',
     primaryKeywords: [
@@ -1016,7 +1021,7 @@ export const HINDI_LOCALIZED_ROUTES: Record<
   '/hi': {
     enPath: '/',
     hiPath: '/hi',
-    title: 'भारतीय CA फर्मों के लिए GST इनवॉइस OCR सॉफ्टवेयर | CA Saarthi AI',
+    title: 'CA फर्मों के लिए GST इनवॉइस OCR | CA Saarthi AI',
     h1: 'भारतीय CA फर्मों के लिए GST इनवॉइस OCR और डेटा एंट्री ऑटोमेशन',
     subtitle:
       'अंग्रेज़ी और हिंदी (देवनागरी) बिलों को स्कैन करें, 15-अंकीय GSTIN और टैक्स गणित की स्वचालित जांच करें, और एक क्लिक में TallyPrime XML या Excel (.xlsx) में एक्सपोर्ट करें।',
@@ -1027,7 +1032,7 @@ export const HINDI_LOCALIZED_ROUTES: Record<
   '/hi/features': {
     enPath: '/features',
     hiPath: '/hi/features',
-    title: 'GST इनवॉइस OCR फीचर्स — GSTIN सत्यापन और द्विभाषी OCR | CA Saarthi AI',
+    title: 'GST इनवॉइस OCR और Tally फीचर्स | CA Saarthi AI',
     h1: 'भारतीय GST प्रैक्टिस वर्कफ़्लो के लिए निर्मित फीचर्स',
     subtitle:
       '15-अंकीय GSTIN Mod-36 चेकसम ऑडिट, द्विभाषी बिल स्कैनिंग, मल्टी-क्लाइंट वर्कस्पेस और मेकर-चेकर टीम अप्रूवल।',
@@ -1038,7 +1043,7 @@ export const HINDI_LOCALIZED_ROUTES: Record<
   '/hi/pricing': {
     enPath: '/pricing',
     hiPath: '/hi/pricing',
-    title: 'प्राइसिंग — CA फर्मों के लिए GST इनवॉइस OCR प्लान | CA Saarthi AI',
+    title: 'CA फर्म प्राइसिंग और प्लान | CA Saarthi AI',
     h1: 'सोलो प्रैक्टिशनर्स और मल्टी-पार्टनर CA फर्मों के लिए प्लान',
     subtitle:
       'मल्टी-क्लाइंट GSTIN वर्कस्पेस, TallyPrime XML एक्सपोर्ट और GSTR-2B रिकन्सिलिएशन के साथ पारदर्शी प्लान (₹0, ₹1,499, ₹3,999)। पायलट फर्मों के लिए अर्ली-एक्सेस प्राइसिंग।',
@@ -1060,7 +1065,7 @@ export const HINDI_LOCALIZED_ROUTES: Record<
   '/hi/gstr-2b-reconciliation-excel': {
     enPath: '/gstr-2b-reconciliation-excel',
     hiPath: '/hi/gstr-2b-reconciliation-excel',
-    title: 'Excel में GSTR-2B रिकन्सिलिएशन — 6-स्टेटस मिलान | CA Saarthi AI',
+    title: 'Excel में GSTR-2B रिकन्सिलिएशन | CA Saarthi AI',
     h1: 'Excel में GSTR-2B रिकन्सिलिएशन',
     subtitle:
       'अपने खरीद रजिस्टर का GST पोर्टल GSTR-2B JSON या Excel फ़ाइल से मिलान करें और पात्र ITC, राशि अंतर और छूटे हुए बिल तुरंत पहचानें।',
@@ -1112,21 +1117,21 @@ export const CORE_SAAS_ROUTES_META: Record<
     breadcrumbName: 'Home',
   },
   '/app': {
-    title: 'CA Invoice OCR, Tally XML & GSTR-2B Workspace | CA Saarthi AI',
+    title: 'Invoice OCR & Tally XML Workspace | CA Saarthi AI',
     h1: 'CA Saarthi AI Live Invoice OCR, GST Audit & Tally Command Center',
     description:
       'Upload PDF or image invoices, extract GST fields, validate 15-digit GSTINs, reconcile GSTR-2B, and export TallyPrime XML, Excel, or Zoho CSV. Open now.',
     breadcrumbName: 'Workspace',
   },
   '/features': {
-    title: 'GST Invoice OCR Features — GSTIN Validation & Bilingual OCR | CA Saarthi AI',
+    title: 'GST Invoice OCR & Tally Features | CA Saarthi AI',
     h1: 'Features Built for Indian GST Practice Workflows',
     description:
       'Explore 15-digit GSTIN Mod-36 checksum validation, English + Hindi invoice OCR, GSTR-2B matching, and TallyPrime XML export. Explore features today.',
     breadcrumbName: 'Features',
   },
   '/how-it-works': {
-    title: 'How CA Saarthi AI Automates GST Invoice Entry | CA Saarthi AI',
+    title: 'How GST Invoice OCR Automation Works | CA Saarthi AI',
     h1: 'From Client Invoice Folder to Tally Sign-Off',
     description:
       'See how Indian CA firms upload client PDF and image bills, validate GSTINs and tax splits, and export to TallyPrime XML or Excel. Start a pilot.',
@@ -1154,21 +1159,21 @@ export const CORE_SAAS_ROUTES_META: Record<
     breadcrumbName: 'Security',
   },
   '/privacy': {
-    title: 'Privacy Policy — Client Data & OCR Processing | CA Saarthi AI',
+    title: 'Privacy Policy & Data Handling | CA Saarthi AI',
     h1: 'Privacy Policy for Chartered Accountant & Client Financial Data',
     description:
       "Read CA Saarthi AI's privacy policy covering in-memory cloud OCR, local browser fallback OCR, client-scoped Firestore storage, and one-click data deletion.",
     breadcrumbName: 'Privacy Policy',
   },
   '/terms': {
-    title: 'Terms of Service — GST OCR & Tally XML Platform | CA Saarthi AI',
+    title: 'Terms of Service | CA Saarthi AI',
     h1: 'Terms of Service for CA Saarthi AI CA Practice Software',
     description:
       "Review the terms of service governing CA Saarthi AI's GST invoice OCR workspace, TallyPrime XML export, GSTR-2B reconciliation, and developer API.",
     breadcrumbName: 'Terms of Service',
   },
   '/data-deletion': {
-    title: 'Data Deletion Policy — Instant Record Removal | CA Saarthi AI',
+    title: 'Data Deletion Policy | CA Saarthi AI',
     h1: 'Data Deletion Policy & Workspace Purge Controls',
     description:
       'How to permanently delete individual purchase bills, client workspaces, or your entire CA Saarthi AI Cloud Firestore and local browser records.',
@@ -1389,7 +1394,7 @@ export function getCanonicalSitemapEntries(): Array<{
   RESOURCE_ARTICLES.forEach((article) => {
     entries.push({
       loc: `${SITE_DOMAIN}/blog/${article.slug}`,
-      lastmod: article.publishedDate || defaultDate,
+      lastmod: article.modifiedDate || article.publishedDate || defaultDate,
       changefreq: 'monthly',
       priority: '0.8',
     });
@@ -1707,10 +1712,10 @@ export function buildJsonLdGraph(rawUrlOrPath: string): Record<string, any> {
     });
   }
 
-  // Task 8: Article schema with honest editorial Organization author + Organization publisher
+  // Task 8: BlogPosting schema with honest editorial Organization author + Organization publisher
   if (articleSpec) {
     graph.push({
-      '@type': 'Article',
+      '@type': 'BlogPosting',
       headline: articleSpec.title,
       description: articleSpec.metaDescription,
       image: DEFAULT_OG_IMAGE,
@@ -1837,10 +1842,10 @@ export const PRACTICE_PRICING_PLANS: PracticePricingPlanSpec[] = [
     ctaLabel: 'Start Free Trial in Workspace',
     ctaHref: '/app',
     features: [
-      '3 no-login demo scans/day + free workspace trial',
-      'Single & batch invoice upload queue',
+      '3 no-login demo scans/day per browser + 3 sample invoices',
+      'Single & batch invoice upload queue (up to 5 pages/scan pass)',
       'TallyPrime XML & Excel (.xlsx) export',
-      '1 Default Client workspace',
+      'Client-wise GSTIN workspace profile for workflow evaluation',
     ],
   },
   {
@@ -1854,8 +1859,8 @@ export const PRACTICE_PRICING_PLANS: PracticePricingPlanSpec[] = [
     ctaLabel: 'Request CA-Firm Pilot Offer',
     ctaHref: '/contact',
     features: [
-      'Up to 25 Client-Wise Workspaces',
-      'Full GSTR-2B JSON & Excel Reconciliation',
+      'Multi-client GSTIN workspace separation (configured on onboarding)',
+      '6-status GSTR-2B JSON & Excel Reconciliation (7-sheet workbook)',
       'Zoho Books CSV & Busy Excel exports',
       'Extended E-Invoice, IRN & Bank field extraction',
     ],
@@ -1871,10 +1876,10 @@ export const PRACTICE_PRICING_PLANS: PracticePricingPlanSpec[] = [
     ctaLabel: 'Request CA-Firm Pilot Offer',
     ctaHref: '/contact',
     features: [
-      'Unlimited Client Workspaces',
+      'Firm-wide multi-client workspaces (configured on onboarding)',
       'Team Access RBAC (Owner/CA, Reviewer, Staff)',
-      'Bill approval workflow & immutable audit trail',
-      'Developer REST API (POST /api/v1/extract)',
+      'Bill approval workflow & per-bill audit trail',
+      'REST API (POST /api/v1/extract · 30 req/min, 15 MB max)',
     ],
   },
 ];
@@ -1891,10 +1896,10 @@ export const PRACTICE_PRICING_PLANS_HI: PracticePricingPlanSpec[] = [
     ctaLabel: 'वर्कस्पेस में मुफ़्त ट्रायल शुरू करें',
     ctaHref: '/app',
     features: [
-      'प्रतिदिन 3 बिना-लॉगिन डेमो स्कैन + मुफ़्त वर्कस्पेस ट्रायल',
-      'सिंगल और बैच इनवॉइस अपलोड क्यू (Queue)',
+      'प्रतिदिन 3 बिना-लॉगिन डेमो स्कैन + 3 सैंपल इनवॉइस',
+      'सिंगल और बैच अपलोड क्यू (प्रति स्कैन पास 5 पेज तक)',
       'TallyPrime XML और Excel (.xlsx) एक्सपोर्ट',
-      '1 डिफ़ॉल्ट क्लाइंट वर्कस्पेस',
+      'वर्कफ़्लो मूल्यांकन के लिए क्लाइंट-वाइज़ GSTIN वर्कस्पेस',
     ],
   },
   {
@@ -1908,8 +1913,8 @@ export const PRACTICE_PRICING_PLANS_HI: PracticePricingPlanSpec[] = [
     ctaLabel: 'CA-फर्म पायलट ऑफ़र का अनुरोध करें',
     ctaHref: '/contact',
     features: [
-      '25 तक क्लाइंट-वाइज़ वर्कस्पेस',
-      'पूर्ण GSTR-2B JSON और Excel रिकन्सिलिएशन',
+      'मल्टी-क्लाइंट GSTIN वर्कस्पेस पृथक्करण (ऑनबोर्डिंग पर कॉन्फ़िगर)',
+      '6-स्टेटस GSTR-2B JSON और Excel रिकन्सिलिएशन (7-शीट वर्कबुक)',
       'Zoho Books CSV और Busy Excel एक्सपोर्ट',
       'विस्तृत E-Invoice, IRN और बैंक फ़ील्ड एक्सट्रैक्शन',
     ],
@@ -1925,10 +1930,10 @@ export const PRACTICE_PRICING_PLANS_HI: PracticePricingPlanSpec[] = [
     ctaLabel: 'CA-फर्म पायलट ऑफ़र का अनुरोध करें',
     ctaHref: '/contact',
     features: [
-      'असीमित (Unlimited) क्लाइंट वर्कस्पेस',
+      'फर्म-स्तरीय मल्टी-क्लाइंट वर्कस्पेस (ऑनबोर्डिंग पर कॉन्फ़िगर)',
       'टीम एक्सेस RBAC (Owner/CA, Reviewer, Staff)',
       'बिल अप्रूवल वर्कफ़्लो और ऑडिट ट्रेल',
-      'डेवलपर REST API (POST /api/v1/extract)',
+      'डेवलपर REST API (30 req/min प्रति कुंजी, 15 MB अधिकतम)',
     ],
   },
 ];
@@ -2571,8 +2576,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/hi/pricing') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
         <p>पायलट CA फर्मों के लिए अर्ली-एक्सेस प्राइसिंग। हमारे तीन संरचित प्रैक्टिस प्लान की तुलना नीचे करें:</p>
@@ -2596,8 +2601,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/pricing') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
         <p>Early-access pricing — locked for pilot CA firms. Compare our three structured tiers below:</p>
@@ -2617,9 +2622,9 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
         </section>
         <section>
           <h2>How Plan Differences Work in Practice</h2>
-          <p><strong>Starter / Trial (₹0 / month):</strong> Includes 3 no-login demo scans per day on the homepage plus access to the live workspace with 1 Default Client profile, single and batch invoice uploads, 15-digit GSTIN Mod-36 checksum validation, and exports to <a href="/gst-invoice-to-tally">TallyPrime XML</a> and <a href="/pdf-invoice-to-excel">Excel (.xlsx)</a>.</p>
-          <p><strong>CA Practice Pro (₹1,499 / month):</strong> Designed for solo practitioners managing up to 25 separate client GSTIN workspaces. Unlocks the full 6-status <a href="/gstr-2b-reconciliation-excel">GSTR-2B JSON &amp; Excel Reconciliation</a> engine, Zoho Books CSV and Busy Accounting Excel exports, and extended e-Invoice IRN, e-Way Bill, bank IFSC, and Bill of Entry field extraction.</p>
-          <p><strong>Firm / Enterprise (₹3,999 / month):</strong> Built for multi-partner CA firms requiring unlimited client workspaces, role-based team access (Owner/CA, Reviewer, and Staff roles), maker-checker bill approval workflows with audit trails, and programmatic access to <a href="/api-docs">POST /api/v1/extract</a>.</p>
+          <p><strong>Starter / Trial (₹0 / month):</strong> Includes 3 built-in GST sample invoices plus up to 3 custom file scans per browser per day without login, single and batch uploads (up to 5 pages rendered per visual scan pass), 15-digit GSTIN Mod-36 checksum validation, and exports to <a href="/gst-invoice-to-tally">TallyPrime XML</a> and <a href="/pdf-invoice-to-excel">Excel (.xlsx)</a>.</p>
+          <p><strong>CA Practice Pro (₹1,499 / month):</strong> Designed for solo CAs and GST practitioners managing multiple monthly retainer clients, adding client-wise GSTIN workspace separation, the 6-status <a href="/gstr-2b-reconciliation-excel">GSTR-2B JSON &amp; Excel Reconciliation</a> engine (7-sheet workbook), Zoho Books CSV and Busy Accounting Excel exports, and extended e-Invoice IRN, e-Way Bill, bank IFSC, and Bill of Entry field extraction.</p>
+          <p><strong>Firm / Enterprise (₹3,999 / month):</strong> Built for multi-partner CA firms needing firm-wide multi-client workspaces, role-based team access (Owner/CA, Reviewer, and Staff roles), maker-checker bill approval workflows with audit trails, and programmatic access to <a href="/api-docs">POST /api/v1/extract</a> (enforced rate limit: 30 requests/minute per API key hash and 15 MB maximum payload). Commercial billing and firm pilot onboarding are configured via <a href="/contact">Contact &amp; Book a Demo</a>.</p>
           <p>Explore <a href="/features">all implemented GST practice features</a>, review our <a href="/security">Security &amp; Data Isolation architecture</a>, or <a href="/contact">Contact us to book a CA firm pilot walkthrough</a>.</p>
         </section>
       </main>
@@ -2628,8 +2633,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/features' || cleanPath === '/hi/features') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
         <p>Every capability listed below is implemented in the ${escapeHtmlAttr(BRAND_NAME)} workspace. Each section details what the module does, what input it accepts, what output it produces, what the Chartered Accountant or accountant must review, and technical limitations.</p>
@@ -2653,8 +2658,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/security') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>This page documents the exact authentication, OCR processing, Firestore database isolation, role-based access control, and encryption mechanisms implemented in the ${escapeHtmlAttr(BRAND_NAME)} codebase.</p>
         ${SECURITY_ARCHITECTURE_SECTIONS.map(
@@ -2671,8 +2676,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/privacy') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>Last Updated: November 2026 · Support: <a href="mailto:support@casaarthiai.in">support@casaarthiai.in</a></p>
         ${PRIVACY_POLICY_SECTIONS.map(
@@ -2689,8 +2694,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/data-deletion') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>Last Updated: November 2026 · Support: <a href="mailto:support@casaarthiai.in">support@casaarthiai.in</a></p>
         ${DATA_DELETION_SECTIONS.map(
@@ -2707,8 +2712,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/about') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(description)}</p>
         ${ABOUT_PAGE_SECTIONS.map(
@@ -2725,8 +2730,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/api-docs') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(description)}</p>
         <section>
@@ -2774,8 +2779,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/how-it-works') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(description)}</p>
         ${HOW_IT_WORKS_SECTIONS.map(
@@ -2792,8 +2797,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/blog') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(description)}</p>
         <section>
@@ -2814,8 +2819,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/terms') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>Last Updated: November 2026 · Support: <a href="mailto:support@casaarthiai.in">support@casaarthiai.in</a></p>
         <section>
@@ -2836,8 +2841,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/contact') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>Schedule a live walkthrough of <a href="/gst-invoice-to-tally">TallyPrime XML import</a>, <a href="/gstr-2b-reconciliation-excel">GSTR-2B reconciliation in Excel</a>, and multi-client CA firm workspaces with our engineering team at <a href="mailto:support@casaarthiai.in">support@casaarthiai.in</a>.</p>
         <p>Compare our <a href="/pricing">Starter (₹0), CA Practice Pro (₹1,499/month), and Firm / Enterprise (₹3,999/month) plans</a> or test the <a href="/app">live workspace</a> directly.</p>
@@ -2847,8 +2852,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (seoSpec) {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <article>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : seoSpec.subtitle)}</p>
         <p>${escapeHtmlAttr(seoSpec.problemStatement)}</p>
@@ -2883,8 +2888,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (articleSpec) {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <article>
+        ${breadcrumbNavHtml}
         <p>Published ${escapeHtmlAttr(articleSpec.publishedDate)} · Updated ${escapeHtmlAttr(articleSpec.modifiedDate || articleSpec.publishedDate)} · By <a href="/about">${escapeHtmlAttr(DEFAULT_CA_AUTHOR.name)} (${escapeHtmlAttr(DEFAULT_CA_AUTHOR.credentials)})</a> — ${escapeHtmlAttr(DEFAULT_CA_AUTHOR.bio)}</p>
         <h1>${escapeHtmlAttr(articleSpec.title)}</h1>
         <p>${escapeHtmlAttr(articleSpec.summary)}</p>
@@ -2925,8 +2930,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else if (cleanPath === '/faq') {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(description)}</p>
         <section>
@@ -3009,8 +3014,8 @@ export function getPrerenderedSeoHtml(rawUrlOrPath: string): {
   } else {
     ssrBodyHtml = `<div id="prerendered-route-shell">
       ${sharedNavHtml}
-      ${breadcrumbNavHtml}
       <main>
+        ${breadcrumbNavHtml}
         <h1>${escapeHtmlAttr(h1)}</h1>
         <p>${escapeHtmlAttr(hindiSpec ? hindiSpec.subtitle : description)}</p>
         <p>Bilingual AI OCR built exclusively for Indian CA firms. Scan English &amp; Hindi bills, validate 15-digit GSTINs with Mod-36 checksums, and export directly to <a href="/gst-invoice-to-tally">TallyPrime XML</a>, <a href="/gstr-2b-reconciliation-excel">GSTR-2B Reconciliation in Excel</a>, <a href="/pdf-invoice-to-excel">Excel (.xlsx)</a>, SQL, or JSON with client-scoped data isolation.</p>

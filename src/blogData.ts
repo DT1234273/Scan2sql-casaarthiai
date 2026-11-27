@@ -46,7 +46,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'how-to-import-purchase-invoices-into-tallyprime-from-pdf',
     path: '/blog/how-to-import-purchase-invoices-into-tallyprime-from-pdf',
     title: 'How to Import Purchase Invoices into TallyPrime from PDF',
-    metaTitle: 'How to Import Purchase Invoices into TallyPrime from PDF — CA Saarthi AI',
+    metaTitle: 'Import PDF Purchase Invoices to TallyPrime | CA Saarthi AI',
     metaDescription:
       'Step-by-step guide for Indian CA firms on converting PDF purchase bills into TallyPrime XML vouchers with GST ledger mapping and party auto-creation.',
     category: 'TallyPrime Automation',
@@ -104,7 +104,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     category: 'GST Reconciliation',
     readTime: '8 min read',
     publishedDate: '2026-11-03',
-    modifiedDate: '2026-11-26',
+    modifiedDate: '2026-11-27',
     summary:
       'A practical guide for CA firms on matching purchase books against GSTR-2B, handling invoice number formatting differences, and exporting a 7-sheet reconciliation workbook.',
     keyTakeaways: [
@@ -117,7 +117,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
         heading: '1. Why GSTR-2B Reconciliation Is Critical Before Filing GSTR-3B',
         paragraphs: [
           'Under Section 16(2)(aa) of the CGST Act read with Rule 36(4), Input Tax Credit (ITC) can only be availed when the supplier has furnished the invoice in their GSTR-1/IFF and the details are communicated in the recipient’s GSTR-2B statement.',
-          'On the GST Portal, a Form GST DRC-01C intimation is issued when the difference between ITC available as per GSTR-2B and ITC claimed in GSTR-3B/3BQ exceeds a predefined limit. When such an intimation is received, the taxpayer is required to submit the Part B response. As explained by the GST Portal, failure to submit the Part B response can prevent filing GSTR-1/IFF for the subsequent tax period. Conversely, failing to spot invoices present in GSTR-2B but missing from your client’s purchase books can leave eligible ITC unrecorded.',
+          'On the GST Portal, a Form GST DRC-01C intimation is issued when the difference between ITC available as per GSTR-2B and ITC claimed in GSTR-3B/3BQ exceeds the prescribed limit. When such an intimation is received, the taxpayer must submit a response in Part B. As explained by the GST Portal, failure to submit the Part B response can restrict filing of GSTR-1/IFF for the subsequent tax period. Not every unmatched invoice or reconciliation difference automatically triggers DRC-01C, and receiving an intimation does not automatically establish fraud or impose an automatic penalty—it is a return-compliance intimation requiring reconciliation and a Part B explanation or payment where applicable. Conversely, failing to spot invoices present in GSTR-2B but missing from your client’s purchase books can leave eligible ITC unrecorded.',
         ],
         externalSources: [
           {
@@ -130,7 +130,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
       {
         heading: '2. Why Standard Excel VLOOKUPs Fail on GSTR-2B Data',
         paragraphs: [
-          'When you run a simple VLOOKUP on `GSTIN + Invoice Number` in Excel, inconsistent invoice-number formats, punctuation, leading zeros, and supplier data differences can cause exact-match formulas to return unmatched results. For example, the printed bill might say `Bill No: 00458/26-27`, whereas the supplier’s accountant uploaded `458` or `458-26/27` in GSTR-1.',
+          'When you run a simple exact-match VLOOKUP on `GSTIN + Invoice Number` in Excel, valid invoices can still appear unmatched because of different invoice-number formats, leading zeros, punctuation and spacing differences, supplier GSTIN inconsistencies, invoice-date and tax-value discrepancies, and different data formats between purchase registers and GSTR-2B. For example, a printed bill might read `Bill No: 00458/26-27`, whereas the supplier uploaded `458` or `458-26/27` in GSTR-1.',
         ],
         checklist: [
           'Step 1: Normalize both Books and 2B invoice numbers (uppercase, strip punctuation and leading zeros).',
@@ -158,7 +158,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'how-to-find-duplicate-purchase-invoices-before-filing-gst',
     path: '/blog/how-to-find-duplicate-purchase-invoices-before-filing-gst',
     title: 'How to Find Duplicate Purchase Invoices Before Filing GST',
-    metaTitle: 'How to Find Duplicate Purchase Invoices Before Filing GST — CA Saarthi AI',
+    metaTitle: 'Find Duplicate Purchase Invoices Before GST | CA Saarthi AI',
     metaDescription:
       'Learn how CA firms detect and resolve duplicate purchase bills across WhatsApp photos, PDFs, and Excel sheets before filing GSTR-3B.',
     category: 'GST Audit Controls',
@@ -203,7 +203,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'automate-invoice-data-entry-ca-firms',
     path: '/blog/automate-invoice-data-entry-ca-firms',
     title: 'How to Automate Invoice Data Entry in a CA Firm: A Practical Step-by-Step Guide',
-    metaTitle: 'How to Automate Invoice Data Entry in a CA Firm: A Practical Step-by-Step Guide — CA Saarthi AI',
+    metaTitle: 'Automate Invoice Data Entry for CA Firms | CA Saarthi AI',
     metaDescription:
       'Learn how Indian Chartered Accountant firms automate purchase bill data entry using AI OCR, GSTIN validation, and Excel exports. Read the guide now.',
     category: 'CA Practice Management',
@@ -255,7 +255,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'ocr-for-gst-invoices-complete-guide',
     path: '/blog/ocr-for-gst-invoices-complete-guide',
     title: 'OCR for GST Invoices: Complete Technical & Compliance Guide for Indian Accountants',
-    metaTitle: 'OCR for GST Invoices: Complete Technical & Compliance Guide for Indian Accountants — CA Saarthi AI',
+    metaTitle: 'OCR for GST Invoices: Guide for Indian CAs | CA Saarthi AI',
     metaDescription:
       'Understand how Optical Character Recognition and AI Vision extract GSTIN, HSN codes, and CGST/SGST/IGST splits from GST invoices. Read the full guide.',
     category: 'GST Technology',
@@ -300,7 +300,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'convert-purchase-bills-to-excel-accounting',
     path: '/blog/convert-purchase-bills-to-excel-accounting',
     title: 'How to Convert Client Purchase Bills into Clean Excel Sheets for Accounting',
-    metaTitle: 'How to Convert Client Purchase Bills into Clean Excel Sheets for Accounting — CA Saarthi AI',
+    metaTitle: 'Convert Purchase Bills to Excel for CAs | CA Saarthi AI',
     metaDescription:
       'Step-by-step guide to converting PDF and image purchase bills into structured, formula-ready Excel (.xlsx) registers without broken columns. Read more.',
     category: 'Excel & Bookkeeping',
@@ -344,7 +344,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'common-errors-manual-invoice-entry',
     path: '/blog/common-errors-manual-invoice-entry',
     title: '7 Costly Errors in Manual Invoice Data Entry (And How CA Firms Prevent Them)',
-    metaTitle: '7 Costly Errors in Manual Invoice Data Entry (And How CA Firms Prevent Them) — CA Saarthi AI',
+    metaTitle: '7 Manual Invoice Entry Errors in CA Firms | CA Saarthi AI',
     metaDescription:
       'Discover the 7 most common manual invoice data entry mistakes in Indian accounting practices—from GSTIN typos to duplicate ITC claims. Read the guide.',
     category: 'Audit & Risk Control',
@@ -392,7 +392,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'digital-document-workflow-chartered-accountants',
     path: '/blog/digital-document-workflow-chartered-accountants',
     title: 'Designing a Modern Digital Document Workflow for Chartered Accountants',
-    metaTitle: 'Designing a Modern Digital Document Workflow for Chartered Accountants — CA Saarthi AI',
+    metaTitle: 'Digital Document Workflow for CA Firms | CA Saarthi AI',
     metaDescription:
       'Build a paperless, audit-ready digital document workflow for your CA firm. Standardize document collection, OCR extraction, and archival. Read guide.',
     category: 'Digital Practice',
@@ -431,7 +431,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'gst-invoice-fields-checklist-verification',
     path: '/blog/gst-invoice-fields-checklist-verification',
     title: 'Mandatory GST Invoice Fields Checklist: What Every CA Must Verify Under Rule 46',
-    metaTitle: 'Mandatory GST Invoice Fields Checklist: What Every CA Must Verify Under Rule 46 — CA Saarthi AI',
+    metaTitle: 'Mandatory GST Invoice Fields (Rule 46) | CA Saarthi AI',
     metaDescription:
       'Complete checklist of mandatory fields required on a valid Indian GST Tax Invoice under CGST Rule 46 for claiming Input Tax Credit. View checklist now.',
     category: 'GST Compliance',
@@ -481,7 +481,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'ai-document-processing-for-tax-consultants',
     path: '/blog/ai-document-processing-for-tax-consultants',
     title: 'AI Document Processing for Tax Consultants: Practical Use Cases & Safeguards',
-    metaTitle: 'AI Document Processing for Tax Consultants: Practical Use Cases & Safeguards — CA Saarthi AI',
+    metaTitle: 'AI Document Processing for Tax Consultants | CA Saarthi AI',
     metaDescription:
       'How Indian tax consultants and GST practitioners use AI document processing with deterministic validation rules to speed up return filing. Read guide.',
     category: 'AI in Accounting',
@@ -521,7 +521,7 @@ export const RESOURCE_ARTICLES: ResourceArticleSpec[] = [
     slug: 'organize-client-bills-monthly-gst-compliance',
     path: '/blog/organize-client-bills-monthly-gst-compliance',
     title: 'How to Organize Client Bills for Stress-Free Monthly GST Compliance',
-    metaTitle: 'How to Organize Client Bills for Stress-Free Monthly GST Compliance — CA Saarthi AI',
+    metaTitle: 'Organize Client Bills for Monthly GST | CA Saarthi AI',
     metaDescription:
       'A practical system for CA firms and accountants to organize, scan, and reconcile client purchase and sales bills before GST deadlines. Read the guide.',
     category: 'GST Workflow',
@@ -668,7 +668,7 @@ export function syncBlogDocumentSeoTags(pathname: string): void {
 
   if (article) {
     graph.push({
-      '@type': 'Article',
+      '@type': 'BlogPosting',
       headline: article.title,
       description: article.metaDescription,
       image: DEFAULT_OG_IMAGE,
