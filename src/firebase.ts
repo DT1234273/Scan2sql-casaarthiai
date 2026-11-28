@@ -35,6 +35,10 @@ import {
   type FirmRole,
   type BillApprovalStatus,
 } from './caWorkspaceTypes';
+import {
+  buildFirestoreBillRecordPayload,
+  parseFirestoreBillDocument,
+} from './extendedInvoiceFields';
 
 interface FirebaseAppletConfigShape {
   apiKey?: string;
@@ -381,90 +385,7 @@ export async function deleteClientFromFirestore(
 // Path: /users/{uid}/clients/{clientId}/bills/{billId}
 // ---------------------------------------------------------------------------
 function buildBillFirestorePayload(uid: string, clientId: string, bill: NoSQLBillRecord) {
-  const billId = sanitizeId(bill.id, 'BILL');
-  const billAny = bill as unknown as Record<string, unknown>;
-  const extraWithAudit = {
-    ...(bill.extraHeaderFields || {}),
-    clientId,
-    approvalStatus: String(
-      billAny.approvalStatus || bill.extraHeaderFields?.approvalStatus || 'approved'
-    ),
-    rejectionReason: String(
-      billAny.rejectionReason || bill.extraHeaderFields?.rejectionReason || ''
-    ),
-    auditTrailJson:
-      typeof billAny.auditTrail === 'object'
-        ? JSON.stringify(billAny.auditTrail)
-        : bill.extraHeaderFields?.auditTrailJson || '[]',
-  };
-
-  let extraHeaderFieldsJson = '{}';
-  try {
-    const str = JSON.stringify(extraWithAudit);
-    if (str.length >= 2 && str.length <= 10000) {
-      extraHeaderFieldsJson = str;
-    }
-  } catch {
-    extraHeaderFieldsJson = '{}';
-  }
-
-  let itemsJson = '[]';
-  try {
-    const str = JSON.stringify(Array.isArray(bill.items) ? bill.items.slice(0, 100) : []);
-    if (str.length >= 2 && str.length <= 100000) {
-      itemsJson = str;
-    }
-  } catch {
-    itemsJson = '[]';
-  }
-
-  const approvalStatusRaw = String(
-    billAny.approvalStatus || extraWithAudit.approvalStatus || 'approved'
-  );
-  const approvalStatus: BillApprovalStatus =
-    approvalStatusRaw === 'draft' ||
-    approvalStatusRaw === 'pending_review' ||
-    approvalStatusRaw === 'rejected'
-      ? approvalStatusRaw
-      : 'approved';
-
-  return {
-    billId,
-    payload: {
-      id: billId,
-      ownerId: uid,
-      clientId: clampString(clientId, 120, 1, DEFAULT_CLIENT_ID),
-      approvalStatus,
-      fileName: clampString(bill.fileName, 250, 1, 'Uploaded_Bill.pdf'),
-      shopName: clampString(bill.shopName, 250, 1, 'Vendor / Shop'),
-      sellerGstin: clampString(bill.sellerGstin, 30, 0, ''),
-      buyerName: clampString(bill.buyerName, 250, 0, ''),
-      buyerGstin: clampString(bill.buyerGstin, 30, 0, ''),
-      invoiceNumber: clampString(bill.invoiceNumber, 120, 1, 'INV-001'),
-      billDate: clampString(bill.billDate, 40, 1, new Date().toISOString().slice(0, 10)),
-      placeOfSupply: clampString(bill.placeOfSupply, 120, 0, ''),
-      voucherType: clampString(bill.voucherType, 80, 1, 'Tax Invoice'),
-      paymentMode: clampString(bill.paymentMode, 80, 1, 'Cash / UPI'),
-      subtotal: clampCurrency(bill.subtotal),
-      cgstAmount: clampCurrency(bill.cgstAmount),
-      sgstAmount: clampCurrency(bill.sgstAmount),
-      igstAmount: clampCurrency(bill.igstAmount),
-      taxAmount: clampCurrency(bill.taxAmount),
-      discountAmount: clampCurrency(bill.discountAmount),
-      grandTotal: clampCurrency(bill.grandTotal),
-      confidence: clampConfidence(bill.confidence),
-      rawText: clampString(bill.rawText, 50000, 0, ''),
-      createdAt: clampString(
-        bill.createdAt,
-        40,
-        1,
-        new Date().toISOString().slice(0, 16).replace('T', ' ')
-      ),
-      extraHeaderFieldsJson,
-      itemsJson,
-      syncedAt: serverTimestamp(),
-    },
-  };
+  return buildFirestoreBillRecordPayload(uid, clientId, bill, serverTimestamp());
 }
 
 export async function saveBillToUserAccount(
@@ -855,65 +776,7 @@ export async function deleteEntireUserAccountDataFromFirestore(userId: string): 
 }
 
 function parseBillSnapshotDoc(docId: string, d: Record<string, unknown>): NoSQLBillRecord {
-  let extraHeaderFields: Record<string, string> = {};
-  if (typeof d.extraHeaderFieldsJson === 'string') {
-    try {
-      const parsed = JSON.parse(d.extraHeaderFieldsJson);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        extraHeaderFields = parsed as Record<string, string>;
-      }
-    } catch {
-      // ignore
-    }
-  } else if (d.extraHeaderFields && typeof d.extraHeaderFields === 'object') {
-    extraHeaderFields = { ...(d.extraHeaderFields as Record<string, string>) };
-  }
-  if (d.clientId && !extraHeaderFields.clientId) {
-    extraHeaderFields.clientId = String(d.clientId);
-  }
-  if (d.approvalStatus && !extraHeaderFields.approvalStatus) {
-    extraHeaderFields.approvalStatus = String(d.approvalStatus);
-  }
-
-  let items: NoSQLBillRecord['items'] = [];
-  if (typeof d.itemsJson === 'string') {
-    try {
-      const parsed = JSON.parse(d.itemsJson);
-      if (Array.isArray(parsed)) {
-        items = parsed as NoSQLBillRecord['items'];
-      }
-    } catch {
-      // ignore
-    }
-  } else if (Array.isArray(d.items)) {
-    items = d.items as NoSQLBillRecord['items'];
-  }
-
-  return {
-    id: String(d.id || docId),
-    fileName: String(d.fileName || 'Uploaded_Bill.pdf'),
-    shopName: String(d.shopName || 'Vendor'),
-    sellerGstin: String(d.sellerGstin || ''),
-    buyerName: String(d.buyerName || ''),
-    buyerGstin: String(d.buyerGstin || ''),
-    invoiceNumber: String(d.invoiceNumber || ''),
-    billDate: String(d.billDate || ''),
-    placeOfSupply: String(d.placeOfSupply || ''),
-    voucherType: String(d.voucherType || 'Tax Invoice'),
-    paymentMode: String(d.paymentMode || 'Cash / UPI'),
-    subtotal: Number(d.subtotal) || 0,
-    cgstAmount: Number(d.cgstAmount) || 0,
-    sgstAmount: Number(d.sgstAmount) || 0,
-    igstAmount: Number(d.igstAmount) || 0,
-    taxAmount: Number(d.taxAmount) || 0,
-    discountAmount: Number(d.discountAmount) || 0,
-    grandTotal: Number(d.grandTotal) || 0,
-    confidence: Number(d.confidence) || 100,
-    rawText: String(d.rawText || ''),
-    createdAt: String(d.createdAt || ''),
-    extraHeaderFields,
-    items,
-  };
+  return parseFirestoreBillDocument(docId, d);
 }
 
 export function subscribeToUserAccountHistory(

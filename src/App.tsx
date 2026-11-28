@@ -84,7 +84,18 @@ import {
   UserApiKeyRecord,
   BillApprovalStatus,
   BillAuditTrailEntry,
+  ExtendedInvoiceFields,
 } from './caWorkspaceTypes';
+import {
+  EMPTY_EXTENDED_EDITOR_STATE,
+  ExtendedInvoiceEditorState,
+  extractExtendedFieldsFromBackendResponse,
+  mergeExtendedFieldsForEditor,
+  editorStateToBillExtendedFields,
+  billRecordToExtendedEditorState,
+  mergeBillExtendedFieldsForDuplicate,
+  parseEditorNumberInput,
+} from './extendedInvoiceFields';
 import {
   TallyExportModal,
   Gstr2bReconciliationTab,
@@ -250,6 +261,7 @@ const STANDARD_COLUMNS: ColumnDefinition[] = [
   { key: 'supplierAddress', label: 'Supplier Address', category: 'HEADER' },
   { key: 'buyerName', label: 'Buyer Name', category: 'HEADER' },
   { key: 'buyerGstin', label: 'Buyer GSTIN', category: 'HEADER' },
+  { key: 'buyerState', label: 'Buyer State', category: 'HEADER' },
   { key: 'buyerAddress', label: 'Buyer Address', category: 'HEADER' },
   { key: 'placeOfSupply', label: 'Place of Supply', category: 'HEADER' },
   { key: 'voucherType', label: 'Bill Category / Type', category: 'HEADER' },
@@ -262,7 +274,10 @@ const STANDARD_COLUMNS: ColumnDefinition[] = [
   { key: 'bankName', label: 'Bank Name', category: 'HEADER' },
   { key: 'bankAccountNo', label: 'Bank A/C No', category: 'HEADER' },
   { key: 'bankIfsc', label: 'Bank IFSC', category: 'HEADER' },
+  { key: 'isBillOfEntry', label: 'Is Bill of Entry', category: 'HEADER' },
   { key: 'boeNumber', label: 'Bill of Entry No', category: 'HEADER' },
+  { key: 'boeDate', label: 'Bill of Entry Date', category: 'HEADER' },
+  { key: 'portCode', label: 'Port Code', category: 'HEADER' },
   { key: 'currency', label: 'Currency', category: 'HEADER' },
   { key: 'itemName', label: 'Item Summary / Description', category: 'ITEM' },
   { key: 'hsnSac', label: 'HSN / SAC', category: 'ITEM' },
@@ -934,7 +949,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
 
-  // Part 5 Extended Invoice & Bill of Entry Fields
+  // Part 5 Extended Invoice & Bill of Entry Fields (all 21 fields)
   const [irn, setIrn] = useState('');
   const [ewayBillNo, setEwayBillNo] = useState('');
   const [eInvoiceQr, setEInvoiceQr] = useState('');
@@ -949,14 +964,76 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
   const [bankName, setBankName] = useState('');
   const [bankAccountNo, setBankAccountNo] = useState('');
   const [bankIfsc, setBankIfsc] = useState('');
-  const [currency, setCurrency] = useState('INR');
-  const [otherCharges, setOtherCharges] = useState<number>(0);
-  const [roundOff, setRoundOff] = useState<number>(0);
+  const [currency, setCurrency] = useState('');
+  const [otherCharges, setOtherCharges] = useState<number | undefined>(undefined);
+  const [roundOff, setRoundOff] = useState<number | undefined>(undefined);
+  const [isBillOfEntry, setIsBillOfEntry] = useState<boolean | undefined>(undefined);
   const [boeNumber, setBoeNumber] = useState('');
+  const [boeDate, setBoeDate] = useState('');
+  const [portCode, setPortCode] = useState('');
+
+  const activeDraftIdentityRef = useRef<string>('');
+  const currentExtendedEditorState: ExtendedInvoiceEditorState = {
+    irn,
+    ewayBillNo,
+    eInvoiceQr,
+    supplierPan,
+    supplierAddress,
+    supplierState,
+    buyerAddress,
+    buyerState,
+    poNumber,
+    dueDate,
+    paymentTerms,
+    currency,
+    otherCharges,
+    roundOff,
+    bankName,
+    bankAccountNo,
+    bankIfsc,
+    isBillOfEntry,
+    boeNumber,
+    boeDate,
+    portCode,
+  };
+  const currentExtendedStateRef = useRef<ExtendedInvoiceEditorState>(currentExtendedEditorState);
+  currentExtendedStateRef.current = currentExtendedEditorState;
+
+  const applyExtendedEditorState = useCallback((next: ExtendedInvoiceEditorState) => {
+    currentExtendedStateRef.current = next;
+    setIrn(next.irn);
+    setEwayBillNo(next.ewayBillNo);
+    setEInvoiceQr(next.eInvoiceQr);
+    setSupplierPan(next.supplierPan);
+    setSupplierAddress(next.supplierAddress);
+    setSupplierState(next.supplierState);
+    setBuyerAddress(next.buyerAddress);
+    setBuyerState(next.buyerState);
+    setPoNumber(next.poNumber);
+    setDueDate(next.dueDate);
+    setPaymentTerms(next.paymentTerms);
+    setCurrency(next.currency);
+    setOtherCharges(next.otherCharges);
+    setRoundOff(next.roundOff);
+    setBankName(next.bankName);
+    setBankAccountNo(next.bankAccountNo);
+    setBankIfsc(next.bankIfsc);
+    setIsBillOfEntry(next.isBillOfEntry);
+    setBoeNumber(next.boeNumber);
+    setBoeDate(next.boeDate);
+    setPortCode(next.portCode);
+  }, []);
 
   // Part 1, 3, 4, 5.3, 6 State: Clients, Tally Settings, Team RBAC, API Keys, Live GSTIN Verify
   const [clients, setClients] = useState<CAClientProfile[]>([DEFAULT_CLIENT_PROFILE]);
   const [activeClientId, setActiveClientId] = useState<string>(DEFAULT_CLIENT_ID);
+
+  // State for duplicate invoiceNumber + shopName detection modal & resolution
+  const [pendingDuplicateSave, setPendingDuplicateSave] = useState<{
+    newBill: NoSQLBillRecord;
+    existingBill: NoSQLBillRecord;
+    matchCount: number;
+  } | null>(null);
   const [tallySettings, setTallySettings] = useState<TallySettings>(DEFAULT_TALLY_SETTINGS);
   const [teamMembers, setTeamMembers] = useState<TeamMemberRecord[]>([]);
   const [currentFirmRole, setCurrentFirmRole] = useState<FirmRole>('Owner/CA');
@@ -1288,6 +1365,47 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
     setTimeout(() => setToastMessage(null), 4500);
   }, []);
 
+  const resetActiveScannerDraft = useCallback(() => {
+    activeDraftIdentityRef.current = '';
+    setUploadedFileName('');
+    setUploadedFileSize('');
+    setUploadedFileType('');
+    setPreviewImages([]);
+    setActivePageIndex(0);
+    setExtractedText('');
+    setShopName('');
+    setSellerGstin('');
+    setBuyerName('');
+    setBuyerGstin('');
+    setInvoiceNumber('');
+    setBillDate('');
+    setPlaceOfSupply('');
+    setVoucherType('Tax Invoice');
+    setPaymentMode('Cash / UPI');
+    setExtraHeaderFields({});
+    setBillItems([]);
+    setCgstAmount(0);
+    setSgstAmount(0);
+    setIgstAmount(0);
+    setTaxAmount(0);
+    setDiscountAmount(0);
+    setPendingDuplicateSave(null);
+    applyExtendedEditorState({ ...EMPTY_EXTENDED_EDITOR_STATE });
+  }, [applyExtendedEditorState]);
+
+  const handleSwitchActiveClient = useCallback(
+    (nextClientId: string, toastMessage?: string) => {
+      if (nextClientId !== activeClientId) {
+        resetActiveScannerDraft();
+        setActiveClientId(nextClientId);
+      }
+      if (toastMessage) {
+        showToast(toastMessage);
+      }
+    },
+    [activeClientId, resetActiveScannerDraft, showToast]
+  );
+
   const completeUserSignInMigration = useCallback(
     async (user: User) => {
       const guestBillsToMigrate = [...savedBills];
@@ -1390,6 +1508,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
       setSavedDocuments([]);
       setClients([DEFAULT_CLIENT_PROFILE]);
       setActiveClientId(DEFAULT_CLIENT_ID);
+      resetActiveScannerDraft();
       setTeamMembers([]);
       setApiKeys([]);
       setTallySettings(DEFAULT_TALLY_SETTINGS);
@@ -1398,7 +1517,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
       const msg = err instanceof Error ? err.message : 'Error';
       showToast(`Sign out failed: ${msg}`);
     }
-  }, [showToast]);
+  }, [showToast, resetActiveScannerDraft]);
 
   const [recentlyAddedBillIds, setRecentlyAddedBillIds] = useState<string[]>([]);
 
@@ -1440,9 +1559,19 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
         grandTotal: number;
         extraHeaderFields: Record<string, string>;
         billItems: NoSQLBillItem[];
+        extendedFields?: Partial<ExtendedInvoiceFields>;
       },
-      shouldAutoSaveToMaster: boolean
+      shouldAutoSaveToMaster: boolean,
+      options?: { isSameDraftRescan?: boolean; draftKey?: string }
     ) => {
+      const nextExtended = mergeExtendedFieldsForEditor({
+        extracted: result.extendedFields || {},
+        current: currentExtendedStateRef.current,
+        isSameDraftRescan: Boolean(options?.isSameDraftRescan),
+      });
+      activeDraftIdentityRef.current =
+        options?.draftKey || `${fileName}::${result.invoiceNumber || ''}::${Date.now()}`;
+
       setExtractedText(result.exactRawText);
       setDetectedType(result.docType);
       setConfidenceScore(result.confidence);
@@ -1462,6 +1591,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
       setIgstAmount(result.igstAmount || 0);
       setTaxAmount(result.taxAmount || 0);
       setDiscountAmount(result.discountAmount || 0);
+      applyExtendedEditorState(nextExtended);
 
       // Auto-enable any newly discovered dynamic columns
       const newDynKeys: string[] = [];
@@ -1520,6 +1650,8 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
             ? 'Pending Review'
             : 'Approved';
 
+        const persistedExtended = editorStateToBillExtendedFields(nextExtended);
+
         const newBill: NoSQLBillRecord = {
           id: `BILL-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           clientId: activeClientId,
@@ -1556,26 +1688,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
               note: `Extracted via ${BRAND_NAME} (${initialApproval})`,
             },
           ],
-          irn: (result as any).irn || '',
-          ewayBillNo: (result as any).ewayBillNo || '',
-          eInvoiceQr: (result as any).eInvoiceQr || '',
-          supplierPan:
-            (result as any).supplierPan ||
-            (result.sellerGstin && result.sellerGstin.length >= 12 ? result.sellerGstin.slice(2, 12) : ''),
-          supplierAddress: (result as any).supplierAddress || '',
-          supplierState: (result as any).supplierState || result.placeOfSupply || '',
-          buyerAddress: (result as any).buyerAddress || '',
-          buyerState: (result as any).buyerState || '',
-          poNumber: (result as any).poNumber || '',
-          dueDate: (result as any).dueDate || '',
-          paymentTerms: (result as any).paymentTerms || '',
-          bankName: (result as any).bankName || '',
-          bankAccountNo: (result as any).bankAccountNo || '',
-          bankIfsc: (result as any).bankIfsc || '',
-          currency: (result as any).currency || 'INR',
-          otherCharges: Number((result as any).otherCharges) || 0,
-          roundOff: Number((result as any).roundOff) || 0,
-          boeNumber: (result as any).boeNumber || '',
+          ...persistedExtended,
         };
         setSavedBills((prev) => [newBill, ...prev]);
         markBillsAsRecentlyAdded([newBill.id]);
@@ -1587,7 +1700,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
         }
       }
     },
-    [ocrLang, markBillsAsRecentlyAdded, activeClientId, currentFirmRole, currentUser]
+    [ocrLang, markBillsAsRecentlyAdded, activeClientId, currentFirmRole, currentUser, applyExtendedEditorState]
   );
 
   // ---------------------------------------------------------------------------
@@ -1602,9 +1715,20 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
     pageDataUrls: string[];
     embeddedCoordinateText: string;
     shouldAutoSave: boolean;
+    isSameDraftRescan?: boolean;
+    draftKey?: string;
     onProgress?: (percent: number, stageLabel: string) => void;
   }): Promise<{ shopName: string; invoiceNumber: string; grandTotal: number; itemCount: number }> => {
-    const { fileName, fileType, pageDataUrls, embeddedCoordinateText, shouldAutoSave, onProgress } = params;
+    const {
+      fileName,
+      fileType,
+      pageDataUrls,
+      embeddedCoordinateText,
+      shouldAutoSave,
+      isSameDraftRescan = false,
+      draftKey,
+      onProgress,
+    } = params;
 
     setScanStepIndex(1);
     setOcrProgressPercent(35);
@@ -1736,6 +1860,10 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
               d.invoiceNumber || fallbackCrossCheck.invoiceNumber || `INV-${Date.now().toString().slice(-5)}`
             );
 
+            const extractedExtendedFields = extractExtendedFieldsFromBackendResponse(
+              d as Record<string, unknown>
+            );
+
             setScanStepIndex(3);
             setOcrProgressPercent(100);
 
@@ -1765,8 +1893,10 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                 grandTotal: grandTotalVal,
                 extraHeaderFields: extraHeadersObj,
                 billItems: finalItems,
+                extendedFields: extractedExtendedFields,
               },
-              shouldAutoSave
+              shouldAutoSave,
+              { isSameDraftRescan, draftKey }
             );
 
             onProgress?.(100, shouldAutoSave ? 'Added to Master Excel Sheet' : 'Extraction complete');
@@ -1824,8 +1954,10 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
         ...fallbackParsed,
         exactRawText: fullRawText || 'No readable text detected in this image.',
         confidence: 95.0,
+        extendedFields: {},
       },
-      shouldAutoSave
+      shouldAutoSave,
+      { isSameDraftRescan, draftKey }
     );
 
     onProgress?.(100, shouldAutoSave ? 'Added to Master Excel Sheet' : 'Extraction complete');
@@ -2460,13 +2592,6 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
     setBillItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // State for duplicate invoiceNumber + shopName detection modal & resolution
-  const [pendingDuplicateSave, setPendingDuplicateSave] = useState<{
-    newBill: NoSQLBillRecord;
-    existingBill: NoSQLBillRecord;
-    matchCount: number;
-  } | null>(null);
-
   // Manual Save / Append Current Bill to Master Sheet
   const handleSaveCurrentToMasterSheet = () => {
     if (!uploadedFileName && !extractedText.trim() && billItems.length === 0) {
@@ -2522,25 +2647,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
           note: `Saved from Scanner Editor (${initialApproval})`,
         },
       ],
-      irn: irn.trim(),
-      ewayBillNo: ewayBillNo.trim(),
-      eInvoiceQr: eInvoiceQr.trim(),
-      supplierPan:
-        supplierPan.trim() || (sellerGstin.trim().length >= 12 ? sellerGstin.trim().slice(2, 12) : ''),
-      supplierAddress: supplierAddress.trim(),
-      supplierState: supplierState.trim() || placeOfSupply.trim(),
-      buyerAddress: buyerAddress.trim(),
-      buyerState: buyerState.trim(),
-      poNumber: poNumber.trim(),
-      dueDate: dueDate.trim(),
-      paymentTerms: paymentTerms.trim(),
-      bankName: bankName.trim(),
-      bankAccountNo: bankAccountNo.trim(),
-      bankIfsc: bankIfsc.trim(),
-      currency: currency.trim() || 'INR',
-      otherCharges,
-      roundOff,
-      boeNumber: boeNumber.trim(),
+      ...editorStateToBillExtendedFields(currentExtendedEditorState),
     };
 
     // Check savedBills collection for any existing bill with the same invoiceNumber and shopName
@@ -2618,6 +2725,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
       rawText: combinedRawText,
       extraHeaderFields: mergedExtraHeaders,
       items: mergedItems,
+      ...mergeBillExtendedFieldsForDuplicate(existingBill, newBill),
     };
 
     setSavedBills((prev) => prev.map((b) => (b.id === existingBill.id ? mergedRecord : b)));
@@ -2674,8 +2782,8 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
 
   const filteredBills = useMemo(() => {
     return savedBills.filter((b) => {
-      // Client scope filter (in guest mode, filter by activeClientId or default_client)
-      if (!currentUser && b.clientId && b.clientId !== activeClientId) {
+      // Strict client workspace scope filter in guest mode (legacy bills without clientId belong only to DEFAULT_CLIENT_ID)
+      if (!currentUser && (b.clientId || DEFAULT_CLIENT_ID) !== activeClientId) {
         return false;
       }
       // Review Queue & Approval Status filter (Part 4 & Part 5.4)
@@ -2760,6 +2868,9 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
             cells[col.key] = bill.igstAmount;
           } else if (col.key === 'taxAmount') {
             cells[col.key] = bill.taxAmount;
+          } else if (col.key === 'isBillOfEntry') {
+            cells[col.key] =
+              typeof bill.isBillOfEntry === 'boolean' ? (bill.isBillOfEntry ? 'Yes' : 'No') : '';
           } else {
             cells[col.key] = (bill as any)[col.key] ?? '';
           }
@@ -2808,6 +2919,9 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
               cells[col.key] = bill.fileName || 'Uploaded_Bill';
             } else if (col.key === 'grandTotal') {
               cells[col.key] = item.lineTotal || bill.grandTotal;
+            } else if (col.key === 'isBillOfEntry') {
+              cells[col.key] =
+                typeof bill.isBillOfEntry === 'boolean' ? (bill.isBillOfEntry ? 'Yes' : 'No') : '';
             } else if (col.category === 'HEADER') {
               cells[col.key] = (bill as any)[col.key] ?? '';
             } else {
@@ -3196,6 +3310,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
   const handleJumpToFixBill = (billId: string) => {
     const target = savedBills.find((b) => b.id === billId);
     if (!target) return;
+    activeDraftIdentityRef.current = target.id;
     setUploadedFileName(target.fileName);
     setShopName(target.shopName);
     setSellerGstin(target.sellerGstin);
@@ -3206,6 +3321,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
     setPlaceOfSupply(target.placeOfSupply);
     setVoucherType(target.voucherType);
     setPaymentMode(target.paymentMode);
+    setExtraHeaderFields(target.extraHeaderFields || {});
     setCgstAmount(target.cgstAmount);
     setSgstAmount(target.sgstAmount);
     setIgstAmount(target.igstAmount);
@@ -3213,18 +3329,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
     setDiscountAmount(target.discountAmount);
     setBillItems(target.items || []);
     setExtractedText(target.rawText || '');
-    setIrn(target.irn || '');
-    setEwayBillNo(target.ewayBillNo || '');
-    setSupplierPan(target.supplierPan || '');
-    setPoNumber(target.poNumber || '');
-    setDueDate(target.dueDate || '');
-    setPaymentTerms(target.paymentTerms || '');
-    setBankName(target.bankName || '');
-    setBankAccountNo(target.bankAccountNo || '');
-    setBankIfsc(target.bankIfsc || '');
-    setOtherCharges(target.otherCharges || 0);
-    setRoundOff(target.roundOff || 0);
-    setBoeNumber(target.boeNumber || '');
+    applyExtendedEditorState(billRecordToExtendedEditorState(target));
     setIsTallyModalOpen(false);
     setActiveTab('scanner');
     showToast(`Loaded "${target.invoiceNumber}" into Scanner Editor for correction.`);
@@ -3731,9 +3836,11 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                 aria-label="Select Active Client Workspace"
                 value={activeClientId}
                 onChange={(e) => {
-                  setActiveClientId(e.target.value);
                   const chosen = clients.find((c) => c.id === e.target.value);
-                  if (chosen) showToast(`Switched workspace to "${chosen.name}" (${chosen.financialYear})`);
+                  handleSwitchActiveClient(
+                    e.target.value,
+                    chosen ? `Switched workspace to "${chosen.name}" (${chosen.financialYear})` : undefined
+                  );
                 }}
                 className="bg-transparent text-xs font-semibold text-[var(--text-main)] focus:outline-none max-w-[160px] truncate cursor-pointer"
               >
@@ -4002,9 +4109,11 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                   aria-label="Select Active Client Workspace Mobile"
                   value={activeClientId}
                   onChange={(e) => {
-                    setActiveClientId(e.target.value);
                     const chosen = clients.find((c) => c.id === e.target.value);
-                    if (chosen) showToast(`Switched workspace to "${chosen.name}" (${chosen.financialYear})`);
+                    handleSwitchActiveClient(
+                      e.target.value,
+                      chosen ? `Switched workspace to "${chosen.name}" (${chosen.financialYear})` : undefined
+                    );
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full bg-transparent text-xs font-semibold text-[var(--text-main)] focus:outline-none truncate"
@@ -5199,6 +5308,18 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              E-Invoice QR Data
+                            </label>
+                            <input
+                              type="text"
+                              value={eInvoiceQr}
+                              onChange={(e) => setEInvoiceQr(e.target.value)}
+                              placeholder="Signed QR payload"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
                               Supplier PAN
                             </label>
                             <input
@@ -5207,6 +5328,54 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                               onChange={(e) => setSupplierPan(e.target.value.toUpperCase())}
                               placeholder="ABCDE1234F"
                               className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Supplier State
+                            </label>
+                            <input
+                              type="text"
+                              value={supplierState}
+                              onChange={(e) => setSupplierState(e.target.value)}
+                              placeholder="e.g. Maharashtra"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Supplier Address
+                            </label>
+                            <input
+                              type="text"
+                              value={supplierAddress}
+                              onChange={(e) => setSupplierAddress(e.target.value)}
+                              placeholder="Supplier registered address"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Buyer State
+                            </label>
+                            <input
+                              type="text"
+                              value={buyerState}
+                              onChange={(e) => setBuyerState(e.target.value)}
+                              placeholder="e.g. Karnataka"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Buyer Address
+                            </label>
+                            <input
+                              type="text"
+                              value={buyerAddress}
+                              onChange={(e) => setBuyerAddress(e.target.value)}
+                              placeholder="Buyer billing address"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
                             />
                           </div>
                           <div>
@@ -5242,6 +5411,44 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                               onChange={(e) => setPaymentTerms(e.target.value)}
                               placeholder="Net 30 Days"
                               className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Currency
+                            </label>
+                            <input
+                              type="text"
+                              value={currency}
+                              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                              placeholder="INR"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Other Charges (₹)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={otherCharges ?? ''}
+                              onChange={(e) => setOtherCharges(parseEditorNumberInput(e.target.value))}
+                              placeholder="0.00"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Round-Off (₹)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={roundOff ?? ''}
+                              onChange={(e) => setRoundOff(parseEditorNumberInput(e.target.value))}
+                              placeholder="0.00"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
                             />
                           </div>
                           <div>
@@ -5282,30 +5489,6 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                           </div>
                           <div>
                             <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
-                              Other Charges (₹)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={otherCharges}
-                              onChange={(e) => setOtherCharges(parseFloat(e.target.value) || 0)}
-                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
-                              Round-Off (₹)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={roundOff}
-                              onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
-                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
                               Bill of Entry (BOE) No
                             </label>
                             <input
@@ -5315,6 +5498,44 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
                               placeholder="For Import BOE"
                               className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
                             />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              BOE Date
+                            </label>
+                            <input
+                              type="date"
+                              value={boeDate}
+                              onChange={(e) => setBoeDate(e.target.value)}
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">
+                              Port Code
+                            </label>
+                            <input
+                              type="text"
+                              value={portCode}
+                              onChange={(e) => setPortCode(e.target.value.toUpperCase())}
+                              placeholder="e.g. INNSA1"
+                              className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                            />
+                          </div>
+                          <div className="sm:col-span-3 flex items-center gap-2 pt-1">
+                            <input
+                              id="extended-is-bill-of-entry"
+                              type="checkbox"
+                              checked={Boolean(isBillOfEntry)}
+                              onChange={(e) => setIsBillOfEntry(e.target.checked)}
+                              className="w-3.5 h-3.5 accent-indigo-600 rounded cursor-pointer"
+                            />
+                            <label
+                              htmlFor="extended-is-bill-of-entry"
+                              className="text-[11px] font-semibold text-[var(--text-main)] cursor-pointer"
+                            >
+                              Import Bill of Entry (Customs BOE)
+                            </label>
                           </div>
                         </div>
                       )}
@@ -6443,9 +6664,11 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
             clients={clients}
             activeClientId={activeClientId}
             onSelectClient={(id) => {
-              setActiveClientId(id);
               const found = clients.find((c) => c.id === id);
-              if (found) showToast(`Switched active client to "${found.name}"`);
+              handleSwitchActiveClient(
+                id,
+                found ? `Switched active client to "${found.name}"` : undefined
+              );
             }}
             onSaveClient={async (client) => {
               setClients((prev) => {
@@ -6458,7 +6681,7 @@ export function App({ initialOpenSignIn = false, initialMountWorkspace = false }
             }}
             onDeleteClient={async (clientId) => {
               setClients((prev) => prev.filter((c) => c.id !== clientId));
-              if (activeClientId === clientId) setActiveClientId(DEFAULT_CLIENT_ID);
+              if (activeClientId === clientId) handleSwitchActiveClient(DEFAULT_CLIENT_ID);
               if (currentUser) {
                 await deleteClientFromFirestore(currentUser.uid, clientId);
               }
